@@ -1,21 +1,19 @@
-.gradle
+# Maven
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Gradle (leftovers from previous local installations)
+.gradle/
 **/build/
-!**/src/**/build/
-
-# Gradle
-gradle-app.setting
-!gradle-wrapper.jar
-!gradle-wrapper.properties
-.gradletasknamecache
-
-# Eclipse
-.project
-.classpath
 
 # IntelliJ IDEA
 .idea/
 *.iml
 out/
+
+# Eclipse
+.project
+.classpath
 
 # Visual Studio Code
 .vscode/

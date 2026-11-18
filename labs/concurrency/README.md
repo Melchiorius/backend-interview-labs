@@ -35,7 +35,7 @@
 Из корня репозитория:
 
 ```powershell
-.\gradlew.bat :labs:concurrency:test
+mvn -pl labs/concurrency -am test
 ```
 
 ## Следующие темы
