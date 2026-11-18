@@ -20,8 +20,8 @@ class BoundedBlockingQueueTest {
 
         assertEquals(2, queue.size());
         assertEquals(2, queue.capacity());
-        assertEquals(67, queue.take());
-        assertEquals(7, queue.take());
+        assertEquals(67, queue.take().intValue());
+        assertEquals(7, queue.take().intValue());
         assertEquals(0, queue.size());
     }
 
