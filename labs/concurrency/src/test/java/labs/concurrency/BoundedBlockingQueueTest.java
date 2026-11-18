@@ -20,8 +20,8 @@ class BoundedBlockingQueueTest {
 
         assertEquals(2, queue.size());
         assertEquals(2, queue.capacity());
-        assertEquals(67, queue.take());
-        assertEquals(7, queue.take());
+        assertEquals(67, queue.take().intValue());
+        assertEquals(7, queue.take().intValue());
         assertEquals(0, queue.size());
     }
 
@@ -39,7 +39,7 @@ class BoundedBlockingQueueTest {
             );
 
             queue.put(67);
-            assertEquals(67, consumer.get(1, TimeUnit.SECONDS));
+            assertEquals(67, consumer.get(1, TimeUnit.SECONDS).intValue());
         }
     }
 
@@ -49,7 +49,10 @@ class BoundedBlockingQueueTest {
         queue.put(7);
 
         try (var executor = Executors.newSingleThreadExecutor()) {
-            var producer = executor.submit(() -> queue.put(67));
+            var producer = executor.submit(() -> {
+                queue.put(67);
+                return null;
+            });
 
             assertThrows(
                     TimeoutException.class,
