@@ -35,7 +35,7 @@
 Из корня репозитория:
 
 ```powershell
-mvn -pl labs/concurrency -am test
+.\mvnw.cmd -pl labs/concurrency -am test
 ```
 
 ## Следующие темы

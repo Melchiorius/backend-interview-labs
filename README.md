@@ -36,18 +36,18 @@
 
 ## Локальный запуск
 
-Нужны JDK 21 и Maven 3.9+ (либо Maven, встроенный в IntelliJ IDEA).
+Нужен JDK 21. Maven Wrapper скачает необходимую версию Maven автоматически; отдельно устанавливать Maven не требуется.
 
 Из корня репозитория — компиляция и все тесты:
 
 ```powershell
-mvn clean verify
+.\mvnw.cmd clean verify
 ```
 
 Тесты только лаборатории многопоточности (с нужными модулями):
 
 ```powershell
-mvn -pl labs/concurrency -am test
+.\mvnw.cmd -pl labs/concurrency -am test
 ```
 
 В IntelliJ IDEA откройте корневой `pom.xml` как Maven-проект (или используйте File → Open и выберите корень проекта). Не импортируйте `build.gradle.kts`: Gradle больше не используется.
