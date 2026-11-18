@@ -39,7 +39,7 @@ class BoundedBlockingQueueTest {
             );
 
             queue.put(67);
-            assertEquals(67, consumer.get(1, TimeUnit.SECONDS));
+            assertEquals(67, consumer.get(1, TimeUnit.SECONDS).intValue());
         }
     }
 
