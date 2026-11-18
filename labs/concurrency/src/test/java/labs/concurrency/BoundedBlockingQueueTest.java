@@ -49,7 +49,10 @@ class BoundedBlockingQueueTest {
         queue.put(7);
 
         try (var executor = Executors.newSingleThreadExecutor()) {
-            var producer = executor.submit(() -> queue.put(67));
+            var producer = executor.submit(() -> {
+                queue.put(67);
+                return null;
+            });
 
             assertThrows(
                     TimeoutException.class,
