@@ -35,6 +35,7 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 - [ROADMAP.md](docs/ROADMAP.md) — рекомендуемые первый, второй и последующие проходы.
 - [STUDY_METHOD.md](docs/STUDY_METHOD.md) — короткая справка самостоятельному читателю.
 - [AGENTS.md](AGENTS.md) — требования для авторов и ассистентов.
+- [ROLE_MODEL.md](docs/ROLE_MODEL.md) и [WORKFLOW.md](docs/WORKFLOW.md) — организация работы ролей 00–06 и последовательность проверки материалов.
 - [EXERCISE_AND_TESTING_STANDARD.md](docs/EXERCISE_AND_TESTING_STANDARD.md) — будущая независимая проверка упражнений.
 
 **Java Core:** [Типы и значения](knowledge/01-java-core/types.md) (подробная статья с [проверяемым примером](examples/core/TypesAndVariablesDemo.java)), [Преобразования типов](knowledge/01-java-core/conversions.md) ([самопроверка](examples/core/ConversionsDemo.java)), [Передача аргументов](knowledge/01-java-core/parameters.md) ([самопроверка](examples/core/ParametersDemo.java)), [Классы и объекты](knowledge/01-java-core/classes.md) ([проверяемый пример](examples/core/ClassesAndObjectsDemo.java)). Общий [запускаемый пример](examples/core/README.md) не требует Gradle: `java examples/core/ValuesAndReferencesDemo.java` (JDK 21).
