@@ -36,6 +36,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 - [AGENTS.md](AGENTS.md) — требования для авторов и ассистентов.
 - [EXERCISE_AND_TESTING_STANDARD.md](docs/EXERCISE_AND_TESTING_STANDARD.md) — будущая независимая проверка упражнений.
 
-**Первый готовый материал:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
+**Java Core:** [Типы и значения](knowledge/01-java-core/types.md), [Преобразования типов](knowledge/01-java-core/conversions.md), [Передача аргументов](knowledge/01-java-core/parameters.md). Общий [запускаемый пример](examples/core/README.md) не требует Gradle: `java examples/core/ValuesAndReferencesDemo.java` (JDK 21).
+
+**Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.
