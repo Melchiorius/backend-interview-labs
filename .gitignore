@@ -26,3 +26,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local role-dispatcher inbox/state (never commit)
+.dispatcher/
