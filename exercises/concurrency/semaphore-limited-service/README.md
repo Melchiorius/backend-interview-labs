@@ -52,7 +52,9 @@
 ./gradlew -p exercises/concurrency/semaphore-limited-service test -Preference=true
 ```
 
-Параметр `-Preference=true` выбирает `src/reference/java` вместо заготовки; обе реализации используют общий `Gateway`. Другие лаборатории для этого запуска не компилируются, хотя нужные зависимости Gradle загрузит.
+Обе реализации зарегистрированы в Gradle как отдельные source sets: `main` — заготовка, `reference` — эталон. Параметр `-Preference=true` запускает те же тесты с эталонными классами вместо ученических. Другие лаборатории для этого запуска не компилируются, хотя нужные зависимости Gradle загрузит.
+
+Если IntelliJ сообщает `Java file outside of source root`, после обновления проекта выполните **Gradle → Reload All Gradle Projects**: корневой `settings.gradle.kts` подключает упражнение через `includeBuild(...)`, а вложенный `build.gradle.kts` объявляет оба каталога Java как source sets. Ручная разметка папок не нужна.
 
 Для IntelliJ в корне проекта есть общие конфигурации `.run/Semaphore - student tests.run.xml` и `.run/Semaphore - reference tests.run.xml`, без абсолютных путей. **Их фактический импорт в IDE ещё предстоит проверить**. Если IDE не подхватила их, используйте команды выше из терминала.
 
