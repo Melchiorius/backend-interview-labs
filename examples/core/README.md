@@ -2,6 +2,18 @@
 
 Примеры здесь не являются обязательными упражнениями. Это короткие самостоятельные программы, которые полезно запускать и изменять, чтобы сопоставлять результат с текстом статьи.
 
+## Типы, переменные и значения
+
+[TypesAndVariablesDemo.java](TypesAndVariablesDemo.java) относится к [CORE-TYPES](../../knowledge/01-java-core/types.md). Он сравнивает копирование значений и ссылок, инициализацию полей и массивов, `var`, `final`, переполнение `int` и Unicode.
+
+Из корня репозитория, JDK 21:
+
+```powershell
+java examples/core/TypesAndVariablesDemo.java
+```
+
+Пример заканчивается строкой `CHECK PASSED`, иначе выбрасывает `AssertionError`. Запуск этого примера отдельно проверяется в GitHub Actions.
+
 ## Значения и ссылки
 
 [ValuesAndReferencesDemo.java](ValuesAndReferencesDemo.java) относится к трём статьям:
