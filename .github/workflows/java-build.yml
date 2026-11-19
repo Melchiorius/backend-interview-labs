@@ -28,4 +28,4 @@ jobs:
         run: ./gradlew clean build --no-daemon --stacktrace
 
       - name: Run standalone Java Core example (source-file mode)
-        run: java examples/core/ValuesAndReferencesDemo.java
+        run: |\n          java examples/core/ValuesAndReferencesDemo.java\n          java examples/core/TypesAndVariablesDemo.java
