@@ -12,15 +12,14 @@ java {
     }
 }
 
-// Student and reference implementations share one contract and one test suite.
+// Both source sets exist regardless of Gradle properties; IntelliJ can
+// index the student solution and the reference implementation together.
 sourceSets {
     main {
-        java.setSrcDirs(listOf(
-            if (providers.gradleProperty("reference").isPresent) "src/reference/java"
-            else "src/main/java"
-        ))
-        // Gateway is common to both implementations.
-        java.srcDir("src/common/java")
+        java.srcDirs("src/main/java", "src/common/java")
+    }
+    create("reference") {
+        java.srcDirs("src/reference/java", "src/common/java")
     }
 }
 
@@ -32,4 +31,13 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+
+    // Preserve the existing documented -Preference=true command.
+    // Compile the tests against the student-facing public contract,
+    // but run those same tests against the separately compiled reference.
+    if (providers.gradleProperty("reference").map(String::toBoolean).getOrElse(false)) {
+        val reference = sourceSets["reference"]
+        dependsOn(tasks.named(reference.classesTaskName))
+        classpath = sourceSets["test"].output + reference.output + configurations["testRuntimeClasspath"]
+    }
 }
