@@ -339,8 +339,8 @@ java examples/core/ClassesAndObjectsDemo.java
 
 ## Первоисточники
 
-- [JLS 21 `8 — Classes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html).
-- [JLS 21 `12.4 — Initialization of Classes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4).
-- [JLS 21 `12.5 — Creation of New Class Instances](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
-- [JLS 21 `15.9 — Class Instance Creation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.9).
+- [JLS 21 §8 — Classes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html).
+- [JLS 21 §12.4 — Initialization of Classes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4).
+- [JLS 21 §12.5 — Creation of New Class Instances](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
+- [JLS 21 §15.9 — Class Instance Creation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.9).
 - [dev.java — Classes and Objects](https://dev.java/learn/language/oop/classes-objects/).
