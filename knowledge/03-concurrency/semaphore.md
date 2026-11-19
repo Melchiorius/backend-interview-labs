@@ -29,6 +29,13 @@
 Ниже показан **один возможный порядок событий**: первые три потока начинают работу, четвёртый вынужден ждать.
 
 ```mermaid
+---
+config:
+  flowchart:
+    rankSpacing: 12
+    nodeSpacing: 15
+    wrappingWidth: 400
+---
 flowchart TB
     A["Один объект Semaphore(3)<br/>Изначально доступно 3 разрешения"]
     A --> B["Поток 1: acquire() → работа с сервисом<br/>Осталось 2 разрешения"]
@@ -38,10 +45,10 @@ flowchart TB
     E --> F["Поток 2 закончил работу и вызвал release()"]
     F --> G["Поток 4 получает освободившееся разрешение<br/>acquire() завершается → работа с сервисом"]
 
-    classDef initial fill:#e2e8f0,stroke:#64748b,color:#1e293b,stroke-width:2px
-    classDef active fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px
-    classDef waiting fill:#fef3c7,stroke:#b45309,color:#78350f,stroke-width:2px
-    classDef release fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px
+    classDef initial fill:#e2e8f0,stroke:#64748b,color:#1e293b,stroke-width:2px,font-size:13px
+    classDef active fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px,font-size:13px
+    classDef waiting fill:#fef3c7,stroke:#b45309,color:#78350f,stroke-width:2px,font-size:13px
+    classDef release fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px,font-size:13px
 
     class A initial
     class B,C,D,G active
