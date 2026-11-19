@@ -26,3 +26,6 @@ jobs:
 
       - name: Run build and JUnit tests
         run: ./gradlew clean build --no-daemon --stacktrace
+
+      - name: Run standalone Java Core example (source-file mode)
+        run: java examples/core/ValuesAndReferencesDemo.java
