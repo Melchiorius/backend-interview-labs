@@ -1,6 +1,6 @@
 # Реестр покрытия и реализации курса
 
-**Дата сверки:** 2026-11-19. **База:** `main` после объединения PR #5; пилот ведётся в отдельном PR и ещё не входит в main. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
+**Дата сверки:** 2026-11-19. **База:** состояние после PR #6; факт CI проверки указан отдельно от неподтверждённого локального UX. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
 
 ## Легенда
 - **Implemented**: файл/код существует в main.
@@ -23,9 +23,9 @@
 | Maven migration PR #4 | **OPEN, not merged** | Не включать в курс; судьба PR отдельно решается владельцем |
 | Mockito | Included in standalone pilot exercise (PR #6); not a root-wide dependency | Explore broader tests when suitable |
 | knowledge/ Obsidian vault | Pilot Semaphore Markdown article exists in PR #6; Obsidian UI not verified | Check local navigation in Obsidian |
-| examples/, exercises/, solutions/ | Planned | Пилот EX-CON-SEM-01; выбрать размещение эталонов |
+| examples/, exercises/, solutions/ | `exercises/` exists for Semaphore pilot; standalone `examples/` and `solutions/` not created | Reference kept in `src/reference/java` inside exercise |
 | .run/ shared IntelliJ configs | Implemented for pilot in PR #6; IDE unverified | Проверить переносимость на чистом clone |
-| Изолированные команды запуска exercise + student/reference | Planned | Проверить Gradle dependency isolation, CI |
+| Изолированные команды запуска exercise + student/reference | Reference Gradle command verified in GitHub Actions; student run pending local check | Verify local command in IntelliJ |
 | CI matrix/sharding/distributed test execution | Planned | После локального пилота; не утверждать что есть |
 
 ## Тематическое покрытие (каталог в CURRICULUM.md)
@@ -33,7 +33,7 @@
 |---|---|---|---|
 | 01 Java Core | Отдельные темы обсуждались, структурированный контент не подтверждён | generics, контракты, ООП, streams, exceptions, reflection | CORE-TYPES + CORE-GENERICS |
 | 02 Collections | Обсуждались HashMap, ArrayList, ConcurrentHashMap; lab-каркас | статьи, runnable examples, задачи и тесты | COL-HASH |
-| 03 Concurrency | SynchronizedCounter, BoundedBlockingQueue, JUnit; обсуждались JMM/volatile/locks/futures | Semaphore, CountDownLatch, CyclicBarrier, Phaser, RW locks, CAS nuances, ForkJoin, virtual threads, JMM-система | **CON-SEM + EX-CON-SEM-01**, затем CON-JMM |
+| 03 Concurrency | SynchronizedCounter, BoundedBlockingQueue, JUnit; обсуждались JMM/volatile/locks/futures | CountDownLatch, CyclicBarrier, Phaser, RW locks, CAS nuances, ForkJoin, virtual threads, JMM-система | **CON-SEM + EX-CON-SEM-01 implemented in PR #6**, затем CON-JMM |
 | 04 JVM | lab-каркас, обсуждали GC/heap/stack | bytecode, classloading, JIT, профилировка | JVM-MEMORY |
 | 05 I/O & Networking | Не подтверждено наличие учебных файлов | I/O, NIO, TCP/HTTP, backpressure | IO-BYTES |
 | 06 Databases | Не подтверждено наличие учебных файлов | SQL, indexing, MVCC, transactions, ORM | DB-TX |
@@ -42,12 +42,12 @@
 | 09 Testing & Tooling | JUnit тесты, Gradle и GitHub CI ранее успешно работали | Mockito, тест-дизайн, concurrency-tests, отдельные IDE run configs | TEST-JUNIT + TEST-MOCKITO |
 | 10 Algorithms & Design | Есть roadmap System Design | системная декомпозиция, задачи, архитектурные кейсы | DESIGN-REQ |
 
-## Пилотная вертикаль (в PR #6, ещё не в main)
+## Пилотная вертикаль — Semaphore (PR #6)
 | Артефакт | ID | Статус | Критерий завершения |
 |---|---|---|---|
-| Статья Semaphore | CON-SEM | Implemented in pilot branch; Obsidian not manually verified | Термины, семантика, примеры, ловушки, источники и ссылки |
+| Статья Semaphore | CON-SEM | Article committed in PR #6; Obsidian UI not verified | Термины, семантика, примеры, ловушки, источники и ссылки |
 | Готовый пример | EXAMPLE-CON-SEM | Reference implementation in exercise; GitHub Actions reference job SUCCESS (2026-11-19, run 44518768253) | Код компилируется, запущен, объяснён |
-| Самостоятельная задача | EX-CON-SEM-01 | Implemented in pilot branch | README, заготовка и реалистичные ограничения |
+| Самостоятельная задача | EX-CON-SEM-01 | Exercise committed in PR #6 | README, заготовка и реалистичные ограничения |
 | JUnit + Mockito | TEST-CON-SEM | JUnit/Mockito tests executed successfully against reference in CI runs 44518768253 and 44519250051 | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
 | Эталон | SOL-CON-SEM-01 | Reference compiled and tests passed in CI run 44518768253 | Отдельно от student; проверен CI |
 | Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Nested Gradle project; isolated CI command passed; shared .run configs committed but IDE not verified | Одна команда/конфигурация; нет сборки независимых exercises |
