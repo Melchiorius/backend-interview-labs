@@ -1,0 +1,31 @@
+# Java Core — воспроизводимые примеры
+
+Примеры здесь не являются обязательными упражнениями. Это короткие самостоятельные программы, которые полезно запускать и изменять, чтобы сопоставлять результат с текстом статьи.
+
+## Значения и ссылки
+
+[ValuesAndReferencesDemo.java](ValuesAndReferencesDemo.java) относится к трём статьям:
+
+- [Типы и значения](../../knowledge/01-java-core/types.md)
+- [Преобразования типов](../../knowledge/01-java-core/conversions.md)
+- [Передача аргументов](../../knowledge/01-java-core/parameters.md)
+
+**Из корня репозитория, JDK 21:**
+
+```powershell
+java examples/core/ValuesAndReferencesDemo.java
+```
+
+Ожидаемые последние строки:
+
+```text
+After append: AB
+Inside replace: C
+After replace: AB
+After reassigning second: AB
+CHECK PASSED
+```
+
+Программа завершится с ошибкой `AssertionError`, если ожидаемое поведение нарушено. Для запуска не нужны Gradle, сторонние зависимости и подключение к интернету после установки JDK.
+
+Код намеренно оставлен в одном файле: разносить его по классам или создавать отдельный Gradle-модуль ради демонстрации трёх операций нет смысла.
