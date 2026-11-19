@@ -1,5 +1,6 @@
 package api;
 
+// Theory: knowledge/01-java-core/access.md
 // Theory: knowledge/01-java-core/classes.md
 // Research: docs/plans/CORE-ACCESS.md
 // Base class for the package-access and protected-access examples.

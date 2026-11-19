@@ -1,5 +1,6 @@
 package api;
 
+// Theory: knowledge/01-java-core/access.md
 // Theory: knowledge/01-java-core/classes.md
 // Research: docs/plans/CORE-ACCESS.md
 // Same-package code does NOT need to extend Parent to access protected/package members.
