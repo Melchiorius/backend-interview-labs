@@ -54,6 +54,7 @@
 | `Q-IVAN` — [Community Java Interview Preparation](https://github.com/ivanjayasooriya/java-interview-prep) | CORE, COL, CON, JVM, TEST, DB | Группы вопросов, задачи, варианты тестов | C | не покрывает всю серверную архитектуру |
 | `Q-IN28` — [in28minutes interview questions](https://github.com/in28minutes/JavaInterviewQuestionsAndAnswers) | CORE, COL, CON, JVM | Традиционные Java-подвохи и базовые вопросы | C | возможна устаревшая терминология, требует JDK 21 сверки |
 | `Q-BAELDUNG-CORE` — [Baeldung Java Interview Questions](https://www.baeldung.com/java-interview-questions) | CORE, COL, JVM | Популярные вопросы о языке и API | C | отдельные статьи обновляются; ответы проверять по JLS/API |
+| `Q-BAELDUNG-CLASS` — [Baeldung Java Class Structure and Initialization Interview Questions](https://www.baeldung.com/java-classes-initialization-questions) | CORE | Конструкторы, static/instance, initializer blocks и частые ловушки о классах | C | интервью-каталог, ответы сверять с JLS 21 §§8 и 12; не смешивать с нормативным источником |
 | `Q-BAELDUNG-COL` — [Baeldung Java Collections Interview Questions](https://www.baeldung.com/java-collections-interview-questions) | COL, CORE | Контракты и внутренние механизмы коллекций | C | HashMap реализации различаются по версиям |
 | `Q-BAELDUNG-CON` — [Baeldung Java Concurrency Interview Questions](https://www.baeldung.com/java-concurrency-interview-questions) | CON | Потоки, синхронизация, coordination, Executor | C | JMM-гарантии сверять со спецификацией |
 | `Q-BAELDUNG-SPR` — [Baeldung Spring Interview Questions](https://www.baeldung.com/spring-interview-questions) | SPR | DI, AOP, transaction, MVC, lifecycle | C | не путать версии Spring и Spring Boot |
@@ -67,6 +68,7 @@
 | ID / источник | Разделы | Для чего полезен | Уровень | Ограничения |
 |---|---|---|---|---|
 | `B-DEVJAVA-LANGUAGE` — [dev.java Language](https://dev.java/learn/language/) | CORE | Объяснения базового языка по темам | B | не всегда совпадает версия с 21 |
+| `B-DEVJAVA-CLASSES` — [dev.java Classes and Objects](https://dev.java/learn/language/oop/classes-objects/) | CORE | Официальные объяснения классов, полей, методов, конструкторов и объектов | B | страница может учитывать более поздние версии; проверять спорные правила по JLS 21 |
 | `B-MDN-CACHE` — [MDN HTTP Caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching) | IO, DESIGN | Практические объяснения кэширования HTTP | B | RFC выше по авторитету |
 | `B-SPRING-GUIDES` — [Spring Guides](https://spring.io/guides) | SPR, TEST, DB | Небольшие runnable сценарии Spring | B | версии зависимостей проверять отдельно |
 | `B-HIBERNATE-EXAMPLES` — [Hibernate Documentation Landing](https://hibernate.org/orm/documentation/) | DB, SPR | Разборы persistence contexts/fetching/examples | B | приоритет versioned user guide |
