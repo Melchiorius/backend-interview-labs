@@ -16,6 +16,7 @@ from pathlib import Path
 import re
 import sqlite3
 import sys
+import time
 from urllib.parse import urlparse
 import webbrowser
 
@@ -59,6 +60,112 @@ def write_mapping(folder: Path, mapping: dict[str, str]) -> None:
     temporary = folder / "chat_urls.json.tmp"
     temporary.write_text(json.dumps(mapping, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     temporary.replace(target)
+
+
+def validate_tab_index(index: int) -> int:
+    if type(index) is not int or not 1 <= index <= 64:
+        raise DeliveryError("tab number must be in 1..64")
+    return index
+
+
+def tab_steps(index: int) -> list[tuple[int, int]]:
+    """Firefox physical tab order: Ctrl+1..8, otherwise Ctrl+1 then Ctrl+PgDn."""
+    index = validate_tab_index(index)
+    if index <= 8:
+        return [(0x11, ord(str(index)))]
+    return [(0x11, ord("1"))] + [(0x11, 0x22)] * (index - 1)
+
+
+def read_tab_mapping(folder: Path) -> dict[str, int]:
+    path = folder / "chat_tabs.json"
+    if not path.exists():
+        return {}
+    try:
+        mapping = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise DeliveryError(f"invalid tab mapping {path}: {exc}") from exc
+    if not isinstance(mapping, dict) or any(k not in ROLES for k in mapping):
+        raise DeliveryError("tab mapping must be a role -> number JSON object")
+    return {role: validate_tab_index(index) for role, index in mapping.items()}
+
+
+def configure_tab(folder: Path, role: str, index: int) -> None:
+    if role not in ROLES:
+        raise DeliveryError("unknown role")
+    mapping = read_tab_mapping(folder)
+    mapping[role] = validate_tab_index(index)
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / "chat_tabs.json"
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(mapping, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
+    print(f"Роль {role} -> вкладка #{index} (слева направо в одном окне Firefox)")
+
+
+def switch_firefox_tab(index: int) -> None:
+    """Use Windows keystrokes, not Firefox DOM or Marionette; reject multiple windows."""
+    steps = tab_steps(index)
+    if os.name != "nt":
+        raise DeliveryError("automatic tab switching is Windows-only")
+    from ctypes import wintypes
+    user = ctypes.WinDLL("user32", use_last_error=True)
+    proc = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    user.EnumWindows.argtypes = (proc, wintypes.LPARAM)
+    user.GetClassNameW.argtypes = (wintypes.HWND, wintypes.LPWSTR, ctypes.c_int)
+    user.GetClassNameW.restype = ctypes.c_int
+    user.IsWindowVisible.argtypes = (wintypes.HWND,)
+    user.IsWindowVisible.restype = wintypes.BOOL
+    user.IsIconic.argtypes = (wintypes.HWND,)
+    user.IsIconic.restype = wintypes.BOOL
+    user.ShowWindow.argtypes = (wintypes.HWND, ctypes.c_int)
+    user.SetForegroundWindow.argtypes = (wintypes.HWND,)
+    user.SetForegroundWindow.restype = wintypes.BOOL
+    user.GetForegroundWindow.restype = wintypes.HWND
+    windows = []
+
+    @proc
+    def visit(hwnd, unused):
+        buf = ctypes.create_unicode_buffer(128)
+        user.GetClassNameW(hwnd, buf, len(buf))
+        if buf.value == "MozillaWindowClass" and user.IsWindowVisible(hwnd):
+            windows.append(hwnd)
+        return True
+
+    if not user.EnumWindows(visit, 0):
+        raise DeliveryError("could not enumerate Firefox windows")
+    if len(windows) != 1:
+        raise DeliveryError(f"expected exactly one visible Firefox window; found {len(windows)}")
+    hwnd = windows[0]
+    if user.IsIconic(hwnd):
+        user.ShowWindow(hwnd, 9)  # SW_RESTORE
+    if not user.SetForegroundWindow(hwnd):
+        raise DeliveryError("Windows refused to activate Firefox; select it manually")
+    time.sleep(0.2)
+    if user.GetForegroundWindow() != hwnd:
+        raise DeliveryError("Firefox is not foreground; no keys sent")
+
+    class KEYBDINPUT(ctypes.Structure):
+        _fields_ = [("wVk", wintypes.WORD), ("wScan", wintypes.WORD),
+                    ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD),
+                    ("dwExtraInfo", ctypes.c_size_t)]
+
+    class KEYINPUT(ctypes.Union):
+        _fields_ = [("ki", KEYBDINPUT)]
+
+    class INPUT(ctypes.Structure):
+        _fields_ = [("type", wintypes.DWORD), ("u", KEYINPUT)]
+
+    user.SendInput.argtypes = (wintypes.UINT, ctypes.POINTER(INPUT), ctypes.c_int)
+    user.SendInput.restype = wintypes.UINT
+    def key_event(key, up=False):
+        return INPUT(1, KEYINPUT(ki=KEYBDINPUT(key, 0, 0x0002 if up else 0, 0, 0)))
+
+    for control, key in steps:
+        sequence = (INPUT * 4)(key_event(control), key_event(key),
+                               key_event(key, True), key_event(control, True))
+        if user.SendInput(4, sequence, ctypes.sizeof(INPUT)) != 4:
+            raise DeliveryError("Windows did not accept simulated tab-selection keys")
+        time.sleep(0.09)
 
 
 def list_inbox(folder: Path) -> list[tuple[str, str, Path]]:
@@ -189,8 +296,9 @@ def pending(folder: Path, state: DeliveryState, role: str | None = None):
 
 
 def prepare(folder: Path, state: DeliveryState, role: str | None, event: str | None,
-            *, dry_run: bool = False, open_chat: bool = True,
-            clipboard=copy_windows_clipboard, opener=webbrowser.open) -> tuple[str, str] | None:
+            *, dry_run: bool = False, open_chat: bool = True, use_tab: bool = False,
+            clipboard=copy_windows_clipboard, opener=webbrowser.open,
+            tab_switcher=switch_firefox_tab) -> tuple[str, str] | None:
     items = pending(folder, state, role)
     if event:
         items = [x for x in items if x[1] == event]
@@ -200,22 +308,37 @@ def prepare(folder: Path, state: DeliveryState, role: str | None, event: str | N
     if event and not role and len(items) != 1:
         raise DeliveryError("ambiguous event_id: also supply --role")
     current_role, event_id, path, message, digest, status = items[0]
-    mapping = read_mapping(folder)
-    if current_role not in mapping:
-        raise DeliveryError(f"no URL configured for role {current_role}; run configure")
-    url = mapping[current_role]
+    if use_tab and not open_chat:
+        raise DeliveryError("use_tab and no_open cannot be combined")
+    if use_tab:
+        mapping = read_tab_mapping(folder)
+        if current_role not in mapping:
+            raise DeliveryError(f"no tab number for role {current_role}; run configure-tab")
+        tab = mapping[current_role]
+        destination = f"Вкладка #{tab} (одного окна Firefox)"
+    else:
+        mapping = read_mapping(folder)
+        if current_role not in mapping:
+            raise DeliveryError(f"no URL configured for role {current_role}; run configure")
+        url = mapping[current_role]
+        destination = f"Чат: {url}"
     print(f"Роль: {current_role} | Событие: {event_id} | Статус: {status}")
-    print(f"Чат: {url}\nФайл: {path}\nДлина: {len(message)} символов")
+    print(f"{destination}\nФайл: {path}\nДлина: {len(message)} символов")
     if dry_run:
         print("ПРОВЕРКА: браузер и буфер обмена не изменены.")
         return current_role, event_id
+    if use_tab:
+        tab_switcher(tab)
     clipboard(message)
-    if open_chat:
+    if open_chat and not use_tab:
         if not opener(url):
             print("Не удалось подтвердить открытие браузера; текст уже в буфере обмена.",
                   file=sys.stderr)
     state.track(current_role, event_id, digest)
-    if open_chat:
+    if use_tab:
+        print("Переключение на существующую вкладку выполнено; ПРОВЕРЬТЕ адрес и роль,")
+        print("затем вручную нажмите Ctrl+V и Enter. Никакого HTML-анализа или отправки не было.")
+    elif open_chat:
         print("Текст скопирован. Проверьте адрес открытого чата, нажмите Ctrl+V и Enter.")
     else:
         print("Текст скопирован. Переключитесь на существующую вкладку нужного чата,")
@@ -241,14 +364,20 @@ def main(argv: list[str] | None = None) -> int:
     c = commands.add_parser("configure", help="save the URL of an existing ChatGPT conversation")
     c.add_argument("--role", required=True, choices=ROLES)
     c.add_argument("--url", required=True)
+    ct = commands.add_parser("configure-tab", help="bind role to physical tab number in Firefox")
+    ct.add_argument("--role", required=True, choices=ROLES)
+    ct.add_argument("--tab", required=True, type=int)
     q = commands.add_parser("status", help="list messages awaiting manual confirmation")
     q.add_argument("--role", choices=ROLES)
     p = commands.add_parser("prepare", help="open chat and copy next message; no sending")
     p.add_argument("--role", choices=ROLES)
     p.add_argument("--event")
     p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--no-open", action="store_true",
-                   help="copy only: do not open a URL or create a browser tab")
+    group = p.add_mutually_exclusive_group()
+    group.add_argument("--no-open", action="store_true",
+                       help="copy only: do not open a URL or create a browser tab")
+    group.add_argument("--use-tab", action="store_true",
+                       help="select existing Firefox tab by configured physical index")
     a = commands.add_parser("confirm", help="mark a pasted-and-sent message as confirmed")
     a.add_argument("--role", required=True, choices=ROLES)
     a.add_argument("--event", required=True)
@@ -256,6 +385,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "configure":
         try:
             configure(args.folder, args.role, args.url)
+            return 0
+        except (DeliveryError, OSError) as exc:
+            parser.error(str(exc))
+    if args.command == "configure-tab":
+        try:
+            configure_tab(args.folder, args.role, args.tab)
             return 0
         except (DeliveryError, OSError) as exc:
             parser.error(str(exc))
@@ -270,7 +405,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.event and not EVENT_ID.fullmatch(args.event):
                 raise DeliveryError("invalid event_id")
             prepare(args.folder, state, args.role, args.event, dry_run=args.dry_run,
-                    open_chat=not args.no_open)
+                    open_chat=not args.no_open, use_tab=args.use_tab)
         elif args.command == "confirm":
             if not EVENT_ID.fullmatch(args.event):
                 raise DeliveryError("invalid event_id")
