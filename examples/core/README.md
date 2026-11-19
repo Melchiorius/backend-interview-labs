@@ -26,6 +26,18 @@ java examples/core/ConversionsDemo.java
 
 Программа заканчивается строкой `CHECK PASSED`. Некомпилируемые фрагменты специально оставлены **закомментированными**, а не включены в программу. Пример также запускается в GitHub Actions.
 
+## Передача аргументов, массивов, varargs
+
+[ParametersDemo.java](ParametersDemo.java) сопровождает [CORE-PARAMS](../../knowledge/01-java-core/parameters.md). Он проверяет передачу примитива и ссылки, изменение объекта и массива, `swap` параметров, `String` и `Integer`, `varargs`, выбор перегрузки по объявленному типу и порядок вычисления аргументов.
+
+**Из корня репозитория (JDK 21):**
+
+```powershell
+java examples/core/ParametersDemo.java
+```
+
+Результат заканчивается строкой `CHECK PASSED`, иначе выбрасывается `AssertionError`. Пример включён в CI.
+
 ## Значения и ссылки
 
 [ValuesAndReferencesDemo.java](ValuesAndReferencesDemo.java) относится к трём статьям:
