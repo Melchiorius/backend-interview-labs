@@ -7,6 +7,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -102,30 +104,62 @@ class LimitedServiceTest {
     void interruptionOfWaitingCallerDoesNotConsumePermit() throws Exception {
         CountDownLatch firstEntered = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
+
         when(gateway.execute()).thenAnswer(invocation -> {
             firstEntered.countDown();
-            if (!release.await(3, TimeUnit.SECONDS)) throw new AssertionError("Blocked gateway");
+            if (!release.await(3, TimeUnit.SECONDS)) {
+                throw new AssertionError("First gateway call was not released");
+            }
             return "ok";
         });
 
         LimitedService service = new LimitedService(1, gateway);
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        AtomicReference<Throwable> waitingFailure = new AtomicReference<>();
+        CountDownLatch waitingStarted = new CountDownLatch(1);
+
+        Thread waiting = new Thread(() -> {
+            waitingStarted.countDown();
+            try {
+                service.call();
+                waitingFailure.set(new AssertionError("Interrupted call unexpectedly succeeded"));
+            } catch (InterruptedException expected) {
+                // Correct: no permit was acquired, so no release is needed.
+            } catch (Throwable unexpected) {
+                waitingFailure.set(unexpected);
+            }
+        }, "semaphore-interrupted-waiter");
+
         try {
             Future<String> first = executor.submit(service::call);
-            assertTrue(firstEntered.await(2, TimeUnit.SECONDS));
-            CountDownLatch secondStarted = new CountDownLatch(1);
-            Future<String> waiting = executor.submit(() -> {
-                secondStarted.countDown();
-                return service.call();
-            });
-            assertTrue(secondStarted.await(2, TimeUnit.SECONDS));
-            waiting.cancel(true); // Interrupt a caller waiting for its permit.
+            assertTrue(firstEntered.await(2, TimeUnit.SECONDS), "First call did not occupy the permit");
+            waiting.start();
+            assertTrue(waitingStarted.await(2, TimeUnit.SECONDS));
+
+            // Wait until the second thread actually blocks inside acquire().
+            // A latch that only signals entry into the lambda would not prove this.
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            while (waiting.getState() != Thread.State.WAITING
+                    && waiting.isAlive() && System.nanoTime() < deadline) {
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
+            }
+            assertEquals(Thread.State.WAITING, waiting.getState(),
+                    "Second call did not block while the permit was held");
+
+            waiting.interrupt();
+            waiting.join(2_000);
+            assertFalse(waiting.isAlive(), "Interrupted waiter failed to terminate");
+            assertNull(waitingFailure.get(), "Interrupted caller did not propagate InterruptedException");
+
+            // Still holding the first permit: a leaked/extra release would let
+            // another gateway.execute() slip through.
+            verify(gateway, times(1)).execute();
+
             release.countDown();
             assertEquals("ok", first.get(3, TimeUnit.SECONDS));
-            assertTrue(waiting.isCancelled());
-            // The second call must never enter gateway while the permit was occupied.
-            verify(gateway, times(1)).execute();
         } finally {
+            waiting.interrupt();
+            waiting.join(2_000);
             release.countDown();
             executor.shutdownNow();
         }
