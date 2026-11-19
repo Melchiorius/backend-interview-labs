@@ -2,15 +2,20 @@
 
 Статус: карта знаний, не маршрут обучения; отсутствие файла статьи/примера обозначает отсутствие реализации, а не отсутствие темы. Базовая Java — 21. Темы могут пересекаться: категории — карта, не строгая последовательность. **Читатель сам выбирает очередность и глубину прохождения.** Для фактического состояния см. [COVERAGE.md](COVERAGE.md).
 
-## 01 — Java Language Fundamentals
-- CORE-TYPES: primitive/reference, assignment, conversions, boxing/unboxing, parameter passing.
-- CORE-OOP: class/interface, inheritance, overriding/overloading, polymorphism, dynamic dispatch.
-- CORE-CONTRACTS: equals/hashCode/compareTo, immutable objects, defensive copies.
-- CORE-GENERICS: generic types, invariant types, PECS/wildcards, erasure, heap pollution.
-- CORE-ERRORS: checked/unchecked, propagation, try-with-resources, suppressed exceptions.
-- CORE-FUNCTIONAL: lambdas, method references, Optional, Stream API, laziness and side effects.
-- CORE-MODERN: records, sealed types, pattern matching, switch expressions.
-- CORE-REFLECTION: annotations, reflection, module access.
+## 01 — Java Core / Language & Standard APIs
+
+Развёрнутый перечень **42 возможных самостоятельных статей**, конкретные примеры, направления углубления и связи с другими разделами: [JAVA_CORE_PLAN.md](JAVA_CORE_PLAN.md). Ниже — **карта групп**, а не список готовых файлов и не обещание создавать ровно 42 Markdown-файла: короткие близкие вопросы можно объяснить внутри одной содержательной статьи.
+
+- **Язык и значения:** `CORE-SYNTAX`, `CORE-TYPES`, `CORE-OPERATORS`, `CORE-CONVERSIONS`, `CORE-PARAMS`, `CORE-CONTROL`.
+- **Объекты и классы:** `CORE-CLASSES`, `CORE-ACCESS`, `CORE-OBJECT`, `CORE-INHERITANCE`, `CORE-INTERFACES`, `CORE-COMPOSITION`, `CORE-NESTED`, `CORE-INIT`.
+- **Строки, массивы и объекты-значения:** `CORE-ARRAYS`, `CORE-STRINGS`, `CORE-BUILDERS`, `CORE-ENUMS`, `CORE-RECORDS`, `CORE-IMMUTABLE`.
+- **Контракты и система типов:** `CORE-EQUALITY`, `CORE-GENERICS`, `CORE-ERASURE`, `CORE-SEALED`, `CORE-PATTERNS`.
+- **Ошибки и ресурсы:** `CORE-EXCEPTIONS`, `CORE-RESOURCES`, `CORE-ASSERT`, `CORE-OPTIONAL`.
+- **Функциональный стиль:** `CORE-FUNCTIONS`, `CORE-STREAMS`, `CORE-STREAM-ADV`.
+- **Стандартные API:** `CORE-NUMBERS`, `CORE-DATETIME`, `CORE-REGEX`, `CORE-UTIL`, `CORE-I18N`.
+- **Метаданные и динамика:** `CORE-ANNOTATIONS`, `CORE-REFLECTION`, `CORE-MODULES`, `CORE-SERIAL`, `CORE-CLASSLOADER`.
+
+Прежние восемь крупных пунктов (`CORE-TYPES`, `CORE-OOP`, `CORE-CONTRACTS`, `CORE-GENERICS`, `CORE-ERRORS`, `CORE-FUNCTIONAL`, `CORE-MODERN`, `CORE-REFLECTION`) были **рубриками**. Старые ID `CORE-OOP`, `CORE-CONTRACTS`, `CORE-ERRORS`, `CORE-FUNCTIONAL`, `CORE-MODERN` больше не назначаются отдельным статьям: их содержание распределено по новым точным ID. `CORE-TYPES`, `CORE-GENERICS` и `CORE-REFLECTION` сохранены. При работе с ранее созданными ссылками учитывать эту миграцию; не создавать пустые файлы-«алиасы».
 
 ## 02 — Collections & Data Structures
 - COL-CONTRACTS: Collection/List/Set/Map/Queue/Deque, invariants and equality.
