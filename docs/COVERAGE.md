@@ -1,6 +1,6 @@
 # Реестр покрытия и реализации курса
 
-**Дата сверки:** 2026-11-19. **База:** опубликованные PR #10–#18; новая статья CORE-CLASSES готовится в отдельном PR. Фактическая проверка Mermaid в IntelliJ подтверждена пользователем, а проверка навигации именно в Obsidian остаётся открытой. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
+**Дата сверки:** 2026-11-19. **База:** опубликованные Java Core материалы через PR #19 и принятый исследовательский план CORE-ACCESS (PR #23); статья CORE-ACCESS — черновик в отдельном PR, не в main. Фактическая проверка Mermaid в IntelliJ подтверждена пользователем, а проверка навигации именно в Obsidian остаётся открытой. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
 
 ## Легенда
 - **Implemented**: файл/код существует в main.
@@ -31,7 +31,7 @@
 ## Тематическое покрытие (каталог в CURRICULUM.md)
 | Раздел | Что есть | Пробелы/расширения | Следующая конкретная единица |
 |---|---|---|---|
-| 01 Java Core | Карта 42 тем принята в PR #11. `CORE-TYPES` переработана по [плану вопросов](plans/CORE-TYPES.md) с новым JDK 21 примером; `CORE-CONVERSIONS` переработана по [собственному плану](plans/CORE-CONVERSIONS.md) с отдельным JDK 21 примером; `CORE-PARAMS` переработана по [плану вопросов](plans/CORE-PARAMS.md) с собственным Java 21 примером; `CORE-CLASSES` добавлена по [исследовательскому плану](plans/CORE-CLASSES.md) с самостоятельным примером и проверкой инвариантов | P0-пробелы исходного аудита адресованы во всех трёх статьях; это не означает абсолютную полноту всех возможных интервью-вопросов. Локальная навигация в Obsidian ещё не проверена; для `CORE-CLASSES` глубокие вопросы порядка инициализации и наследования остаются отдельными темами | [Итог сверки](JAVA_CORE_POST_REVIEW_2026-11-19.md); далее `CORE-ACCESS`: исследовать до написания |
+| 01 Java Core | Карта 42 тем принята в PR #11. `CORE-TYPES` переработана по [плану вопросов](plans/CORE-TYPES.md) с новым JDK 21 примером; `CORE-CONVERSIONS` переработана по [собственному плану](plans/CORE-CONVERSIONS.md) с отдельным JDK 21 примером; `CORE-PARAMS` переработана по [плану вопросов](plans/CORE-PARAMS.md) с собственным Java 21 примером; `CORE-CLASSES` добавлена по [исследовательскому плану](plans/CORE-CLASSES.md) с самостоятельным примером и проверкой инвариантов | P0-пробелы исходного аудита адресованы во всех трёх статьях; это не означает абсолютную полноту всех возможных интервью-вопросов. Локальная навигация в Obsidian ещё не проверена; для `CORE-CLASSES` глубокие вопросы порядка инициализации и наследования остаются отдельными темами | [Итог сверки](JAVA_CORE_POST_REVIEW_2026-11-19.md); `CORE-ACCESS`: G1 утверждён в PR #23; статья и пример объединены для review в PR #29, ожидают редакционного G3 и независимого G4 |
 | 02 Collections | Обсуждались HashMap, ArrayList, ConcurrentHashMap; lab-каркас | статьи, runnable examples, задачи и тесты | COL-HASH |
 | 03 Concurrency | SynchronizedCounter, BoundedBlockingQueue, JUnit; обсуждались JMM/volatile/locks/futures | CountDownLatch, CyclicBarrier, Phaser, RW locks, CAS nuances, ForkJoin, virtual threads, JMM-система | **CON-SEM + EX-CON-SEM-01 implemented in PR #6**, затем CON-JMM |
 | 04 JVM | lab-каркас, обсуждали GC/heap/stack | bytecode, classloading, JIT, профилировка | JVM-MEMORY |
@@ -52,6 +52,12 @@
 | Эталон | SOL-CON-SEM-01 | Reference compiled and tests passed in CI run 44518768253 | Отдельно от student; проверен CI |
 | Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Nested Gradle project; isolated CI command passed; shared .run configs committed but IDE not verified | Одна команда/конфигурация; нет сборки независимых exercises |
 | Интеграционная задача | MERGE-CON-01 | Planned (not required for pilot) | Сопоставление Semaphore/Lock/BlockingQueue/Executor |
+
+## CORE-ACCESS — проверка перед публикацией
+
+- Исследовательская матрица AC-01–AC-20 принята в [плане](plans/CORE-ACCESS.md) после PR #23. [Статья](../knowledge/01-java-core/access.md) и [Java-пример](../examples/core/access/README.md) объединены для проверки в PR #29; до решения 00 и merge их не считать опубликованными в `main`.
+- Авторская матрица coverage-after-draft приведена в PR #27; статус статьи **planned / in review** до решения 00. Пример из Issue #25 проверен ролью 03, но техническая проверка не заменяет независимое содержательное ревью 04.
+- На интегрированном HEAD `af1093a8d508011932031c4afbd4e4f41ddd5581` GitHub Actions run `44609678117` завершился SUCCESS (Java 21 positive, восемь изолированных negative javac, прочие CI-проверки); при последующих изменениях HEAD результат относится только к названному коммиту. Визуальная проверка Obsidian/IntelliJ — **not run**; G3/G4 фиксируются отдельно. Наличие файла в ветке не означает Implemented в `main`.
 
 ## Проверка содержательной полноты
 
