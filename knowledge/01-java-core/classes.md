@@ -335,7 +335,7 @@ java examples/core/ClassesAndObjectsDemo.java
 
 Уже реализованы: [CORE-TYPES](types.md), [CORE-CONVERSIONS](conversions.md), [CORE-PARAMS](parameters.md).
 
-**Ещё не написаны** (поэтому пока без ссылок): `CORE-ACCESS` (модификаторы доступа), `CORE-INIT` (порядок инициализации), `CORE-INHERITANCE` (наследование и переопределение), `CORE-INTERFACES`, `CORE-OBJECT`, `CORE-EQUALITY`, `CORE-IMMUTABLE`, `CORE-COMPOSITION`, `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
+**Модификаторы доступа и инкапсуляция:** [CORE-ACCESS](access.md). **Ещё не написаны** (поэтому пока без ссылок): `CORE-INIT` (порядок инициализации), `CORE-INHERITANCE` (наследование и переопределение), `CORE-INTERFACES`, `CORE-OBJECT`, `CORE-EQUALITY`, `CORE-IMMUTABLE`, `CORE-COMPOSITION`, `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
 
 ## Первоисточники
 
