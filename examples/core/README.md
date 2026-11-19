@@ -14,6 +14,18 @@ java examples/core/TypesAndVariablesDemo.java
 
 Пример заканчивается строкой `CHECK PASSED`, иначе выбрасывает `AssertionError`. Запуск этого примера отдельно проверяется в GitHub Actions.
 
+## Преобразования, упаковка, перегрузки
+
+[ConversionsDemo.java](ConversionsDemo.java) дополняет [CORE-CONVERSIONS](../../knowledge/01-java-core/conversions.md): проверяет константное сужение, составное присваивание, кэш `Integer`, разницу `Integer == Integer` и `Integer == int`, `null` при распаковке, выбор перегрузки, переполнение и String Pool.
+
+Из корня репозитория с JDK 21:
+
+```powershell
+java examples/core/ConversionsDemo.java
+```
+
+Программа заканчивается строкой `CHECK PASSED`. Некомпилируемые фрагменты специально оставлены **закомментированными**, а не включены в программу. Пример также запускается в GitHub Actions.
+
 ## Значения и ссылки
 
 [ValuesAndReferencesDemo.java](ValuesAndReferencesDemo.java) относится к трём статьям:
