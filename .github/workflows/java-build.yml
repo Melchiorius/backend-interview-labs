@@ -33,3 +33,4 @@ jobs:
           java examples/core/TypesAndVariablesDemo.java
           java examples/core/ConversionsDemo.java
           java examples/core/ParametersDemo.java
+          java examples/core/ClassesAndObjectsDemo.java
