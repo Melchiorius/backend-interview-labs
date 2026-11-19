@@ -4,13 +4,13 @@
 
 | Роль | Инструкция | Первая задача |
 |---|---|---|
-| 00 — Project Coordinator | [00-project-coordinator.md](00-project-coordinator.md) | Организационный PR #21, затем Issue по первому содержательному этапу |
-| 01 — Research & Coverage | [01-research-coverage.md](01-research-coverage.md) | Проверить scope следующей темы и создать P0/P1/P2-план по Issue 00 |
-| 02 — Knowledge Author | [02-knowledge-author.md](02-knowledge-author.md) | Ознакомиться со стандартом и ждать принятого исследовательского плана для конкретной статьи |
-| 03 — Examples & Exercises Engineer | [03-examples-exercises.md](03-examples-exercises.md) | Сверить пилот Semaphore и согласовать с 02 целесообразность примера |
-| 04 — Independent Reviewer | [04-independent-reviewer.md](04-independent-reviewer.md) | Независимо проверить организационный PR #21 по актуальному HEAD SHA |
-| 05 — Knowledge Editor | [05-knowledge-editor.md](05-knowledge-editor.md) | Проверить действующие правила редакции, после появления черновика — текст и навигацию |
-| 06 — Research Operations | [06-research-operations.md](06-research-operations.md) | Закрепить организационный каркас и проверить интеграцию после merge |
+| 00 — Project Coordinator | [00-project-coordinator.md](00-project-coordinator.md) | Сверить открытые Issues/PR и распределить текущие содержательные задачи |
+| 01 — Research & Coverage | [01-research-coverage.md](01-research-coverage.md) | По назначению 00 подготовить исследовательский план для новой темы |
+| 02 — Knowledge Author | [02-knowledge-author.md](02-knowledge-author.md) | Писать следующую статью по принятому плану G1 |
+| 03 — Examples & Exercises Engineer | [03-examples-exercises.md](03-examples-exercises.md) | Согласовать с 02 необходимость примера по назначенной теме |
+| 04 — Independent Reviewer | [04-independent-reviewer.md](04-independent-reviewer.md) | Независимо проверить назначенный PR по точному HEAD SHA |
+| 05 — Knowledge Editor | [05-knowledge-editor.md](05-knowledge-editor.md) | Редактировать текущий подготовленный черновик, проверить навигацию |
+| 06 — Research Operations | [06-research-operations.md](06-research-operations.md) | Сверять G6 и поддерживать пилот диспетчера Issue #34 |
 
 ## Актуальная версия и автоматизация
 
