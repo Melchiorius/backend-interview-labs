@@ -6,7 +6,7 @@
 
 Ориентир: определения, базовая модель, контракты API, основные ошибки и типичные применения. Приоритет — то, что встречается в обычной разработке и помогает понимать остальной материал.
 
-- Java: `CORE-TYPES`, `CORE-OOP`, `CORE-CONTRACTS`, `CORE-GENERICS`, `CORE-ERRORS`.
+- Java Core: `CORE-TYPES`, `CORE-CONVERSIONS`, `CORE-PARAMS`, `CORE-CLASSES`, `CORE-ACCESS`, `CORE-INHERITANCE`, `CORE-INTERFACES`, `CORE-EQUALITY`, `CORE-EXCEPTIONS`, `CORE-GENERICS`. Подробные статьи и «хвосты» — в [карте Java Core](JAVA_CORE_PLAN.md).
 - Коллекции: `COL-CONTRACTS`, `COL-SEQUENTIAL`, `COL-HASH`, `COL-ITER`.
 - Concurrency: `CON-THREAD`, `CON-RACE`, базовая `CON-JMM`, `CON-MONITOR`, `CON-VOLATILE`, `CON-SEM`, `CON-LATCH`, `CON-QUEUE`, `CON-EXEC`.
 - JVM: `JVM-MEMORY`, базовая `JVM-GC`.
@@ -17,11 +17,11 @@
 
 ## Второй проход — инженерные взаимосвязи
 
-Уточнять ограничения, варианты реализации, взаимодействие механизмов и диагностику. Например: `CON-LOCK`, `CON-BARRIER`, `CON-ATOM`, `CON-FUTURE`, `COL-CONCURRENT`, `DB-INDEX`, `DB-JDBC`, `SPR-AOP`, `SPR-TX`, `DIST-FAIL`, `TEST-CONCURRENT`. При желании разбирать интеграционные Java-примеры и упражнения, объединяющие несколько тем.
+Уточнять ограничения, варианты реализации, взаимодействие механизмов и диагностику. Для Java Core здесь уместны `CORE-INIT`, `CORE-ERASURE`, `CORE-IMMUTABLE`, `CORE-STREAM-ADV`, `CORE-PATTERNS`; для остальных областей — `CON-LOCK`, `CON-BARRIER`, `CON-ATOM`, `CON-FUTURE`, `COL-CONCURRENT`, `DB-INDEX`, `DB-JDBC`, `SPR-AOP`, `SPR-TX`, `DIST-FAIL`, `TEST-CONCURRENT`. При желании разбирать интеграционные Java-примеры и упражнения, объединяющие несколько тем.
 
 ## Третий проход — факультативные углубления
 
-Специфические детали, внутреннее устройство и сложные компромиссы, если они нужны для текущей работы. Примеры: оптимизации `JVM-JIT`, тонкости `CON-RWLOCK`, `CON-FORKJOIN`, `CON-PARK`, анализ `JVM-DIAG`, распределённая согласованность `DIST-CONS`, масштабирование `DIST-SCALE`. Само наличие названия здесь **не делает всю тему Senior**; основное знание может относиться к более раннему проходу.
+Специфические детали, внутреннее устройство и сложные компромиссы, если они нужны для текущей работы. Примеры для Java Core: `CORE-MODULES`, ограничения `CORE-REFLECTION`, риски `CORE-SERIAL`. За пределами Java Core: оптимизации `JVM-JIT`, тонкости `CON-RWLOCK`, `CON-FORKJOIN`, `CON-PARK`, анализ `JVM-DIAG`, распределённая согласованность `DIST-CONS`, масштабирование `DIST-SCALE`. Само наличие названия здесь **не делает всю тему Senior**; основное знание может относиться к более раннему проходу.
 
 ## Как использовать
 
