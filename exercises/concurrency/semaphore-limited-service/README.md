@@ -17,7 +17,7 @@
 ## Где код
 
 - [Заготовка](src/main/java/edu/labs/semaphore/LimitedService.java)
-- [Контракт внешней зависимости](src/main/java/edu/labs/semaphore/Gateway.java)
+- [Контракт внешней зависимости](src/common/java/edu/labs/semaphore/Gateway.java)
 - [JUnit/Mockito тесты](src/test/java/edu/labs/semaphore/LimitedServiceTest.java)
 - [Эталон для самостоятельного сравнения](src/reference/java/edu/labs/semaphore/LimitedService.java)
 
