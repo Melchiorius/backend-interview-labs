@@ -24,7 +24,7 @@
 | Mockito | Planned, not yet configured | Подключить в тестовых зависимостях во время пилота |
 | knowledge/ Obsidian vault | Planned | Создать карту, первые статьи, проверить ссылки |
 | examples/, exercises/, solutions/ | Planned | Пилот EX-CON-SEM-01; выбрать размещение эталонов |
-| .run/ shared IntelliJ configs | Planned | Проверить переносимость на чистом clone |
+| .run/ shared IntelliJ configs | Implemented for pilot in PR #6; IDE unverified | Проверить переносимость на чистом clone |
 | Изолированные команды запуска exercise + student/reference | Planned | Проверить Gradle dependency isolation, CI |
 | CI matrix/sharding/distributed test execution | Planned | После локального пилота; не утверждать что есть |
 
@@ -50,7 +50,7 @@
 | Самостоятельная задача | EX-CON-SEM-01 | Implemented in pilot branch | README, заготовка и реалистичные ограничения |
 | JUnit + Mockito | TEST-CON-SEM | JUnit/Mockito tests executed successfully against reference in CI run 44518768253 | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
 | Эталон | SOL-CON-SEM-01 | Reference compiled and tests passed in CI run 44518768253 | Отдельно от student; проверен CI |
-| Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Nested Gradle project; isolated CI command passed; local IDE not verified | Одна команда/конфигурация; нет сборки независимых exercises |
+| Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Nested Gradle project; isolated CI command passed; shared .run configs committed but IDE not verified | Одна команда/конфигурация; нет сборки независимых exercises |
 | Интеграционная задача | MERGE-CON-01 | Planned (not required for pilot) | Сопоставление Semaphore/Lock/BlockingQueue/Executor |
 
 ## Как избегать ложного статуса
