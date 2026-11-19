@@ -21,6 +21,7 @@ class ManualTests(unittest.TestCase):
         self.state = m.DeliveryState(self.folder)
         self.messages = []
         self.opened = []
+        self.switched = []
 
     def tearDown(self):
         self.state.close()
@@ -36,10 +37,62 @@ class ManualTests(unittest.TestCase):
         m.configure(self.folder, "02", URL_02)
         m.configure(self.folder, "06", URL_06)
 
-    def prepare(self, role=None, event=None, dry_run=False, open_chat=True):
+    def prepare(self, role=None, event=None, dry_run=False, open_chat=True, use_tab=False):
         return m.prepare(self.folder, self.state, role, event, dry_run=dry_run,
-                         open_chat=open_chat, clipboard=self.messages.append,
-                         opener=lambda url: self.opened.append(url) or True)
+                         open_chat=open_chat, use_tab=use_tab,
+                         clipboard=self.messages.append,
+                         opener=lambda url: self.opened.append(url) or True,
+                         tab_switcher=self.switched.append)
+
+    def test_tab_shortcut_sequence_includes_ninth_and_eleventh(self):
+        ctrl = 0x11
+        pgdn = 0x22
+        self.assertEqual(m.tab_steps(1), [(ctrl, ord("1"))])
+        self.assertEqual(m.tab_steps(8), [(ctrl, ord("8"))])
+        self.assertEqual(m.tab_steps(9), [(ctrl, ord("1"))] + [(ctrl, pgdn)] * 8)
+        self.assertEqual(len(m.tab_steps(11)), 11)
+
+    def test_invalid_tab_number_or_mapping_rejected(self):
+        for value in (0, -1, 65, True, "2"):
+            with self.subTest(value=value):
+                with self.assertRaises(m.DeliveryError):
+                    m.validate_tab_index(value)
+        (self.folder / "chat_tabs.json").write_text('{"02": true}', encoding="utf-8")
+        with self.assertRaises(m.DeliveryError):
+            m.read_tab_mapping(self.folder)
+
+    def test_tab_mapping_persists_independent_of_urls(self):
+        m.configure_tab(self.folder, "06", 11)
+        self.assertEqual(m.read_tab_mapping(self.folder), {"06": 11})
+        self.assertEqual(m.read_mapping(self.folder), {})
+
+    def test_tab_delivery_switches_without_opening_a_url(self):
+        m.configure_tab(self.folder, "06", 11)
+        self.make_inbox("06", "tab-demo-0001", "Сообщение для 06")
+        self.assertEqual(self.prepare("06", use_tab=True), ("06", "tab-demo-0001"))
+        self.assertEqual(self.switched, [11])
+        self.assertEqual(self.opened, [])
+        self.assertEqual(self.messages, ["Сообщение для 06"])
+        self.assertEqual(self.state.get("06", "tab-demo-0001")[1], "prepared")
+
+    def test_tab_dry_run_neither_switches_nor_copies(self):
+        m.configure_tab(self.folder, "06", 7)
+        self.make_inbox("06", "tab-demo-0002")
+        self.assertEqual(self.prepare("06", use_tab=True, dry_run=True), ("06", "tab-demo-0002"))
+        self.assertEqual(self.switched, [])
+        self.assertEqual(self.messages, [])
+        self.assertIsNone(self.state.get("06", "tab-demo-0002"))
+
+    def test_tab_switch_error_keeps_message_pending(self):
+        m.configure_tab(self.folder, "06", 9)
+        self.make_inbox("06", "tab-demo-0003")
+        with self.assertRaises(m.DeliveryError):
+            m.prepare(self.folder, self.state, "06", None, use_tab=True,
+                      clipboard=self.messages.append,
+                      tab_switcher=lambda _: (_ for _ in ()).throw(m.DeliveryError("not foreground")))
+        self.assertFalse(self.messages)
+        self.assertIsNone(self.state.get("06", "tab-demo-0003"))
+        self.assertEqual(len(m.pending(self.folder, self.state)), 1)
 
     def test_chat_url_validation(self):
         self.assertEqual(m.validate_chat_url(URL_06), URL_06)
