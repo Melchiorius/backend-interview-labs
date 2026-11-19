@@ -44,18 +44,23 @@ flowchart TB
 ## Как это записать на Java
 
 ```java
-Semaphore semaphore = new Semaphore(3); // Общий семафор для всех потоков
+import java.util.concurrent.Semaphore;
 
-// Этот код выполняет каждый поток, обращающийся к сервису.
-semaphore.acquire();                  // Ждём, пока появится разрешение
-try {
-    callExternalService();            // Начинаем работу только после acquire()
-} finally {
-    semaphore.release();              // Возвращаем разрешение после работы
+class LimitedService {
+    private final Semaphore semaphore = new Semaphore(3);
+
+    void execute(Runnable task) throws InterruptedException {
+        semaphore.acquire();           // Поток ждёт, если все 3 места заняты
+        try {
+            task.run();                // Выполняем переданную работу
+        } finally {
+            semaphore.release();       // Освобождаем одно место
+        }
+    }
 }
 ```
 
-**Ключевое условие:** все потоки должны использовать **один и тот же экземпляр** `Semaphore`. Если каждый создаст собственный `new Semaphore(3)`, общего ограничения не будет.
+`task` — переданная методу работа; `task.run()` выполняет её **тот же поток**, который вызвал `execute()`. Объект `LimitedService` должен быть **общим для всех потоков**: тогда они используют один семафор, созданный в поле `semaphore`. Если каждый поток создаст отдельный `LimitedService`, общего ограничения не получится.
 
 Почему `release()` расположен в `finally`? Если обращение к сервису завершится исключением, разрешение всё равно нужно вернуть. Иначе со временем все разрешения могут оказаться заняты навсегда.
 
