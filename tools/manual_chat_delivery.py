@@ -189,8 +189,8 @@ def pending(folder: Path, state: DeliveryState, role: str | None = None):
 
 
 def prepare(folder: Path, state: DeliveryState, role: str | None, event: str | None,
-            *, dry_run: bool = False, clipboard=copy_windows_clipboard,
-            opener=webbrowser.open) -> tuple[str, str] | None:
+            *, dry_run: bool = False, open_chat: bool = True,
+            clipboard=copy_windows_clipboard, opener=webbrowser.open) -> tuple[str, str] | None:
     items = pending(folder, state, role)
     if event:
         items = [x for x in items if x[1] == event]
@@ -210,11 +210,16 @@ def prepare(folder: Path, state: DeliveryState, role: str | None, event: str | N
         print("ПРОВЕРКА: браузер и буфер обмена не изменены.")
         return current_role, event_id
     clipboard(message)
-    if not opener(url):
-        print("Не удалось подтвердить открытие браузера; текст уже в буфере обмена.",
-              file=sys.stderr)
+    if open_chat:
+        if not opener(url):
+            print("Не удалось подтвердить открытие браузера; текст уже в буфере обмена.",
+                  file=sys.stderr)
     state.track(current_role, event_id, digest)
-    print("Текст скопирован. Перейдите в открытый чат, нажмите Ctrl+V и Enter.")
+    if open_chat:
+        print("Текст скопирован. Проверьте адрес открытого чата, нажмите Ctrl+V и Enter.")
+    else:
+        print("Текст скопирован. Переключитесь на существующую вкладку нужного чата,")
+        print("проверьте её адрес, нажмите Ctrl+V и Enter. Новых вкладок скрипт не создавал.")
     print(f"ПОСЛЕ отправки выполните: py tools/manual_chat_delivery.py confirm --role {current_role} --event {event_id}")
     print("Если отправка не состоялась, НЕ подтверждайте: поручение останется в очереди.")
     return current_role, event_id
@@ -242,6 +247,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--role", choices=ROLES)
     p.add_argument("--event")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--no-open", action="store_true",
+                   help="copy only: do not open a URL or create a browser tab")
     a = commands.add_parser("confirm", help="mark a pasted-and-sent message as confirmed")
     a.add_argument("--role", required=True, choices=ROLES)
     a.add_argument("--event", required=True)
@@ -262,7 +269,8 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "prepare":
             if args.event and not EVENT_ID.fullmatch(args.event):
                 raise DeliveryError("invalid event_id")
-            prepare(args.folder, state, args.role, args.event, dry_run=args.dry_run)
+            prepare(args.folder, state, args.role, args.event, dry_run=args.dry_run,
+                    open_chat=not args.no_open)
         elif args.command == "confirm":
             if not EVENT_ID.fullmatch(args.event):
                 raise DeliveryError("invalid event_id")
