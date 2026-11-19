@@ -1,6 +1,6 @@
 # Реестр покрытия и реализации курса
 
-**Дата сверки:** 2026-11-19. **База:** состояние после PR #6; факт CI проверки указан отдельно от неподтверждённого локального UX. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
+**Дата сверки:** 2026-11-19. **База:** `main` после PR #9; последующие правки читаемости Mermaid готовятся отдельно. Фактическая проверка в IntelliJ подтверждена пользователем, а проверка именно в Obsidian остаётся открытой. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
 
 ## Легенда
 - **Implemented**: файл/код существует в main.
@@ -20,12 +20,12 @@
 | JUnit Jupiter 5.11.4 и тесты двух классов | Implemented; ранее четыре теста успешно прошли в CI и CLI | Расширить тестирование и учебные объяснения |
 | Gradle Wrapper 8.8 | Implemented (после PR #3) | Проверять доступность на чистом clone |
 | Gradle CLI и IntelliJ Sync после переустановки IDE | Verified пользователем в ноябре 2026 | Не смешивать с проверкой будущих упражнений |
-| Maven migration PR #4 | **OPEN, not merged** | Не включать в курс; судьба PR отдельно решается владельцем |
+| Maven migration PR #4 | **Closed without merge** | Gradle остаётся текущей системой сборки |
 | Mockito | Included in standalone pilot exercise (PR #6); not a root-wide dependency | Explore broader tests when suitable |
-| knowledge/ Obsidian vault | Pilot Semaphore Markdown article exists in PR #6; Obsidian UI not verified | Check local navigation in Obsidian |
+| knowledge/ Obsidian vault | Статья Semaphore в main; Mermaid Preview **проверен пользователем в IntelliJ** | Отдельно проверить локальную навигацию в Obsidian |
 | examples/, exercises/, solutions/ | `exercises/` exists for Semaphore pilot; standalone `examples/` and `solutions/` not created | Reference kept in `src/reference/java` inside exercise |
-| .run/ shared IntelliJ configs | Implemented for pilot in PR #6; IDE unverified | Проверить переносимость на чистом clone |
-| Изолированные команды запуска exercise + student/reference | Reference Gradle command verified in GitHub Actions; student run pending local check | Gradle source roots fixed in PR #7 with composite includeBuild + permanent reference source set; verify IntelliJ reload locally |
+| .run/ shared IntelliJ configs | Файлы созданы в PR #6; source roots исправлены в PR #7, пользователь подтвердил работу IDE с исходниками | Отдельно проверить запуск обеих конфигураций .run |
+| Изолированные команды запуска exercise + student/reference | Эталон подтверждён в CI, `includeBuild` и три source set (`common`, `main`, `reference`) приняты в PR #7 | Студенческую команду проверить локально |
 | CI matrix/sharding/distributed test execution | Planned | После локального пилота; не утверждать что есть |
 
 ## Тематическое покрытие (каталог в CURRICULUM.md)
@@ -45,7 +45,7 @@
 ## Пилотная вертикаль — Semaphore (PR #6)
 | Артефакт | ID | Статус | Критерий завершения |
 |---|---|---|---|
-| Статья Semaphore | CON-SEM | Существует в main; ясность русских объяснений и схема переработаны в отдельном PR, визуальная проверка Obsidian ещё нужна | Термины, семантика, примеры, ловушки, источники и ссылки |
+| Статья Semaphore | CON-SEM | Реализована в main; текст и цветовая схема обновлены в PR #8/#9; компактный рендер проверен пользователем в IntelliJ, локальный Obsidian ещё не проверен | Термины, семантика, примеры, ловушки, источники и ссылки |
 | Готовый пример | EXAMPLE-CON-SEM | Reference implementation in exercise; GitHub Actions reference job SUCCESS (2026-11-19, run 44518768253) | Код компилируется, запущен, объяснён |
 | Самостоятельная задача | EX-CON-SEM-01 | Exercise committed in PR #6 | README, заготовка и реалистичные ограничения |
 | JUnit + Mockito | TEST-CON-SEM | JUnit/Mockito tests executed successfully against reference in CI runs 44518768253 and 44519250051 | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
