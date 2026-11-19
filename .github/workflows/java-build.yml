@@ -31,3 +31,4 @@ jobs:
         run: |
           java examples/core/ValuesAndReferencesDemo.java
           java examples/core/TypesAndVariablesDemo.java
+          java examples/core/ConversionsDemo.java
