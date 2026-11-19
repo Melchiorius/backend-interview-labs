@@ -1,6 +1,6 @@
 # Реестр покрытия и реализации курса
 
-**Дата сверки:** 2026-11-19. **База:** `main` на момент создания ветки `docs/course-architecture-and-coverage`. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
+**Дата сверки:** 2026-11-19. **База:** `main` после объединения PR #5; пилот ведётся в отдельном PR и ещё не входит в main. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
 
 ## Легенда
 - **Implemented**: файл/код существует в main.
@@ -42,16 +42,16 @@
 | 09 Testing & Tooling | JUnit тесты, Gradle и GitHub CI ранее успешно работали | Mockito, тест-дизайн, concurrency-tests, отдельные IDE run configs | TEST-JUNIT + TEST-MOCKITO |
 | 10 Algorithms & Design | Есть roadmap System Design | системная декомпозиция, задачи, архитектурные кейсы | DESIGN-REQ |
 
-## Пилотная вертикаль (пока НЕ реализована)
+## Пилотная вертикаль (в PR #6, ещё не в main)
 | Артефакт | ID | Статус | Критерий завершения |
 |---|---|---|---|
-| Статья Semaphore | CON-SEM | Planned | Термины, семантика, примеры, ловушки, источники и ссылки |
-| Готовый пример | EXAMPLE-CON-SEM | Planned | Код компилируется, запущен, объяснён |
-| Самостоятельная задача | EX-CON-SEM-01 | Planned | README, заготовка и реалистичные ограничения |
-| JUnit + Mockito | TEST-CON-SEM | Planned | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
-| Эталон | SOL-CON-SEM-01 | Planned | Отдельно от student; проверен CI |
-| Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Planned | Одна команда/конфигурация; нет сборки независимых exercises |
-| Интеграционная задача | MERGE-CON-01 | Planned | Сопоставление Semaphore/Lock/BlockingQueue/Executor |
+| Статья Semaphore | CON-SEM | Implemented in pilot branch; Obsidian not manually verified | Термины, семантика, примеры, ловушки, источники и ссылки |
+| Готовый пример | EXAMPLE-CON-SEM | Reference implementation in exercise; run pending CI | Код компилируется, запущен, объяснён |
+| Самостоятельная задача | EX-CON-SEM-01 | Implemented in pilot branch | README, заготовка и реалистичные ограничения |
+| JUnit + Mockito | TEST-CON-SEM | Test sources committed; execution pending | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
+| Эталон | SOL-CON-SEM-01 | Committed; CI pending | Отдельно от student; проверен CI |
+| Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Standalone nested Gradle project; CLI/IDE verification pending | Одна команда/конфигурация; нет сборки независимых exercises |
+| Интеграционная задача | MERGE-CON-01 | Planned (not required for pilot) | Сопоставление Semaphore/Lock/BlockingQueue/Executor |
 
 ## Как избегать ложного статуса
 - `CURRICULUM.md` отвечает на вопрос **«какие знания должны быть доступны в принципе?»**; этот файл — **«что уже существует и что стоит дополнить?»**. Полезная статья может быть опубликована до создания всех связанных тем. При появлении новых статей возвращаться к старым и добавлять ссылки; статус связей обновлять по факту.
