@@ -12,14 +12,28 @@ java {
     }
 }
 
-// Both source sets exist regardless of Gradle properties; IntelliJ can
-// index the student solution and the reference implementation together.
+// Each directory belongs to exactly one source set. IntelliJ cannot reliably
+// model a source directory shared between main and reference.
 sourceSets {
-    main {
-        java.srcDirs("src/main/java", "src/common/java")
+    val common by creating {
+        java.srcDir("src/common/java")
     }
+
+    main {
+        java.setSrcDirs(listOf("src/main/java"))
+        compileClasspath += common.output
+        runtimeClasspath += common.output
+    }
+
     create("reference") {
-        java.srcDirs("src/reference/java", "src/common/java")
+        java.srcDir("src/reference/java")
+        compileClasspath += common.output
+        runtimeClasspath += common.output
+    }
+
+    test {
+        compileClasspath += common.output
+        runtimeClasspath += common.output
     }
 }
 
@@ -32,12 +46,14 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 
-    // Preserve the existing documented -Preference=true command.
-    // Compile the tests against the student-facing public contract,
-    // but run those same tests against the separately compiled reference.
+    // Select the reference at test runtime without replacing the source roots.
     if (providers.gradleProperty("reference").map(String::toBoolean).getOrElse(false)) {
         val reference = sourceSets["reference"]
+        val common = sourceSets["common"]
         dependsOn(tasks.named(reference.classesTaskName))
-        classpath = sourceSets["test"].output + reference.output + configurations["testRuntimeClasspath"]
+        classpath = sourceSets["test"].output +
+            reference.output +
+            common.output +
+            configurations["testRuntimeClasspath"]
     }
 }
