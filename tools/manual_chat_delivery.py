@@ -102,6 +102,38 @@ def configure_tab(folder: Path, role: str, index: int) -> None:
     print(f"Роль {role} -> вкладка #{index} (слева направо в одном окне Firefox)")
 
 
+def windows_input_layout(pointer_type=ctypes.c_size_t):
+    """Mirror Win32 INPUT union, including its largest (mouse) member.
+
+    Fixed-width Win32 integers make this layout testable even on non-Windows
+    hosts. A 64-bit INPUT is 40 bytes, a 32-bit INPUT is 28 bytes.
+    """
+    DWORD = ctypes.c_uint32
+    LONG = ctypes.c_int32
+    WORD = ctypes.c_uint16
+
+    class MOUSEINPUT(ctypes.Structure):
+        _fields_ = [("dx", LONG), ("dy", LONG), ("mouseData", DWORD),
+                    ("dwFlags", DWORD), ("time", DWORD),
+                    ("dwExtraInfo", pointer_type)]
+
+    class KEYBDINPUT(ctypes.Structure):
+        _fields_ = [("wVk", WORD), ("wScan", WORD),
+                    ("dwFlags", DWORD), ("time", DWORD),
+                    ("dwExtraInfo", pointer_type)]
+
+    class HARDWAREINPUT(ctypes.Structure):
+        _fields_ = [("uMsg", DWORD), ("wParamL", WORD), ("wParamH", WORD)]
+
+    class INPUTUNION(ctypes.Union):
+        _fields_ = [("mi", MOUSEINPUT), ("ki", KEYBDINPUT), ("hi", HARDWAREINPUT)]
+
+    class INPUT(ctypes.Structure):
+        _fields_ = [("type", DWORD), ("u", INPUTUNION)]
+
+    return INPUT, INPUTUNION, KEYBDINPUT
+
+
 def switch_firefox_tab(index: int) -> None:
     """Use Windows keystrokes, not Firefox DOM or Marionette; reject multiple windows."""
     steps = tab_steps(index)
@@ -144,27 +176,28 @@ def switch_firefox_tab(index: int) -> None:
     if user.GetForegroundWindow() != hwnd:
         raise DeliveryError("Firefox is not foreground; no keys sent")
 
-    class KEYBDINPUT(ctypes.Structure):
-        _fields_ = [("wVk", wintypes.WORD), ("wScan", wintypes.WORD),
-                    ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD),
-                    ("dwExtraInfo", ctypes.c_size_t)]
+    INPUT, INPUTUNION, KEYBDINPUT = windows_input_layout()
+    expected_size = 40 if ctypes.sizeof(ctypes.c_void_p) == 8 else 28
+    if ctypes.sizeof(INPUT) != expected_size:
+        raise DeliveryError(f"incorrect Windows INPUT layout: {ctypes.sizeof(INPUT)} bytes")
+    user.SendInput.argtypes = (ctypes.c_uint32, ctypes.POINTER(INPUT), ctypes.c_int)
+    user.SendInput.restype = ctypes.c_uint32
 
-    class KEYINPUT(ctypes.Union):
-        _fields_ = [("ki", KEYBDINPUT)]
-
-    class INPUT(ctypes.Structure):
-        _fields_ = [("type", wintypes.DWORD), ("u", KEYINPUT)]
-
-    user.SendInput.argtypes = (wintypes.UINT, ctypes.POINTER(INPUT), ctypes.c_int)
-    user.SendInput.restype = wintypes.UINT
     def key_event(key, up=False):
-        return INPUT(1, KEYINPUT(ki=KEYBDINPUT(key, 0, 0x0002 if up else 0, 0, 0)))
+        return INPUT(1, INPUTUNION(ki=KEYBDINPUT(key, 0, 0x0002 if up else 0, 0, 0)))
 
     for control, key in steps:
         sequence = (INPUT * 4)(key_event(control), key_event(key),
                                key_event(key, True), key_event(control, True))
-        if user.SendInput(4, sequence, ctypes.sizeof(INPUT)) != 4:
-            raise DeliveryError("Windows did not accept simulated tab-selection keys")
+        ctypes.set_last_error(0)
+        inserted = user.SendInput(4, sequence, ctypes.sizeof(INPUT))
+        if inserted != 4:
+            code = ctypes.get_last_error()
+            explanation = ctypes.FormatError(code).strip() if code else (
+                "no Win32 error code; possibly blocked by Windows input permissions")
+            raise DeliveryError(
+                f"SendInput inserted {inserted}/4 keys; WinError {code}: {explanation}; "
+                f"sizeof(INPUT)={ctypes.sizeof(INPUT)}")
         time.sleep(0.09)
 
 
