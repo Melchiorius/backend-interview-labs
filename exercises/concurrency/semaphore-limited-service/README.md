@@ -1,97 +1,65 @@
 # EX-CON-SEM-01 — ограниченный внешний сервис
 
-**Практика к статье:** [Semaphore](../../../knowledge/03-concurrency/semaphore.md). **Рекомендуемая глубина:** Middle / Middle+.
+**Теория:** [Semaphore](../../../knowledge/03-concurrency/semaphore.md) · **уровень:** Middle, нюансы Middle+.
 
-## Задача
+## Условие
 
-Есть интерфейс `Gateway`: вызов `execute()` выполняет одну внешнюю операцию и может завершиться исключением.
+Интерфейс `Gateway` описывает внешний вызов `execute()`, который возвращает строку и может завершиться исключением.
 
-Реализуйте `LimitedService`, у которого:
-- конструктор `LimitedService(int maxConcurrent, Gateway gateway)` отвергает `maxConcurrent <= 0` (`IllegalArgumentException`) и `null` gateway (`NullPointerException`);
-- `String call() throws Exception` делегирует `gateway.execute()`, но одновременно допускает **не более `maxConcurrent`** вызовов;
-- при исключении gateway разрешение возвращается;
-- если поток прерывается во время ожидания разрешения, вызов завершается `InterruptedException` без выполнения gateway и без лишнего `release()`.
+Реализуйте класс `LimitedService`:
 
-**Что изучаем дополнительно:** `InterruptedException` — способ сообщить об отмене ожидания; `finally` выполняется при нормальном и исключительном выходе; JUnit проверяет утверждения `assertEquals`, `assertThrows`, а Mockito предоставляет тестовый `Gateway`. В тестах применяются `CountDownLatch` (счётчик событий с ожиданием), `ExecutorService` (пул запуска задач) и таймауты, чтобы проверять одновременные вызовы. Более подробные статьи о них будут добавлены позднее.
+- `LimitedService(int maxConcurrent, Gateway gateway)` отклоняет `maxConcurrent <= 0` через `IllegalArgumentException` и `gateway == null` через `NullPointerException`.
+- `String call() throws Exception` вызывает `gateway.execute()`, но **одновременно внутри `execute()` может находиться не более `maxConcurrent` вызовов**.
+- При любом завершении `execute()` — нормальном или исключительном — полученное разрешение возвращается.
+- Если поток прерван во время ожидания разрешения, `call()` завершается `InterruptedException`, не выполняя `execute()` и не возвращая разрешения, которого не получил.
 
-## Где код
+**Нужные понятия:** `Semaphore.acquire/release` и `finally` разобраны в [статье](../../../knowledge/03-concurrency/semaphore.md). `InterruptedException` означает прерывание операции, которая допускает прерывание. Для тестов используются JUnit Jupiter (проверки результата), Mockito (подставной Gateway), `ExecutorService` (запуск рабочих задач) и `CountDownLatch` (ожидание наступления события). Отдельные подробные статьи о последних механизмах будут добавлены по мере развития базы.
+
+## Файлы
 
 - [Заготовка](src/main/java/edu/labs/semaphore/LimitedService.java)
-- [Контракт внешней зависимости](src/common/java/edu/labs/semaphore/Gateway.java)
-- [JUnit/Mockito тесты](src/test/java/edu/labs/semaphore/LimitedServiceTest.java)
-- [Эталон для самостоятельного сравнения](src/reference/java/edu/labs/semaphore/LimitedService.java)
+- [Gateway — контракт внешней зависимости](src/common/java/edu/labs/semaphore/Gateway.java)
+- [JUnit/Mockito-тесты](src/test/java/edu/labs/semaphore/LimitedServiceTest.java)
+- [Эталонное решение](src/reference/java/edu/labs/semaphore/LimitedService.java) — можно открыть после собственной попытки
 
-## Запуск из корня репозитория
+## Запуск конкретного задания
 
-Требуется JDK 21. Gradle Wrapper уже находится в корне. Первая загрузка зависимостей может потребовать интернет.
+Из корня репозитория с **JDK 21**. Gradle Wrapper находится в корне; первая загрузка Gradle и зависимостей может требовать интернет.
 
-**Windows — проверить свою заготовку (ожидаются красные тесты до решения):**
+**Windows — своя реализация:**
 
 ```powershell
 .\gradlew.bat -p exercises/concurrency/semaphore-limited-service test
 ```
 
-**Linux/macOS:**
+**Linux/macOS — своя реализация:**
 
 ```sh
 ./gradlew -p exercises/concurrency/semaphore-limited-service test
 ```
 
-**Проверить эталон, не изменяя заготовку:**
+Заготовка пока **не реализована**, поэтому функциональные тесты должны завершаться ошибками. Не нужно менять тесты ради зелёного результата: реализуйте контракт в `src/main/java`.
+
+**Эталон — те же тесты, но другая реализация (Windows):**
 
 ```powershell
 .\gradlew.bat -p exercises/concurrency/semaphore-limited-service test -Preference=true
 ```
 
-На Linux/macOS замените `.\gradlew.bat` на `./gradlew`. Выбор `-Preference=true` переключает исходники на `src/reference/java`, оставляя те же тесты. В репозитории подготовлены общие IntelliJ-конфигурации в `.run/`: `Semaphore - student tests` и `Semaphore - reference tests`. Они используют путь `$PROJECT_DIR# EX-CON-SEM-01 — ограниченный внешний сервис
-
-**Практика к статье:** [Semaphore](../../../knowledge/03-concurrency/semaphore.md). **Рекомендуемая глубина:** Middle / Middle+.
-
-## Задача
-
-Есть интерфейс `Gateway`: вызов `execute()` выполняет одну внешнюю операцию и может завершиться исключением.
-
-Реализуйте `LimitedService`, у которого:
-- конструктор `LimitedService(int maxConcurrent, Gateway gateway)` отвергает `maxConcurrent <= 0` (`IllegalArgumentException`) и `null` gateway (`NullPointerException`);
-- `String call() throws Exception` делегирует `gateway.execute()`, но одновременно допускает **не более `maxConcurrent`** вызовов;
-- при исключении gateway разрешение возвращается;
-- если поток прерывается во время ожидания разрешения, вызов завершается `InterruptedException` без выполнения gateway и без лишнего `release()`.
-
-**Что изучаем дополнительно:** `InterruptedException` — способ сообщить об отмене ожидания; `finally` выполняется при нормальном и исключительном выходе; JUnit проверяет утверждения `assertEquals`, `assertThrows`, а Mockito предоставляет тестовый `Gateway`. В тестах применяются `CountDownLatch` (счётчик событий с ожиданием), `ExecutorService` (пул запуска задач) и таймауты, чтобы проверять одновременные вызовы. Более подробные статьи о них будут добавлены позднее.
-
-## Где код
-
-- [Заготовка](src/main/java/edu/labs/semaphore/LimitedService.java)
-- [Контракт внешней зависимости](src/common/java/edu/labs/semaphore/Gateway.java)
-- [JUnit/Mockito тесты](src/test/java/edu/labs/semaphore/LimitedServiceTest.java)
-- [Эталон для самостоятельного сравнения](src/reference/java/edu/labs/semaphore/LimitedService.java)
-
-## Запуск из корня репозитория
-
-Требуется JDK 21. Gradle Wrapper уже находится в корне. Первая загрузка зависимостей может потребовать интернет.
-
-**Windows — проверить свою заготовку (ожидаются красные тесты до решения):**
-
-```powershell
-.\gradlew.bat -p exercises/concurrency/semaphore-limited-service test
-```
-
-**Linux/macOS:**
+**Эталон (Linux/macOS):**
 
 ```sh
-./gradlew -p exercises/concurrency/semaphore-limited-service test
+./gradlew -p exercises/concurrency/semaphore-limited-service test -Preference=true
 ```
 
-**Проверить эталон, не изменяя заготовку:**
+Параметр `-Preference=true` выбирает `src/reference/java` вместо заготовки; обе реализации используют общий `Gateway`. Другие лаборатории для этого запуска не компилируются, хотя нужные зависимости Gradle загрузит.
 
-```powershell
-.\gradlew.bat -p exercises/concurrency/semaphore-limited-service test -Preference=true
-```
+Для IntelliJ в корне проекта есть общие конфигурации `.run/Semaphore - student tests.run.xml` и `.run/Semaphore - reference tests.run.xml`, без абсолютных путей. **Их фактический импорт в IDE ещё предстоит проверить**. Если IDE не подхватила их, используйте команды выше из терминала.
 
-На Linux/macOS замените `.\gradlew.bat` на `./gradlew`. Выбор `-Preference=true` переключает исходники на `src/reference/java`, оставляя те же тесты. , без абсолютных путей. **Их импорт/выполнение в реальной IntelliJ ещё необходимо проверить**; надёжный резерв — команды Gradle выше. Эта задача — отдельный вложенный Gradle-проект, независимый от проверки других лабораторий.
+## Как интерпретировать тесты
 
-## Что проверяется
+Тесты проверяют аргументы конструктора, значение и делегирование, возврат разрешения после ошибки, ограничение одновременных обращений и прерывание ожидающего вызова. При неуспехе откройте отчёт JUnit и сопоставьте название теста с соответствующим контрактом выше и [объяснением семафора](../../../knowledge/03-concurrency/semaphore.md).
 
-Конструктор и делегирование, освобождение разрешения при исключении, ограничение числа одновременно выполняемых операций, реакция на прерывание ожидания. Тест на конкуренцию использует контролируемые барьеры, но не доказывает отсутствие всех возможных гонок при каждом расписании потоков. При красном тесте посмотрите текст assertion и вернитесь к [разделу о `acquire()` и `finally`](../../../knowledge/03-concurrency/semaphore.md).
+В конкурентном тесте потоки координируются через `CountDownLatch` и ограниченные ожидания. Даже многократный успешный тест **не доказывает корректность для всех возможных расписаний потоков**.
 
-**Важно:** заготовка специально бросает `UnsupportedOperationException`: это приглашение реализовать поведение. Основная CI-сборка корневого проекта не должна считать её корректной реализацией.
+Это отдельный Gradle-проект с намеренно незавершённой заготовкой: стандартная корневая CI-сборка не должна запускать её как эталон.
