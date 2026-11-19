@@ -46,11 +46,11 @@
 | Артефакт | ID | Статус | Критерий завершения |
 |---|---|---|---|
 | Статья Semaphore | CON-SEM | Implemented in pilot branch; Obsidian not manually verified | Термины, семантика, примеры, ловушки, источники и ссылки |
-| Готовый пример | EXAMPLE-CON-SEM | Reference implementation in exercise; run pending CI | Код компилируется, запущен, объяснён |
+| Готовый пример | EXAMPLE-CON-SEM | Reference implementation in exercise; GitHub Actions reference job SUCCESS (2026-11-19, run 44518768253) | Код компилируется, запущен, объяснён |
 | Самостоятельная задача | EX-CON-SEM-01 | Implemented in pilot branch | README, заготовка и реалистичные ограничения |
-| JUnit + Mockito | TEST-CON-SEM | Test sources committed; execution pending | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
-| Эталон | SOL-CON-SEM-01 | Committed; CI pending | Отдельно от student; проверен CI |
-| Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Standalone nested Gradle project; CLI/IDE verification pending | Одна команда/конфигурация; нет сборки независимых exercises |
+| JUnit + Mockito | TEST-CON-SEM | JUnit/Mockito tests executed successfully against reference in CI run 44518768253 | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
+| Эталон | SOL-CON-SEM-01 | Reference compiled and tests passed in CI run 44518768253 | Отдельно от student; проверен CI |
+| Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Nested Gradle project; isolated CI command passed; local IDE not verified | Одна команда/конфигурация; нет сборки независимых exercises |
 | Интеграционная задача | MERGE-CON-01 | Planned (not required for pilot) | Сопоставление Semaphore/Lock/BlockingQueue/Executor |
 
 ## Как избегать ложного статуса
