@@ -1,5 +1,6 @@
 """Offline tests; never touch real clipboard or a real browser."""
 import importlib.util
+import ctypes
 from pathlib import Path
 import tempfile
 import unittest
@@ -43,6 +44,18 @@ class ManualTests(unittest.TestCase):
                          clipboard=self.messages.append,
                          opener=lambda url: self.opened.append(url) or True,
                          tab_switcher=self.switched.append)
+
+    def test_input_layout_matches_windows_32_and_64_bit_abi(self):
+        layout64, union64, key64 = m.windows_input_layout(ctypes.c_uint64)
+        layout32, union32, key32 = m.windows_input_layout(ctypes.c_uint32)
+        self.assertEqual(ctypes.sizeof(layout64), 40)
+        self.assertEqual(ctypes.sizeof(union64), 32)
+        self.assertEqual(ctypes.sizeof(key64), 24)
+        self.assertEqual(ctypes.sizeof(layout32), 28)
+        self.assertEqual(ctypes.sizeof(union32), 24)
+        self.assertEqual(ctypes.sizeof(key32), 16)
+        self.assertEqual(layout64.u.offset, 8)
+        self.assertEqual(layout32.u.offset, 4)
 
     def test_tab_shortcut_sequence_includes_ninth_and_eleventh(self):
         ctrl = 0x11
