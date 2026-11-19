@@ -31,7 +31,7 @@
 ## Тематическое покрытие (каталог в CURRICULUM.md)
 | Раздел | Что есть | Пробелы/расширения | Следующая конкретная единица |
 |---|---|---|---|
-| 01 Java Core | Отдельные темы обсуждались, структурированный контент не подтверждён | generics, контракты, ООП, streams, exceptions, reflection | CORE-TYPES + CORE-GENERICS |
+| 01 Java Core | В отдельном PR составлена подробная карта 42 предложенных статей и 10 сценариев примеров; сами статьи/исходники ещё не созданы | Основные объяснения, будущие связи на JVM/Collections/Concurrency/IO/Spring, автономные проверяемые примеры | Сначала CORE-TYPES, CORE-CONVERSIONS, CORE-PARAMS; затем классы и объекты |
 | 02 Collections | Обсуждались HashMap, ArrayList, ConcurrentHashMap; lab-каркас | статьи, runnable examples, задачи и тесты | COL-HASH |
 | 03 Concurrency | SynchronizedCounter, BoundedBlockingQueue, JUnit; обсуждались JMM/volatile/locks/futures | CountDownLatch, CyclicBarrier, Phaser, RW locks, CAS nuances, ForkJoin, virtual threads, JMM-система | **CON-SEM + EX-CON-SEM-01 implemented in PR #6**, затем CON-JMM |
 | 04 JVM | lab-каркас, обсуждали GC/heap/stack | bytecode, classloading, JIT, профилировка | JVM-MEMORY |
