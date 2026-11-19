@@ -1,6 +1,6 @@
 # Реестр покрытия и реализации курса
 
-**Дата сверки:** 2026-11-19. **База:** `main` после PR #9; последующие правки читаемости Mermaid готовятся отдельно. Фактическая проверка в IntelliJ подтверждена пользователем, а проверка именно в Obsidian остаётся открытой. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
+**Дата сверки:** 2026-11-19. **База:** опубликованные PR #10–#18; новая статья CORE-CLASSES готовится в отдельном PR. Фактическая проверка Mermaid в IntelliJ подтверждена пользователем, а проверка навигации именно в Obsidian остаётся открытой. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
 
 ## Легенда
 - **Implemented**: файл/код существует в main.
@@ -23,7 +23,7 @@
 | Maven migration PR #4 | **Closed without merge** | Gradle остаётся текущей системой сборки |
 | Mockito | Included in standalone pilot exercise (PR #6); not a root-wide dependency | Explore broader tests when suitable |
 | knowledge/ Obsidian vault | Статья Semaphore в main; Mermaid Preview **проверен пользователем в IntelliJ** | Отдельно проверить локальную навигацию в Obsidian |
-| examples/, exercises/, solutions/ | `exercises/` exists for Semaphore pilot; standalone `examples/` and `solutions/` not created | Reference kept in `src/reference/java` inside exercise |
+| examples/, exercises/, solutions/ | `exercises/` существует для Semaphore; `examples/core/` содержит автономные JDK 21 демонстрации; отдельный `solutions/` не создавался | Reference kept in `src/reference/java` inside exercise |
 | .run/ shared IntelliJ configs | Файлы созданы в PR #6; source roots исправлены в PR #7, пользователь подтвердил работу IDE с исходниками | Отдельно проверить запуск обеих конфигураций .run |
 | Изолированные команды запуска exercise + student/reference | Эталон подтверждён в CI, `includeBuild` и три source set (`common`, `main`, `reference`) приняты в PR #7 | Студенческую команду проверить локально |
 | CI matrix/sharding/distributed test execution | Planned | После локального пилота; не утверждать что есть |
@@ -31,7 +31,7 @@
 ## Тематическое покрытие (каталог в CURRICULUM.md)
 | Раздел | Что есть | Пробелы/расширения | Следующая конкретная единица |
 |---|---|---|---|
-| 01 Java Core | Карта 42 тем принята в PR #11. `CORE-TYPES` переработана по [плану вопросов](plans/CORE-TYPES.md) с новым JDK 21 примером; `CORE-CONVERSIONS` переработана по [собственному плану](plans/CORE-CONVERSIONS.md) с отдельным JDK 21 примером; `CORE-PARAMS` переработана по [плану вопросов](plans/CORE-PARAMS.md) с собственным Java 21 примером | P0-пробелы исходного аудита адресованы во всех трёх статьях; это не означает абсолютную полноту всех возможных интервью-вопросов. Локальная навигация в Obsidian ещё не проверена | [Итог сверки](JAVA_CORE_POST_REVIEW_2026-11-19.md); далее исследовать CORE-CLASSES до написания |
+| 01 Java Core | Карта 42 тем принята в PR #11. `CORE-TYPES` переработана по [плану вопросов](plans/CORE-TYPES.md) с новым JDK 21 примером; `CORE-CONVERSIONS` переработана по [собственному плану](plans/CORE-CONVERSIONS.md) с отдельным JDK 21 примером; `CORE-PARAMS` переработана по [плану вопросов](plans/CORE-PARAMS.md) с собственным Java 21 примером; `CORE-CLASSES` добавлена по [исследовательскому плану](plans/CORE-CLASSES.md) с самостоятельным примером и проверкой инвариантов | P0-пробелы исходного аудита адресованы во всех трёх статьях; это не означает абсолютную полноту всех возможных интервью-вопросов. Локальная навигация в Obsidian ещё не проверена; для `CORE-CLASSES` глубокие вопросы порядка инициализации и наследования остаются отдельными темами | [Итог сверки](JAVA_CORE_POST_REVIEW_2026-11-19.md); далее `CORE-ACCESS`: исследовать до написания |
 | 02 Collections | Обсуждались HashMap, ArrayList, ConcurrentHashMap; lab-каркас | статьи, runnable examples, задачи и тесты | COL-HASH |
 | 03 Concurrency | SynchronizedCounter, BoundedBlockingQueue, JUnit; обсуждались JMM/volatile/locks/futures | CountDownLatch, CyclicBarrier, Phaser, RW locks, CAS nuances, ForkJoin, virtual threads, JMM-система | **CON-SEM + EX-CON-SEM-01 implemented in PR #6**, затем CON-JMM |
 | 04 JVM | lab-каркас, обсуждали GC/heap/stack | bytecode, classloading, JIT, профилировка | JVM-MEMORY |

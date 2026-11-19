@@ -38,6 +38,18 @@ java examples/core/ParametersDemo.java
 
 Результат заканчивается строкой `CHECK PASSED`, иначе выбрасывается `AssertionError`. Пример включён в CI.
 
+## Классы, состояние и конструкторы
+
+[ClassesAndObjectsDemo.java](ClassesAndObjectsDemo.java) связан со статьёй [CORE-CLASSES](../../knowledge/01-java-core/classes.md). Здесь два разных объекта счёта, две ссылки на один экземпляр, перегруженные конструкторы, `static`-счётчик и проверка инвариантов (ошибочные данные и переполнение).
+
+Из корня репозитория на JDK 21:
+
+```powershell
+java examples/core/ClassesAndObjectsDemo.java
+```
+
+Программа должна завершиться строкой `CHECK PASSED`. Дополнительная проверка через `javac` также поддерживается; изолированные примеры не требуют Gradle. Запуск примера добавлен в GitHub Actions.
+
 ## Значения и ссылки
 
 [ValuesAndReferencesDemo.java](ValuesAndReferencesDemo.java) относится к трём статьям:

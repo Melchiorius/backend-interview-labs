@@ -7,7 +7,7 @@
 Развёрнутый перечень **42 возможных самостоятельных статей**, конкретные примеры, направления углубления и связи с другими разделами: [JAVA_CORE_PLAN.md](JAVA_CORE_PLAN.md). Ниже — **карта групп**, а не список готовых файлов и не обещание создавать ровно 42 Markdown-файла: короткие близкие вопросы можно объяснить внутри одной содержательной статьи.
 
 - **Язык и значения:** `CORE-SYNTAX`, **[CORE-TYPES](../knowledge/01-java-core/types.md)**, `CORE-OPERATORS`, **[CORE-CONVERSIONS](../knowledge/01-java-core/conversions.md)**, **[CORE-PARAMS](../knowledge/01-java-core/parameters.md)**, `CORE-CONTROL`.
-- **Объекты и классы:** `CORE-CLASSES`, `CORE-ACCESS`, `CORE-OBJECT`, `CORE-INHERITANCE`, `CORE-INTERFACES`, `CORE-COMPOSITION`, `CORE-NESTED`, `CORE-INIT`.
+- **Объекты и классы:** **[CORE-CLASSES](../knowledge/01-java-core/classes.md)**, `CORE-ACCESS`, `CORE-OBJECT`, `CORE-INHERITANCE`, `CORE-INTERFACES`, `CORE-COMPOSITION`, `CORE-NESTED`, `CORE-INIT`.
 - **Строки, массивы и объекты-значения:** `CORE-ARRAYS`, `CORE-STRINGS`, `CORE-BUILDERS`, `CORE-ENUMS`, `CORE-RECORDS`, `CORE-IMMUTABLE`.
 - **Контракты и система типов:** `CORE-EQUALITY`, `CORE-GENERICS`, `CORE-ERASURE`, `CORE-SEALED`, `CORE-PATTERNS`.
 - **Ошибки и ресурсы:** `CORE-EXCEPTIONS`, `CORE-RESOURCES`, `CORE-ASSERT`, `CORE-OPTIONAL`.
