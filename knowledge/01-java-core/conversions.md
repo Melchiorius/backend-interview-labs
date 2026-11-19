@@ -125,3 +125,7 @@ System.out.println(choose(67)); // "long"
 
 - [JLS 21, §5 — Conversions and Contexts](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html)
 - [JLS 21, §15.12 — Method Invocation Expressions](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12)
+- [JLS 21, §5.1.7 — Boxing Conversion](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7)
+- [Java 21 API — Integer.valueOf(int)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html#valueOf(int))
+- [Java 21 API — String.intern()](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#intern())
+- [JLS 21, §3.10.5 — String Literals](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.10.5)
