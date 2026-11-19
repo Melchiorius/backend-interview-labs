@@ -31,7 +31,7 @@
 ## Тематическое покрытие (каталог в CURRICULUM.md)
 | Раздел | Что есть | Пробелы/расширения | Следующая конкретная единица |
 |---|---|---|---|
-| 01 Java Core | Карта 42 тем принята в PR #11. `CORE-TYPES` переработана по [плану вопросов](plans/CORE-TYPES.md) с новым JDK 21 примером; `CORE-CONVERSIONS` и `CORE-PARAMS` существуют, но их P0-аудит пока открыт | Для CORE-TYPES основные P0 из аудита раскрыты; IDE/Obsidian проверка остаётся открытой. Преобразования и параметры требуют аналогичной доработки | Следующая статья: CORE-CONVERSIONS, затем CORE-PARAMS; [общий аудит](JAVA_CORE_COVERAGE_AUDIT_2026-11-19.md) |
+| 01 Java Core | Карта 42 тем принята в PR #11. `CORE-TYPES` переработана по [плану вопросов](plans/CORE-TYPES.md) с новым JDK 21 примером; `CORE-CONVERSIONS` переработана по [собственному плану](plans/CORE-CONVERSIONS.md) с отдельным JDK 21 примером; `CORE-PARAMS` существует, но её P0-аудит пока открыт | Для CORE-TYPES основные P0 из аудита раскрыты; IDE/Obsidian проверка остаётся открытой. Параметры требуют аналогичной доработки | Следующая статья: CORE-PARAMS; [общий аудит](JAVA_CORE_COVERAGE_AUDIT_2026-11-19.md) |
 | 02 Collections | Обсуждались HashMap, ArrayList, ConcurrentHashMap; lab-каркас | статьи, runnable examples, задачи и тесты | COL-HASH |
 | 03 Concurrency | SynchronizedCounter, BoundedBlockingQueue, JUnit; обсуждались JMM/volatile/locks/futures | CountDownLatch, CyclicBarrier, Phaser, RW locks, CAS nuances, ForkJoin, virtual threads, JMM-система | **CON-SEM + EX-CON-SEM-01 implemented in PR #6**, затем CON-JMM |
 | 04 JVM | lab-каркас, обсуждали GC/heap/stack | bytecode, classloading, JIT, профилировка | JVM-MEMORY |
