@@ -34,3 +34,6 @@ jobs:
           java examples/core/ConversionsDemo.java
           java examples/core/ParametersDemo.java
           java examples/core/ClassesAndObjectsDemo.java
+
+      - name: Compile and run CORE-ACCESS positive and negative cases
+        run: bash examples/core/access/verify.sh
