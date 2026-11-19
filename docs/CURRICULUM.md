@@ -29,7 +29,7 @@
 - CON-MONITOR: synchronized, reentrancy, monitor ownership, wait/notify/notifyAll, condition loops.
 - CON-VOLATILE: visibility/order guarantees, read-modify-write limits.
 - CON-LOCK: Lock/ReentrantLock, Condition, fair/timed/interruptible acquisition.
-- **CON-SEM: Semaphore**, permits, binary/counting, fairness, interrupt, leaks, mutex comparison.
+- **[CON-SEM: Semaphore](../knowledge/03-concurrency/semaphore.md)**, permits, binary/counting, fairness, interrupt, leaks, mutex comparison.
 - **CON-LATCH: CountDownLatch** and one-shot coordination.
 - **CON-BARRIER: CyclicBarrier, Phaser**, cyclic phases, abort/failure cases.
 - CON-RWLOCK: ReadWriteLock and StampedLock, optimistic reads and caveats.

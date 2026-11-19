@@ -1,0 +1,21 @@
+name: Semaphore pilot reference tests
+
+on:
+  pull_request:
+    paths:
+      - 'exercises/concurrency/semaphore-limited-service/**'
+      - '.github/workflows/semaphore-pilot.yml'
+  workflow_dispatch:
+
+jobs:
+  reference-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Test reference implementation only
+        run: ./gradlew -p exercises/concurrency/semaphore-limited-service test -Preference=true
