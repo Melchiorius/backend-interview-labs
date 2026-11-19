@@ -45,7 +45,7 @@
 ## Пилотная вертикаль — Semaphore (PR #6)
 | Артефакт | ID | Статус | Критерий завершения |
 |---|---|---|---|
-| Статья Semaphore | CON-SEM | Article committed in PR #6; Obsidian UI not verified | Термины, семантика, примеры, ловушки, источники и ссылки |
+| Статья Semaphore | CON-SEM | Существует в main; ясность русских объяснений и схема переработаны в отдельном PR, визуальная проверка Obsidian ещё нужна | Термины, семантика, примеры, ловушки, источники и ссылки |
 | Готовый пример | EXAMPLE-CON-SEM | Reference implementation in exercise; GitHub Actions reference job SUCCESS (2026-11-19, run 44518768253) | Код компилируется, запущен, объяснён |
 | Самостоятельная задача | EX-CON-SEM-01 | Exercise committed in PR #6 | README, заготовка и реалистичные ограничения |
 | JUnit + Mockito | TEST-CON-SEM | JUnit/Mockito tests executed successfully against reference in CI runs 44518768253 and 44519250051 | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
