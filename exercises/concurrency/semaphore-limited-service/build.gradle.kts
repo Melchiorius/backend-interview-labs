@@ -12,15 +12,28 @@ java {
     }
 }
 
-// Student and reference implementations share one contract and one test suite.
+// Each directory belongs to exactly one source set. IntelliJ cannot reliably
+// model a source directory shared between main and reference.
 sourceSets {
-    main {
-        java.setSrcDirs(listOf(
-            if (providers.gradleProperty("reference").isPresent) "src/reference/java"
-            else "src/main/java"
-        ))
-        // Gateway is common to both implementations.
+    val common by creating {
         java.srcDir("src/common/java")
+    }
+
+    main {
+        java.setSrcDirs(listOf("src/main/java"))
+        compileClasspath += common.output
+        runtimeClasspath += common.output
+    }
+
+    create("reference") {
+        java.srcDir("src/reference/java")
+        compileClasspath += common.output
+        runtimeClasspath += common.output
+    }
+
+    test {
+        compileClasspath += common.output
+        runtimeClasspath += common.output
     }
 }
 
@@ -32,4 +45,15 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+
+    // Select the reference at test runtime without replacing the source roots.
+    if (providers.gradleProperty("reference").map(String::toBoolean).getOrElse(false)) {
+        val reference = sourceSets["reference"]
+        val common = sourceSets["common"]
+        dependsOn(tasks.named(reference.classesTaskName))
+        classpath = sourceSets["test"].output +
+            reference.output +
+            common.output +
+            configurations["testRuntimeClasspath"]
+    }
 }

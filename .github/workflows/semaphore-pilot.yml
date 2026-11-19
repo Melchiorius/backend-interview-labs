@@ -3,6 +3,7 @@ name: Semaphore pilot reference tests
 on:
   pull_request:
     paths:
+      - 'settings.gradle.kts'
       - 'exercises/concurrency/semaphore-limited-service/**'
       - '.github/workflows/semaphore-pilot.yml'
   workflow_dispatch:
@@ -17,5 +18,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Test reference implementation only
+      - name: Confirm included build
+        run: ./gradlew projects
+      - name: Compile the independent reference source set
+        run: ./gradlew -p exercises/concurrency/semaphore-limited-service compileReferenceJava
+      - name: Test reference implementation in isolation
         run: ./gradlew -p exercises/concurrency/semaphore-limited-service test -Preference=true

@@ -25,7 +25,7 @@
 | knowledge/ Obsidian vault | Pilot Semaphore Markdown article exists in PR #6; Obsidian UI not verified | Check local navigation in Obsidian |
 | examples/, exercises/, solutions/ | `exercises/` exists for Semaphore pilot; standalone `examples/` and `solutions/` not created | Reference kept in `src/reference/java` inside exercise |
 | .run/ shared IntelliJ configs | Implemented for pilot in PR #6; IDE unverified | Проверить переносимость на чистом clone |
-| Изолированные команды запуска exercise + student/reference | Reference Gradle command verified in GitHub Actions; student run pending local check | Verify local command in IntelliJ |
+| Изолированные команды запуска exercise + student/reference | Reference Gradle command verified in GitHub Actions; student run pending local check | Gradle source roots fixed in PR #7 with composite includeBuild + permanent reference source set; verify IntelliJ reload locally |
 | CI matrix/sharding/distributed test execution | Planned | После локального пилота; не утверждать что есть |
 
 ## Тематическое покрытие (каталог в CURRICULUM.md)
