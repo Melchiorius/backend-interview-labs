@@ -20,7 +20,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Confirm included build
         run: ./gradlew projects
-      - name: Show source sets
-        run: ./gradlew -p exercises/concurrency/semaphore-limited-service sourceSets
+      - name: Compile the independent reference source set
+        run: ./gradlew -p exercises/concurrency/semaphore-limited-service compileReferenceJava
       - name: Test reference implementation in isolation
         run: ./gradlew -p exercises/concurrency/semaphore-limited-service test -Preference=true
