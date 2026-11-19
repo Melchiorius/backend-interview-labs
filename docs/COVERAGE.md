@@ -1,6 +1,6 @@
 # Реестр покрытия и реализации курса
 
-**Дата сверки:** 2026-11-19. **База:** `main` после PR #9; последующие правки читаемости Mermaid готовятся отдельно. Фактическая проверка в IntelliJ подтверждена пользователем, а проверка именно в Obsidian остаётся открытой. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
+**Дата сверки:** 2026-11-19. **База:** опубликованные PR #10–#18; новая статья CORE-CLASSES готовится в отдельном PR. Фактическая проверка Mermaid в IntelliJ подтверждена пользователем, а проверка навигации именно в Obsidian остаётся открытой. Это живой реестр **материалов базы знаний**, не оценка личных знаний пользователя и не журнал учебной траектории.
 
 ## Легенда
 - **Implemented**: файл/код существует в main.
@@ -23,7 +23,7 @@
 | Maven migration PR #4 | **Closed without merge** | Gradle остаётся текущей системой сборки |
 | Mockito | Included in standalone pilot exercise (PR #6); not a root-wide dependency | Explore broader tests when suitable |
 | knowledge/ Obsidian vault | Статья Semaphore в main; Mermaid Preview **проверен пользователем в IntelliJ** | Отдельно проверить локальную навигацию в Obsidian |
-| examples/, exercises/, solutions/ | `exercises/` exists for Semaphore pilot; standalone `examples/` and `solutions/` not created | Reference kept in `src/reference/java` inside exercise |
+| examples/, exercises/, solutions/ | `exercises/` существует для Semaphore; `examples/core/` содержит автономные JDK 21 демонстрации; отдельный `solutions/` не создавался | Reference kept in `src/reference/java` inside exercise |
 | .run/ shared IntelliJ configs | Файлы созданы в PR #6; source roots исправлены в PR #7, пользователь подтвердил работу IDE с исходниками | Отдельно проверить запуск обеих конфигураций .run |
 | Изолированные команды запуска exercise + student/reference | Эталон подтверждён в CI, `includeBuild` и три source set (`common`, `main`, `reference`) приняты в PR #7 | Студенческую команду проверить локально |
 | CI matrix/sharding/distributed test execution | Planned | После локального пилота; не утверждать что есть |
