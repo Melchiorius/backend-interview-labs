@@ -36,9 +36,10 @@ class ManualTests(unittest.TestCase):
         m.configure(self.folder, "02", URL_02)
         m.configure(self.folder, "06", URL_06)
 
-    def prepare(self, role=None, event=None, dry_run=False):
+    def prepare(self, role=None, event=None, dry_run=False, open_chat=True):
         return m.prepare(self.folder, self.state, role, event, dry_run=dry_run,
-                         clipboard=self.messages.append, opener=lambda url: self.opened.append(url) or True)
+                         open_chat=open_chat, clipboard=self.messages.append,
+                         opener=lambda url: self.opened.append(url) or True)
 
     def test_chat_url_validation(self):
         self.assertEqual(m.validate_chat_url(URL_06), URL_06)
@@ -71,6 +72,24 @@ class ManualTests(unittest.TestCase):
         self.assertEqual(self.messages, ["Содержимое поручения"])
         self.assertEqual(self.opened, [URL_02])
         self.assertEqual(self.state.get("02", "event-0002")[1], "prepared")
+
+    def test_no_open_copies_but_does_not_open_tab(self):
+        self.configured()
+        self.make_inbox("02", "event-0002", "Поручение без новой вкладки")
+        self.assertEqual(self.prepare("02", open_chat=False), ("02", "event-0002"))
+        self.assertEqual(self.messages, ["Поручение без новой вкладки"])
+        self.assertEqual(self.opened, [])
+        self.assertEqual(self.state.get("02", "event-0002")[1], "prepared")
+        self.assertEqual(len(m.pending(self.folder, self.state)), 1)
+
+    def test_no_open_does_not_ack_when_reprepared(self):
+        self.configured()
+        self.make_inbox()
+        self.prepare("02", open_chat=False)
+        self.prepare("02", open_chat=False)
+        self.assertEqual(self.opened, [])
+        self.assertEqual(len(self.messages), 2)
+        self.assertEqual(self.state.get("02", "event-0001")[1], "prepared")
 
     def test_dry_run_does_not_copy_open_or_mutate(self):
         self.configured()
