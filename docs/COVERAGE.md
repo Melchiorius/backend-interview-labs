@@ -31,7 +31,7 @@
 ## Тематическое покрытие (каталог в CURRICULUM.md)
 | Раздел | Что есть | Пробелы/расширения | Следующая конкретная единица |
 |---|---|---|---|
-| 01 Java Core | Карта 42 тем принята в PR #11. Три статьи `CORE-TYPES`, `CORE-CONVERSIONS`, `CORE-PARAMS` и воспроизводимый Java-пример добавлены в следующем PR; CI для примера обязателен перед merge | Остальные темы, связи с JVM/Collections/Concurrency/IO/Spring; пример JDK source-file mode | Следующая связанная группа: CORE-CLASSES, CORE-ACCESS, CORE-INHERITANCE, CORE-INTERFACES |
+| 01 Java Core | Карта 42 тем принята в PR #11. Три статьи `CORE-TYPES`, `CORE-CONVERSIONS`, `CORE-PARAMS` и запускаемый пример реализованы; CI подтвердил запуск примера. **Аудит обнаружил значимые P0-пробелы** — см. [JAVA_CORE_COVERAGE_AUDIT_2026-11-19.md](JAVA_CORE_COVERAGE_AUDIT_2026-11-19.md) | Три статьи ещё не получили статус полного покрытия для интервью: типы/литералы/var; контексты преобразований/boxing/overload; массивы/immutable/null в параметрах | Сначала устранить P0 в трёх статьях по аудиту; затем исследовать CORE-CLASSES до написания |
 | 02 Collections | Обсуждались HashMap, ArrayList, ConcurrentHashMap; lab-каркас | статьи, runnable examples, задачи и тесты | COL-HASH |
 | 03 Concurrency | SynchronizedCounter, BoundedBlockingQueue, JUnit; обсуждались JMM/volatile/locks/futures | CountDownLatch, CyclicBarrier, Phaser, RW locks, CAS nuances, ForkJoin, virtual threads, JMM-система | **CON-SEM + EX-CON-SEM-01 implemented in PR #6**, затем CON-JMM |
 | 04 JVM | lab-каркас, обсуждали GC/heap/stack | bytecode, classloading, JIT, профилировка | JVM-MEMORY |
@@ -52,6 +52,12 @@
 | Эталон | SOL-CON-SEM-01 | Reference compiled and tests passed in CI run 44518768253 | Отдельно от student; проверен CI |
 | Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Nested Gradle project; isolated CI command passed; shared .run configs committed but IDE not verified | Одна команда/конфигурация; нет сборки независимых exercises |
 | Интеграционная задача | MERGE-CON-01 | Planned (not required for pilot) | Сопоставление Semaphore/Lock/BlockingQueue/Executor |
+
+## Проверка содержательной полноты
+
+- **Implemented** и **Verified** описывают наличие материала и факт технической проверки, но не означают «полное покрытие интервью-вопросов». Для такого заявления требуются предварительная матрица вопросов, исследование спецификации/интервью-источников и повторный аудит готовой статьи.
+- Непокрытые P0 фиксировать явным статусом **Requires expansion**, даже если файл опубликован и пример прошёл CI. Счётчик статей и тестов не заменяет проверку полноты.
+- [Ретроспективный аудит Java Core (2026-11-19)](JAVA_CORE_COVERAGE_AUDIT_2026-11-19.md) — текущий список содержательных пробелов и критерии доработки.
 
 ## Как избегать ложного статуса
 - `CURRICULUM.md` отвечает на вопрос **«какие знания должны быть доступны в принципе?»**; этот файл — **«что уже существует и что стоит дополнить?»**. Полезная статья может быть опубликована до создания всех связанных тем. При появлении новых статей возвращаться к старым и добавлять ссылки; статус связей обновлять по факту.
