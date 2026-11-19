@@ -21,8 +21,8 @@
 | Gradle Wrapper 8.8 | Implemented (после PR #3) | Проверять доступность на чистом clone |
 | Gradle CLI и IntelliJ Sync после переустановки IDE | Verified пользователем в ноябре 2026 | Не смешивать с проверкой будущих упражнений |
 | Maven migration PR #4 | **OPEN, not merged** | Не включать в курс; судьба PR отдельно решается владельцем |
-| Mockito | Planned, not yet configured | Подключить в тестовых зависимостях во время пилота |
-| knowledge/ Obsidian vault | Planned | Создать карту, первые статьи, проверить ссылки |
+| Mockito | Included in standalone pilot exercise (PR #6); not a root-wide dependency | Explore broader tests when suitable |
+| knowledge/ Obsidian vault | Pilot Semaphore Markdown article exists in PR #6; Obsidian UI not verified | Check local navigation in Obsidian |
 | examples/, exercises/, solutions/ | Planned | Пилот EX-CON-SEM-01; выбрать размещение эталонов |
 | .run/ shared IntelliJ configs | Implemented for pilot in PR #6; IDE unverified | Проверить переносимость на чистом clone |
 | Изолированные команды запуска exercise + student/reference | Planned | Проверить Gradle dependency isolation, CI |
@@ -48,7 +48,7 @@
 | Статья Semaphore | CON-SEM | Implemented in pilot branch; Obsidian not manually verified | Термины, семантика, примеры, ловушки, источники и ссылки |
 | Готовый пример | EXAMPLE-CON-SEM | Reference implementation in exercise; GitHub Actions reference job SUCCESS (2026-11-19, run 44518768253) | Код компилируется, запущен, объяснён |
 | Самостоятельная задача | EX-CON-SEM-01 | Implemented in pilot branch | README, заготовка и реалистичные ограничения |
-| JUnit + Mockito | TEST-CON-SEM | JUnit/Mockito tests executed successfully against reference in CI run 44518768253 | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
+| JUnit + Mockito | TEST-CON-SEM | JUnit/Mockito tests executed successfully against reference in CI runs 44518768253 and 44519250051 | Проверены разрешения, ошибки, interruption; Mockito только для внешней зависимости |
 | Эталон | SOL-CON-SEM-01 | Reference compiled and tests passed in CI run 44518768253 | Отдельно от student; проверен CI |
 | Фокусированный Gradle/IDE запуск | RUN-CON-SEM | Nested Gradle project; isolated CI command passed; shared .run configs committed but IDE not verified | Одна команда/конфигурация; нет сборки независимых exercises |
 | Интеграционная задача | MERGE-CON-01 | Planned (not required for pilot) | Сопоставление Semaphore/Lock/BlockingQueue/Executor |
