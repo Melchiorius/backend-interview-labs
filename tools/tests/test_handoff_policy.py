@@ -48,6 +48,45 @@ class MandatoryHandoffPolicyTests(unittest.TestCase):
                 ):
                     self.assertIn(token, text)
 
+    def test_reviewer_cannot_skip_handoff_when_no_next_task(self):
+        reviewer = document("docs/roles/04-independent-reviewer.md")
+        self.assertIn(
+            "Если следующего исполнителя нет, отправь `QUESTION` координатору 00",
+            reviewer,
+        )
+        self.assertIn(
+            "Отсутствие `backend-handoff` допустимо только при явно "
+            "зафиксированной общей остановке проекта",
+            reviewer,
+        )
+        self.assertIn("даже при CHANGES, BLOCKED", reviewer)
+        self.assertNotIn(
+            "При отсутствии новой задачи честно объясни, почему handoff не нужен",
+            reviewer,
+        )
+        self.assertNotIn(
+            "если следующее решение или действие требуется от другой роли, добавь",
+            reviewer,
+        )
+
+    def test_no_unconditional_opt_out_in_other_role_instructions_or_policy(self):
+        paths = [
+            "AGENTS.md",
+            "docs/WORKFLOW.md",
+            "docs/ROLE_HANDOFF_PROTOCOL.md",
+            *(f"docs/roles/{name}" for name in ROLE_FILES),
+        ]
+        forbidden = (
+            "При отсутствии новой задачи честно объясни, почему handoff не нужен",
+            "если следующее решение или действие требуется от другой роли, добавь",
+            "если нужна передача, добавляет",
+        )
+        for path in paths:
+            with self.subTest(path=path):
+                content = " ".join(document(path).split()).casefold()
+                for clause in forbidden:
+                    self.assertNotIn(clause.casefold(), content)
+
     def test_workflow_and_protocol_cannot_make_delivery_optional(self):
         workflow = document("docs/WORKFLOW.md")
         protocol = document("docs/ROLE_HANDOFF_PROTOCOL.md")
