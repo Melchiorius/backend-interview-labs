@@ -143,6 +143,12 @@ def run_loop(cycle: RoleCycle, *, issue: int | None, interval: int,
         try:
             cycle.scan(issue, dry_run=dry_run)
             failures = 0
+        except manual.WindowFocusDeferred as exc:
+            # A background process cannot always steal foreground on Windows.
+            # No clipboard/status mutation happened; retry this fresh event.
+            failures = 0
+            cycle.tell(f"Ожидание Firefox: {exc}")
+            cycle.tell("Цикл НЕ остановлен; повторим при следующем опросе GitHub.")
         except RuntimeError as exc:
             # GitHub client wraps HTTP/network failures as RuntimeError.
             failures += 1
