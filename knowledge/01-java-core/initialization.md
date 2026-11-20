@@ -256,3 +256,223 @@ Base initialized
 
 Поле `VALUE` объявлено в `Base`. Выражение `Sub.VALUE` использует имя подкласса как квалификатор, но разрешённое поле принадлежит `Base`; поэтому инициализируется `Base`, а не `Sub`. Квалификатор выражения сам по себе не определяет инициализируемый тип. Это показано в [JLS 21 §12.4.1, Example 12.4.1-2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1).
 
+## Constant variables: почему `static final` недостаточно
+
+*Constant variable* — переменная примитивного типа или `String`, объявленная `final` и инициализированная constant expression ([JLS 21 §4.12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4)).
+
+| Объявление | Constant variable? | Чтение само по себе запускает class initialization? |
+|---|---:|---:|
+| `static final int LIMIT = 67;` | Да | Нет |
+| `static final String NAME = "Java";` | Да | Нет |
+| `static final Integer LIMIT = 67;` | Нет | Да, если поле объявлено в этом классе |
+| `static final String NAME = new String("Java");` | Нет | Да, если поле объявлено в этом классе |
+| `static final int LIMIT = calculate();` | Нет | Да, если поле объявлено в этом классе |
+
+Критерий — не наличие `static final`, а тип переменной и constant expression. `Integer` — ссылочный тип, поэтому даже значение `67` после boxing не превращает поле в constant variable.
+
+В подробной процедуре [JLS 21 §12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2) есть тонкость: при инициализации класса его constant variables получают значения на отдельном раннем шаге **до инициализации суперкласса**. Обычные static field initializers выполняются позже — после суперкласса и нужных интерфейсов. В центральном примере `Child.CONSTANT` — constant variable, а `Child.BOXED` — нет.
+
+Значение constant variable может быть встроено компилятором в клиентский класс. Если библиотека изменит `public static final int LIMIT = 67` на `68`, старый клиентский `.class` может продолжить использовать `67`, пока его не перекомпилируют. Это тонкость бинарной совместимости, а не механизм обновления статического состояния во время выполнения ([JLS 21 §§13.1, 13.4.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html)).
+
+## Порядок class initialization
+
+### Суперкласс, затем superinterfaces с default methods, затем класс
+
+При инициализации класса `C` подробная процедура выполняет следующие действия:
+
+1. Отмечает, что инициализация `C` начата текущим потоком.
+2. Присваивает значения его constant variables.
+3. Инициализирует суперкласс `C`, если он ещё не инициализирован.
+4. Инициализирует superinterfaces `C`, объявляющие хотя бы один `default`-метод, в порядке специального рекурсивного обхода.
+5. Выполняет class variable initializers и static blocks самого `C` в текстовом порядке.
+
+Для обычного класса сначала идёт цепочка классов-суперклассов, затем нужные интерфейсы, затем собственные non-constant static initializers класса.
+
+### Почему интерфейсы обходятся в postorder
+
+Для каждого непосредственно реализованного интерфейса Java рекурсивно рассматривает его superinterfaces слева направо, прежде чем вернуться к самому интерфейсу. В инициализацию класса включаются только интерфейсы этого обхода, объявляющие хотя бы один `default`-метод.
+
+В центральном примере `Child implements MiddleFeature, NoDefaultFeature`, а `MiddleFeature extends RootFeature`. Поэтому порядок: `Parent` → `RootFeature` → `MiddleFeature` → `Child`. `NoDefaultFeature` не входит в этот список.
+
+Компилятор может создать *synthetic default methods*. Такие методы тоже могут повлиять на то, считается ли интерфейс объявляющим default method для целей инициализации, хотя этого не видно в исходном коде. Это оговорка спецификации, а не основание строить повседневный код на предположениях о синтетических методах. См. [JLS 21 §12.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1) и [§12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2).
+
+### Прямая инициализация интерфейса не инициализирует его предков
+
+```java
+interface ParentI {
+    int P = log("ParentI");
+}
+
+interface ChildI extends ParentI {
+    int C = log("ChildI");
+
+    static int log(String name) {
+        System.out.println(name);
+        return 1;
+    }
+}
+
+public class InterfaceInit {
+    public static void main(String[] args) {
+        System.out.println(ChildI.C);
+    }
+}
+```
+
+Будет напечатано `ChildI`, затем `1`; `ParentI` не инициализируется. Это контрпример к фразе «инициализация интерфейса всегда сначала инициализирует его родителей». Исключение для superinterfaces с default methods относится к инициализации **класса**, а не к прямой инициализации интерфейса.
+
+### Static fields и blocks — одна последовательность
+
+```java
+class Ordered {
+    static int first = log("first field");
+    static { log("first block"); }
+    static int second = log("second field");
+    static { log("second block"); }
+
+    static int log(String text) {
+        System.out.println(text);
+        return 67;
+    }
+}
+```
+
+Порядок: `first field` → `first block` → `second field` → `second block`. Java не сортирует отдельно все поля и все блоки.
+
+Для простых имён действуют ограничения на *forward references* ([JLS 21 §8.3.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.3.3)):
+
+```java
+class BadForwardReference {
+    static int first = later; // compile-time error: illegal forward reference
+    static int later = 67;
+}
+```
+
+Квалифицированное обращение — другой случай:
+
+```java
+class QualifiedForwardReference {
+    static int first = QualifiedForwardReference.later;
+    static int later = 67;
+}
+```
+
+Этот вариант компилируется, но `first` получает `0`: при выполнении первого инициализатора `later` ещё содержит default value. Это показывает, почему наличие default value не отменяет правил текстового порядка и forward references.
+
+## Значения полей по умолчанию
+
+[JLS 21 §4.12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.5) определяет начальные значения полей и элементов массивов.
+
+| Тип | Значение по умолчанию |
+|---|---|
+| `byte`, `short`, `int`, `long` | числовой ноль |
+| `float`, `double` | положительный ноль |
+| `char` | `'\u0000'` |
+| `boolean` | `false` |
+| Любой ссылочный тип | `null` |
+
+Правило относится к полям и компонентам массивов. **Локальные переменные не получают автоматического значения по умолчанию**: до чтения локальная переменная должна быть определённо присвоена.
+
+Для объекта важно: все поля всего нового объекта — включая унаследованные и поля самого нижнего подкласса — получают default values до запуска конструкторов и instance initializers. Это прямо указано в [JLS 21 §12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
+
+## Instance initialization и цепочка конструкторов
+
+Для `new Child(...)` после необходимой class initialization Java выполняет следующую последовательность:
+
+1. Выделяет память под объект со всеми instance fields всех классов его иерархии.
+2. Присваивает каждому полю default value.
+3. Вызывает выбранный конструктор.
+4. Если конструктор начинает с `this(...)`, рекурсивно выполняет другой конструктор того же класса. Инициализаторы текущего класса на этом шаге ещё не выполняются.
+5. Конструктор, который не делегирует через `this(...)`, вызывает конструктор прямого суперкласса — явно через `super(...)` или неявно через `super()`.
+6. Когда конструктор суперкласса и его цепочка завершились, выполняются instance field initializers и instance initializer blocks текущего класса в текстовом порядке.
+7. Выполняется оставшаяся часть тела текущего конструктора.
+8. Если текущий конструктор был вызван через `this(...)`, после его завершения продолжается оставшаяся часть тела делегирующего конструктора.
+
+Так повторяется для каждого класса от базового к производному.
+
+### `this(...)` выполняет инициализаторы класса один раз
+
+```java
+class Example {
+    int value = log("field initializer");
+
+    Example() {
+        this(67);
+        log("Example() remainder");
+    }
+
+    Example(int value) {
+        log("Example(int) body");
+    }
+
+    static int log(String text) {
+        System.out.println(text);
+        return 67;
+    }
+}
+```
+
+При `new Example()` сначала вызывается `Example(int)`; после возврата конструктора `Object` выполняется инициализатор `value`. Затем выполняется тело `Example(int)`. После возврата делегированного конструктора исполняется остаток `Example()`. Инициализатор поля появляется в выводе один раз.
+
+### Неявный `super()` и Java 21
+
+В Java 21, если конструктор не начинается с явного вызова `this(...)` или `super(...)` и это не конструктор `Object`, он неявно начинает работу с `super()` — вызова no-args конструктора прямого суперкласса.
+
+Если у суперкласса нет доступного конструктора без аргументов, подкласс не скомпилируется:
+
+```java
+class Parent {
+    Parent(int value) { }
+}
+
+class Child extends Parent {
+    Child() { } // compile-time error: implicit super() is not applicable
+}
+```
+
+Исправление — явно выбрать существующий конструктор родителя, например `Child() { super(67); }`.
+
+Не путайте *default constructor* и *no-args constructor*. Default constructor компилятор объявляет только тогда, когда класс вообще не объявил ни одного конструктора. Ручной конструктор без параметров — обычный явно написанный конструктор. Подробное введение уже дано в [CORE-CLASSES](classes.md); здесь важна иерархическая последовательность.
+
+В Java 21 явный вызов `this(...)` или `super(...)` должен быть первым оператором тела конструктора. Следующий код не компилируется:
+
+```java
+class Child {
+    Child() {
+        System.out.println("before super");
+        super(); // compile-time error in Java 21
+    }
+}
+```
+
+Не переносите в Java 21 более поздний синтаксис гибких тел конструкторов или preview-возможности других версий. См. [JLS 21 §8.8.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.7) и [§8.8.7.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.7.1).
+
+Циклическая цепочка `this(...)` — ошибка компиляции:
+
+```java
+class Cyclic {
+    Cyclic() { this(67); }
+    Cyclic(int value) { this(); } // compile-time error: recursive constructor invocation
+}
+```
+
+### Instance field initializers и blocks идут в текстовом порядке
+
+Для каждого класса отдельно, после возврата конструктора суперкласса, Java выполняет field initializers и instance initializer blocks в порядке их расположения в исходном тексте.
+
+```java
+class OrderedInstance {
+    int first = log("first field");
+    { log("first block"); }
+    int second = log("second field");
+    { log("second block"); }
+
+    int log(String text) {
+        System.out.println(text);
+        return 67;
+    }
+}
+```
+
+Порядок: `first field` → `first block` → `second field` → `second block`. Тело конструктора выполняется после них. Нормативная опора — [JLS 21 §8.3.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.3.2), [§8.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.6) и [§12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
+
