@@ -10,7 +10,7 @@ Java 21 interface — не «класс без реализации»: инте�
 
 ## Центральный проверяемый пример: кто исполняет метод
 
-Ниже отдельный **диагностический листинг** для правил интерфейсов. Роль 03 в [Issue #71](https://github.com/Melchiorius/backend-interview-labs/issues/71) разрабатывает **один общий многофайловый пример композиции и интерфейса**; не выдавайте этот независимый листинг за файлы её проекта.
+Ниже отдельный **диагностический листинг** для правил интерфейсов. Помимо него в общем [интегрированном runnable CORE-INTERFACES + CORE-COMPOSITION](../../examples/core/interfaces-composition/README.md) роль 03 реализовала межпакетный сценарий `api.Policy` → `client.Service` → `impl` с десятью проверяемыми строками. Этот листинг не следует выдавать за исходник общего проекта: он отдельно проверяет более широкий набор правил разрешения методов.
 
 Сохраните в `InterfaceMechanics.java`:
 
@@ -410,3 +410,22 @@ javac --release 21 -d out N02.java
 - **Независимые интервью-вопросы:** [in28minutes](https://github.com/in28minutes/JavaInterviewQuestionsAndAnswers), [Hruday-Boppa](https://github.com/Hruday-Boppa/Core-Java-Interview-Questions-List), [Chernyshov RU](https://github.com/ViacheslavChernyshov/java-interview-questions-and-answers), [teamlead](https://github.com/teamlead/java-interview-questions). Это источники формулировок вопросов, **не** доказательство гарантий JLS или частоты на рынке.
 
 **Границы P2.** Sealed/permits (IC-25), generics/erasure (IC-26), продвинутые SAM/lambda (IC-27) и бинарная совместимость API при добавлении default/abstract (IC-28) — отдельные темы. В частности, добавление default к существующему интерфейсу **не** обещает отсутствия source-level конфликтов при множественном наследовании. Полная модель class initialization — в [CORE-INIT](initialization.md), composition/LSP/design — в [CORE-COMPOSITION](composition.md). Успешная компиляция одного сценария не доказывает отсутствие конфликтов во всех реализациях.
+
+## Связь с единым многофайловым примером роли 03
+
+[README, команды и источники](../../examples/core/interfaces-composition/README.md) · [код интерфейса Policy](../../examples/core/interfaces-composition/src/api/Policy.java) · [Java entry point](../../examples/core/interfaces-composition/src/client/InterfaceCompositionDemo.java) · [expected.stdout](../../examples/core/interfaces-composition/expected.stdout).
+
+Это **одна** группа из восьми Java-файлов с реальными пакетами. Контракт `api.Policy` имеет единственную абстрактную операцию `int apply(int)`, default `describe(int)` и закрытый private static formatter. Клиентский `Service` принимает политику через конструктор; классы-реализаторы и декоратор живут в `impl`. Для проверки JLS в entry point две отдельные небольшие иллюстрации:
+
+- `Resolved implements LeftOrigin, RightOrigin` явно вызывает `LeftOrigin.super.origin()` и `RightOrigin.super.origin()` → `left|right`;
+- `ClassWins extends OriginBase implements LeftOrigin` использует конкретный метод родителя вместо default → `class`.
+
+Строки наглядно подтверждают случаи class precedence и default/default с явным override, но **не покрывают автоматически** N02 (abstract/default), N03 (abstract superclass), N11 (non-direct) и N12 (redundant). Эти отдельные отрицательные случаи разобраны выше и должны проверяться отдельными вызовами javac; общий положительный проект не смешивает их с валидными исходниками.
+
+Для проверки из корня репозитория:
+
+```sh
+bash examples/core/interfaces-composition/verify.sh
+```
+
+Скрипт компилирует Java 21, запускает `client.InterfaceCompositionDemo` и сравнивает все **10 строк** с `expected.stdout` через `diff -u`. Успешное сравнение — доказательство **конкретного сценария**, но не всей таблицы IC-01–IC-30. Разница между допустимым API и качеством делегирования разобрана в [CORE-COMPOSITION](composition.md).
