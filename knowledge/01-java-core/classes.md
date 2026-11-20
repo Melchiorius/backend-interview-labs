@@ -284,7 +284,7 @@ Token token = Token.of("67");
 Фабрика может выполнять проверку, возвращать заранее подготовленный объект или выбирать реализацию. Но **наличие фабрики не обещает кэш или singleton**. Конструктор может быть вызван из других конструкторов и методов того же класса; прямое создание извне ограничено модификатором доступа.
 
 > [!note]- Создать объект без прямого вызова new
-> В Java есть способы получить экземпляр, не записав `new SomeClass()` в вызывающем коде: фабрики, reflection, десериализация и другие механизмы. Они не равнозначны друг другу по тому, что именно выполняется при создании. Подробнее — `CORE-REFLECTION`, `CORE-SERIAL`, `CORE-OBJECT`.
+> В Java есть способы получить экземпляр, не записав `new SomeClass()` в вызывающем коде: фабрики, reflection, десериализация и другие механизмы. Они не равнозначны друг другу по тому, что именно выполняется при создании. Подробнее о базовых методах и идентичности — [CORE-OBJECT](object.md); reflection и сериализация остаются будущими `CORE-REFLECTION` и `CORE-SERIAL`.
 
 ## Частые вопросы собеседования
 
@@ -335,7 +335,7 @@ java examples/core/ClassesAndObjectsDemo.java
 
 Уже реализованы: [CORE-TYPES](types.md), [CORE-CONVERSIONS](conversions.md), [CORE-PARAMS](parameters.md).
 
-**Модификаторы доступа и инкапсуляция:** [CORE-ACCESS](access.md). **Наследование и переопределение:** [CORE-INHERITANCE](inheritance.md). **Порядок инициализации:** [CORE-INIT](initialization.md). **Ещё не написаны** (поэтому пока без ссылок): `CORE-INTERFACES`, `CORE-OBJECT`, `CORE-EQUALITY`, `CORE-IMMUTABLE`, `CORE-COMPOSITION`, `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
+**Модификаторы доступа и инкапсуляция:** [CORE-ACCESS](access.md). **Наследование и переопределение:** [CORE-INHERITANCE](inheritance.md). **Порядок инициализации:** [CORE-INIT](initialization.md). **Объект и идентичность:** [CORE-OBJECT](object.md). **Равенство и хеширование:** [CORE-EQUALITY](equality.md). **Ещё не написаны** (поэтому пока без ссылок): `CORE-INTERFACES`, `CORE-IMMUTABLE`, `CORE-COMPOSITION`, `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
 
 ## Первоисточники
 
