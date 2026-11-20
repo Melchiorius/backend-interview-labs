@@ -1,3 +1,5 @@
+// Theory: knowledge/01-java-core/equality.md
+// Theory: knowledge/01-java-core/object.md
 // Theory: knowledge/01-java-core/types.md
 // Theory: knowledge/01-java-core/classes.md
 // Theory: knowledge/01-java-core/inheritance.md
