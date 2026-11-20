@@ -173,6 +173,37 @@ class LoopTests(unittest.TestCase):
         self.assertEqual(self.selected, [7, 7])
         self.assertEqual(self.loop.scan(None), 0)
 
+    def test_focus_denial_does_not_stop_cycle_and_recovers(self):
+        self.init()
+        self.add("04", "test-focus-0001")
+        attempts = []
+        def switch(tab):
+            attempts.append(tab)
+            if len(attempts) == 1:
+                raise manual.WindowFocusDeferred("Firefox is not foreground")
+        self.loop.tab_switcher = switch
+        waits = []
+        result = cycle_mod.run_loop(self.loop, issue=33, interval=10,
+                                    max_rounds=3, sleeper=waits.append)
+        self.assertEqual(result, 0)
+        self.assertEqual(attempts, [5, 5])
+        self.assertEqual(self.clipboard, ["Тестовое поручение"])
+        self.assertEqual(self.loop.state.get("04", "test-focus-0001")[1], "prepared")
+        self.assertEqual(waits, [10, 10])
+        self.assertTrue(any("Цикл НЕ остановлен" in x for x in self.console))
+
+    def test_repeated_focus_denial_stays_pending(self):
+        self.init()
+        self.add("04", "test-focus-0002")
+        self.loop.tab_switcher = lambda _: (_ for _ in ()).throw(
+            manual.WindowFocusDeferred("Firefox not foreground"))
+        waits = []
+        self.assertEqual(cycle_mod.run_loop(self.loop, issue=33, interval=10,
+                                            max_rounds=3, sleeper=waits.append), 0)
+        self.assertIsNone(self.loop.state.get("04", "test-focus-0002"))
+        self.assertEqual(self.clipboard, [])
+        self.assertEqual(waits, [10, 10])
+
     def test_clipboard_failure_does_not_mark_prepared(self):
         self.init()
         self.add()
