@@ -57,6 +57,51 @@ class ManualTests(unittest.TestCase):
         self.assertEqual(layout64.u.offset, 8)
         self.assertEqual(layout32.u.offset, 4)
 
+    def test_foreground_already_firefox_does_not_activate_again(self):
+        class FakeUser:
+            def __init__(self):
+                self.calls = 0
+            def GetForegroundWindow(self):
+                return 67
+            def SetForegroundWindow(self, hwnd):
+                self.calls += 1
+                return False
+        fake = FakeUser()
+        m.ensure_firefox_foreground(fake, 67, sleeper=lambda _: None)
+        self.assertEqual(fake.calls, 0)
+
+    def test_foreground_activation_may_complete_after_false_return(self):
+        class FakeUser:
+            def __init__(self):
+                self.calls = 0
+                self.foreground = 99
+            def GetForegroundWindow(self):
+                return self.foreground
+            def SetForegroundWindow(self, hwnd):
+                self.calls += 1
+                return False
+        fake = FakeUser()
+        def settle(_delay):
+            fake.foreground = 67
+        m.ensure_firefox_foreground(fake, 67, sleeper=settle)
+        self.assertEqual(fake.calls, 1)
+
+    def test_foreground_denied_defers_without_keyboard(self):
+        class FakeUser:
+            def __init__(self):
+                self.calls = 0
+            def GetForegroundWindow(self):
+                return 99
+            def SetForegroundWindow(self, hwnd):
+                self.calls += 1
+                return False
+        fake = FakeUser()
+        delays = []
+        with self.assertRaises(m.WindowFocusDeferred):
+            m.ensure_firefox_foreground(fake, 67, sleeper=delays.append)
+        self.assertEqual(fake.calls, 1)
+        self.assertEqual(delays, [0.15, 0.15, 0.15])
+
     def test_tab_shortcut_sequence_includes_ninth_and_eleventh(self):
         ctrl = 0x11
         pgdn = 0x22
