@@ -159,7 +159,7 @@
 **Команды повторения при наличии исходников.** В исходной временной сессии использовались имена файлов/entry points из таблицы; точные временные каталоги не сохранены. Ниже — однозначная форма команд для восстановления исходников в `src/` и `negative/` (каждый positive запускается отдельно в собственном output-каталоге):
 
 ```sh
-mkdir -p out
+mkdir -p out/ClassInitDemo out/ConstantVsBoxedDemo out/InstanceOrderDemo out/CircularInitDemo out/InitFailureDemo out/InstanceFailureDemo out/ClassLoadingDemo out/negative
 javac --release 21 -d out/ClassInitDemo src/ClassInitDemo.java
 java -cp out/ClassInitDemo ClassInitDemo
 javac --release 21 -d out/ConstantVsBoxedDemo src/ConstantVsBoxedDemo.java
