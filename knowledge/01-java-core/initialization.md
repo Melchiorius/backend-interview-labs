@@ -149,7 +149,7 @@ direct interface field=1
 
 **2. `Child.BOXED` запускает class initialization.** Тип `Integer` — ссылочный, а не примитивный или `String`; поле не является constant variable. Чтение неконстантного static-поля, объявленного в `Child`, — active use, поэтому Java должна инициализировать класс до чтения.
 
-**3. Сначала инициализируется `Parent`.** Инициализация класса начинается с его суперкласса. Внутри `Parent` сначала выполняется инициализатор поля `state`, затем static block. Это единая последовательность в порядке исходного текста.
+**3. Сначала инициализируется `Parent`.** После отдельного раннего шага с constant variables инициализация класса сначала инициализирует его суперкласс. Внутри `Parent` сначала выполняется инициализатор поля `state`, затем static block. Это единая последовательность в порядке исходного текста.
 
 **4. Затем идут superinterfaces, объявляющие default methods.** `Child implements MiddleFeature, NoDefaultFeature`, а `MiddleFeature extends RootFeature`. У `RootFeature` и `MiddleFeature` есть default methods, поэтому при инициализации `Child` Java обходит эту ветвь в postorder: сначала `RootFeature`, затем `MiddleFeature`. `NoDefaultFeature` не объявляет default method, поэтому не инициализируется только из-за `implements`.
 
@@ -211,7 +211,7 @@ direct interface field=1
 
 Класс при этом может быть загружен; важно не смешивать loading и initialization.
 
-Для контраста, `Class.forName(name)` инициирует инициализацию. Вариант с флагом позволяет отделить загрузку от инициализации:
+Для контраста, `Class.forName(name)` инициирует инициализацию. Вариант с флагом позволяет отделить загрузку от инициализации. Ниже фрагмент: предполагается, что переменная `loader` уже содержит нужный `ClassLoader`; обработка `ClassNotFoundException` опущена.
 
 ```java
 Class<?> first = Class.forName("example.SomeType", false, loader);
@@ -299,17 +299,19 @@ Base initialized
 ### Прямая инициализация интерфейса не инициализирует его предков
 
 ```java
-interface ParentI {
-    int P = log("ParentI");
-}
-
-interface ChildI extends ParentI {
-    int C = log("ChildI");
-
+final class InitLog {
     static int log(String name) {
         System.out.println(name);
         return 1;
     }
+}
+
+interface ParentI {
+    int P = InitLog.log("ParentI");
+}
+
+interface ChildI extends ParentI {
+    int C = InitLog.log("ChildI");
 }
 
 public class InterfaceInit {
@@ -351,9 +353,13 @@ class BadForwardReference {
 Квалифицированное обращение — другой случай:
 
 ```java
-class QualifiedForwardReference {
+public class QualifiedForwardReference {
     static int first = QualifiedForwardReference.later;
     static int later = 67;
+
+    public static void main(String[] args) {
+        System.out.println(first);
+    }
 }
 ```
 
