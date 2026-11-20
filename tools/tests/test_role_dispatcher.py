@@ -117,6 +117,10 @@ class DispatchTests(unittest.TestCase):
             text = (Path(self.temp.name) / "inbox" / target / "inheritance-g1-001.md").read_text()
             self.assertIn("Проверь исследовательский план", text)
             self.assertIn("# Поручение роли", text)
+            self.assertIn("Источник сообщения:", text)
+            self.assertIn("## Задание", text)
+            self.assertNotIn("Перед началом повторно сверьте фактический GitHub", text)
+            self.assertNotIn("Это автоматическая доставка, а не доказательство", text)
         self.assertEqual(self.dispatcher.scan(33)["new"], 0)
 
     def test_only_allowlisted_actor(self):
