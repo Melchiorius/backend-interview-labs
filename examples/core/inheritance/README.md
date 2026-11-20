@@ -2,7 +2,7 @@
 
 **Назначение:** один многофайловый пример, в котором один объект наследника используется через ссылку базового типа. Это не самостоятельное упражнение, новой системы сборки не требуется.
 
-**Теория:** [Классы](../../../knowledge/01-java-core/classes.md), [доступ](../../../knowledge/01-java-core/access.md), [типы ссылок](../../../knowledge/01-java-core/types.md), [перегрузки](../../../knowledge/01-java-core/conversions.md), [параметры](../../../knowledge/01-java-core/parameters.md); [исследовательский план CORE-INHERITANCE](../../../docs/plans/CORE-INHERITANCE.md). Статья CORE-INHERITANCE готовится по Issue #38: на несуществующий файл пока не ссылаемся.
+**Теория:** [Классы](../../../knowledge/01-java-core/classes.md), [доступ](../../../knowledge/01-java-core/access.md), [типы ссылок](../../../knowledge/01-java-core/types.md), [перегрузки](../../../knowledge/01-java-core/conversions.md), [параметры](../../../knowledge/01-java-core/parameters.md); [исследовательский план CORE-INHERITANCE](../../../docs/plans/CORE-INHERITANCE.md). Самостоятельная [статья CORE-INHERITANCE](../../../knowledge/01-java-core/inheritance.md) представлена вместе с этим примером на общей ветке PR #43; до публикации в `main` оба материала остаются черновиками.
 
 ## Участники и механизм
 
