@@ -42,9 +42,10 @@ System.out.println(boxed.equals(primitive)); // true: Integer.equals
 ```java
 String s = "67";
 Integer n = 67;
-// boolean a = s == n;       // compile-time error: incomparable reference types
-// boolean b = 67 == true;   // compile-time error: int vs boolean
-// boolean c = 67.equals(n); // compile-time error: int is primitive
+int primitive = 67;
+// boolean a = s == n;              // compile-time error: incomparable reference types
+// boolean b = 67 == true;          // compile-time error: int vs boolean
+// boolean c = primitive.equals(n); // compile-time error: int cannot be dereferenced
 ```
 
 Важно: закомментированные операторы намеренно не компилируются, если убрать комментарий. Это ошибки **типизации на этапе компиляции**, а не контрпримеры нарушенного `equals`. Нормативно: [JLS 21 §15.21.1–15.21.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.21) и [§5.1.8 — Unboxing Conversion](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.8). Подробнее о типах и преобразованиях: [CORE-TYPES](types.md), [CORE-CONVERSIONS](conversions.md).
