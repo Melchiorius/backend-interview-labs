@@ -205,3 +205,67 @@ diff -u expected.stdout actual.stdout
 ```
 
 Не проверять `this==null` или `lambda1==lambda2` вместо указанных тестов — такие примеры не объясняют нормативный момент захвата/типизации. P11/P12 особенно важны: у bound method reference receiver вычисляется **при создании reference**, у приведённой lambda он вычисляется при каждом `get()`.
+
+
+## 6. Negative: 20 самостоятельных компиляций, а не один «сломаный» source set
+
+Для каждой строки сохранить **только соответствующий** код в `negative/<ID>.java`. Запускать отдельно: `mkdir -p out-negative; javac --release 21 -d out-negative negative/<ID>.java`, где `<ID>` — имя в первом столбце. Полный код каждой отрицательной программы приведён в таблице; `javac` на OpenJDK 21.0.12.1 фактически отказал **20/20** раз по указанным причинам. Точное количество диагностик, их английский текст и позиции зависят от компилятора, нормативны причины, а не конкретные сообщения.
+
+| ID / имя файла | Полный отдельный исходник | Проверенная причина отказа |
+|---|---|---|
+| `N01_InnerWithoutOuter` | `class N01_InnerWithoutOuter { class Inner {} static void test(){ new Inner(); } }` | В static method отсутствует enclosing `this` для inner |
+| `N02_StaticNestedOuterInstance` | `class N02_StaticNestedOuterInstance { int x=67; static class Nested { int read(){return x;} } }` | Static nested без ссылки на enclosing object не читает instance field |
+| `N03_CaptureReassignedLocal` | `class N03_CaptureReassignedLocal { void go(){ int x=67; x=68; class Local { int read(){return x;} } } }` | Захваченная local variable не effectively final |
+| `N04_AnonymousCaptureReassigned` | `class N04_AnonymousCaptureReassigned { void go(){ int x=67; Runnable r=new Runnable(){public void run(){System.out.println(x);}}; x++; } }` | То же для anonymous class |
+| `N05_LambdaCaptureReassigned` | `import java.util.function.*; class N05_LambdaCaptureReassigned { void go(){ int x=67; Supplier<Integer> s=()->x; x++; } }` | То же для lambda |
+| `N06_ThisInStaticLambda` | `class N06_ThisInStaticLambda { static Runnable r = () -> System.out.println(this); }` | Lambda не вводит `this` в static context |
+| `N07_VarWithoutLambdaTarget` | `class N07_VarWithoutLambdaTarget { void go(){ var f = (int x) -> x+1; } }` | Нет functional target type |
+| `N08_UnhandledCheckedException` | `import java.io.*; class N08_UnhandledCheckedException { Runnable r=()->{throw new IOException();}; }` | Checked IOException не объявлен у `Runnable.run()` |
+| `N09_OuterThisFromNested` | `class N09_OuterThisFromNested { static class Nested{int m(){return N09_OuterThisFromNested.this.hashCode();}} }` | Нет enclosing instance для `Outer.this` |
+| `N10_InvalidMethodRefReturn` | `import java.util.function.*; class N10_InvalidMethodRefReturn { Function<String,String> f=String::length; }` | Нельзя адаптировать результат int к target String |
+| `N11_AmbiguousLambdaOverload` | `import java.util.function.*; class N11_AmbiguousLambdaOverload { void m(IntUnaryOperator a){} void m(LongUnaryOperator b){} void go(){m(x->x+1);} }` | Две конкурирующие применимые перегрузки |
+| `N12_LambdaRunnableReturnsValue` | `class N12_LambdaRunnableReturnsValue { Runnable r=()->67; }` | Value expression несовместимо с void functional method |
+| `N13_LocalRecordCapturesVariable` | `class N13_LocalRecordCapturesVariable { void go(){ int x=67; record R(int z){int m(){return x;}} } }` | Local record implicitly static, нет local capture |
+| `N14_QualifiedInnerNoOuter` | `class N14_QualifiedInnerNoOuter { class Inner{} static void go(){new N14_QualifiedInnerNoOuter.Inner();} }` | При `new Inner` не предоставлен outer instance |
+| `N15_NotFunctional` | `@FunctionalInterface interface N15_NotFunctional { void first(); void second(); }` | Не SAM, две abstract operations |
+| `N16_CaptureNotDefinitelyAssigned` | `import java.util.function.*; class N16_CaptureNotDefinitelyAssigned { void go(){ int x; Supplier<Integer> s=()->x; x=67;} }` | `x` не definitely assigned к lambda expression |
+| `N17_UnboundReferenceArity` | `import java.util.function.*; class N17_UnboundReferenceArity { Supplier<Integer> s=String::length; }` | Unbound receiver отсутствует в параметрах SAM |
+| `N18_LocalStaticModifier` | `class N18_LocalStaticModifier { void go(){static class Local {}} }` | Сам local class нельзя объявить с `static`, хотя static members в его теле разрешены |
+| `N19_LambdaParameterShadowsLocal` | `import java.util.function.*; class N19_LambdaParameterShadowsLocal {void go(){int x=67; Function<Integer,Integer> f=x->x+1;} }` | Имя lambda parameter уже занято local variable |
+| `N20_InstanceFieldInStaticLambda` | `class N20_InstanceFieldInStaticLambda {int n=67; static Runnable r=()->System.out.println(n);}` | Из static lambda нет implicit receiver instance field |
+
+**Важная противоположность:** выражение `missing::trim` с target `Supplier<String>` **компилируется**; для `missing==null` его вычисление бросает `NullPointerException` сразу. Lambda `()->missing.trim()` создаётся и может бросить NPE только при вызове SAM. Это **runtime**, не ошибка компиляции. И наоборот, ошибочное предположение «inner class не может иметь static initializer» опровергнуто P03–P05: отказ N18 происходит из-за модификатора **самого локального класса**.
+
+## 7. Зависимости, реальные ссылки и отсутствующие темы
+
+Пути проверены по исходному GitHub `main`:
+
+- [CORE-TYPES](../../knowledge/01-java-core/types.md) — reference types, статический тип, переменные;
+- [CORE-CLASSES](../../knowledge/01-java-core/classes.md) — `this`, контекст класса и методы, не повторять весь учебник конструкторов;
+- [CORE-ACCESS](../../knowledge/01-java-core/access.md) — scope vs access, private/nested member access;
+- [CORE-INHERITANCE](../../knowledge/01-java-core/inheritance.md) — dispatch/overload/super;
+- [CORE-INIT](../../knowledge/01-java-core/initialization.md) — class initializers и static, не путать с capture;
+- [CORE-OBJECT](../../knowledge/01-java-core/object.md) и [CORE-EQUALITY](../../knowledge/01-java-core/equality.md) — identity и equals; не выводить гарантии уникальной lambda instance из Object;
+- [Принятый G1-план CORE-INTERFACES/COMPOSITION](CORE-INTERFACES-COMPOSITION.md) — **план**, не опубликованная CORE-INTERFACES-статья; его SAM-обзор не заменяет CORE-FUNCTIONS;
+- [CURRICULUM](../CURRICULUM.md), [COVERAGE](../COVERAGE.md), [SOURCE_REGISTRY](../SOURCE_REGISTRY.md), [JAVA_CORE_PLAN](../JAVA_CORE_PLAN.md) — карта тем, статусы, версии.
+
+**Пока только ID, без фиктивных ссылок на статьи:** `CORE-NESTED`, `CORE-FUNCTIONS` (цели этого исследования), `CORE-GENERICS`, `CORE-ERASURE`, `CORE-STREAMS`, `CORE-SERIAL`, `CON-JMM`, `CON-RACE`, `JVM-BYTECODE`, `JVM-JIT`, `TEST-DESIGN`. Перед выпуском нового текста обязательно повторно проверить `main`: ранее отсутствующие файлы могли появиться.
+
+## 8. Проверки, что выполнено и чего не было
+
+**Фактически запущено локально:** `java -version` и `javac -version` → OpenJDK 21.0.12.1 / `javac 21.0.12.1`; `javac --release 21 -d out NestedFunctionsProbes.java`, `java -cp out NestedFunctionsProbes`, `diff -u expected.stdout actual.stdout` (пустой diff, **17/17 строк совпали**). Затем 20 отдельно созданных Java-файлов и 20 отдельных вызовов `javac --release 21 -d ...`: **20/20** дали ошибки по ожидаемым причинам. Все примеры содержатся в §5 и §6 для повторения; в `examples/` не коммитились.
+
+**Not run:** локальная сборка репозитория Gradle/JUnit/Mockito, IntelliJ/Obsidian Preview и клики, сравнительная компиляция на Java 8/16, альтернативные JDK/VM, property-based tests, serializability, concurrency/JMM, performance benchmark, GUI/другие ОС, отдельный runnable example роли 03. GitHub Actions по новому PR проверять отдельно **после появления HEAD**, явно разграничив CI существующих Java Core тестов и тесты, реально выполненные из Markdown (обычный workflow не компилирует Markdown-листинги).
+
+**Нормативные допущения/риски:** `final` у captured local variable не защищает изменяемые поля/массивы от гонки; наличие лексически охватывающего экземпляра не доказывает универсальный synthetic field; identity lambda result не детерминирована спецификацией; конкретная NPE от bound reference — проверяемое нормативное различие; JLS не гарантирует производительность lambda над anonymous class.
+
+## 9. Контракт следующему этапу и решение G1
+
+- **00:** принять/изменить решение **две статьи + один план**, матрицу NF-01–NF-30 (**16 P0 / 8 P1 / 6 P2**), различие JLS и implementation, достаточность проверочных сценариев. До независимой применимой оценки 04 и явного решения 00 G2 новых тем не открыт; факт наличия PR сам по себе не означает ACCEPTED.
+- **04:** провести **независимый G1 review по точному HEAD**: §8.1.3/14.3 (P03–05 vs N18), §15.9.5/15.27 (P07/N06), §4.12.4/§16 (capture/DA), §15.13.3 (P11/P12 receiver null/eagerness), §9.8 (P17/N15), checked §15.27 (P14/N08), target §15.12 (P13/N11). Проверить полный positive stdout и выборочно negative sources; не засчитывать авторские 20 отказов как независимые. При замечаниях — ID и нормативное основание; re-review при изменении HEAD.
+- **02 (только после G1):** связный русский текст CORE-NESTED по NF-01–07/NF-16; CORE-FUNCTIONS по NF-08–15; P1 — с объяснениями или честными границами, P2 — как будущие направления. Дать читателю реально работающие и отдельно отрицательные контрпримеры; не повторять весь CORE-INTERFACES.
+- **03 (только после G1):** согласовать с 02 один автономный Java 21 example при содержательной необходимости, отдельный negative source set, без ненужного Gradle/Mockito/ритуального упражнения.
+- **05 (G3):** натуральный русский, точный `this`/enclosing/receiver/target, работающие Obsidian-ссылки, проверка GUI только если реально запускалась.
+- **06 (G6):** статус `COVERAGE` и навигация только на опубликованном `main`, не по G1-исследованию.
+
+**Параллельные программы:** G2 CORE-INTERFACES/COMPOSITION (#70/#71) и G6 CORE-OBJECT/EQUALITY (#69) этим G1 не задерживаются. **Не писать статью 02, не менять COVERAGE и не выполнять merge.**
