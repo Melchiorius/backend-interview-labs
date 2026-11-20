@@ -1,4 +1,4 @@
-# CORE-INHERITANCE — runnable Java 21 example
+# CORE-INHERITANCE — запускаемый пример на Java 21
 
 **Назначение:** один многофайловый пример, в котором один объект наследника используется через ссылку базового типа. Это не самостоятельное упражнение, новой системы сборки не требуется.
 
@@ -6,9 +6,9 @@
 
 ## Участники и механизм
 
-В `src/base/Base.java` класс Base объявляет describe(Object), статический kind(), поле code = 67, final-методы, Number result(), read() throws IOException, private и package-private методы. В `src/client/Derived.java` из другого пакета наследник переопределяет describe(Object), вводит describe(String), скрывает kind() и поле code = 68, уточняет результат до Integer и checked throws до FileNotFoundException. В `src/client/InheritanceDemo.java` переменная Base ref и переменная Derived derived указывают **на один объект Derived**.
+В [`base.Base`](src/base/Base.java) объявлены метод `describe(Object)`, статический `kind()`, поле `code = 67`, `final`-методы, `Number result()`, `read() throws IOException`, а также `private` и package-private методы. В [`client.Derived`](src/client/Derived.java) из другого пакета подкласс переопределяет `describe(Object)`, добавляет перегрузку `describe(String)`, скрывает `kind()` и поле `code` собственным значением `68`, уточняет результат до `Integer` и объявляет более узкое проверяемое исключение `FileNotFoundException`. В [`client.InheritanceDemo`](src/client/InheritanceDemo.java) переменные `Base ref` и `Derived derived` указывают **на один объект `Derived`**.
 
-Для `ref.describe("67")` компилятор выбирает доступный по Base метод describe(Object), а при выполнении запускается его override в Derived. Поэтому `derived:object`. Для `derived.describe("67")` компилятор видит перегрузку describe(String) и выбирает её: `derived:string`. Приведение `((Base)this)` не отключает виртуальный dispatch, в отличие от специального вызова `super.describe(...)`. Статические методы и поля выбираются по compile-time типу, не по фактическому классу объекта. Вызов static через переменную показан как ловушка, а не рекомендуемый стиль.
+Для `ref.describe("67")` компилятор видит у статического типа `Base` метод `describe(Object)`, а при выполнении запускается его переопределение в объекте `Derived`. Результат — `derived:object`. Для `derived.describe("67")` компилятор видит дополнительную перегрузку `describe(String)` и выбирает её: `derived:string`. Приведение `((Base) this)` не отключает виртуальную диспетчеризацию, в отличие от специального вызова `super.describe(...)`. Статические методы и поля выбираются по статическому типу выражения, а не по фактическому классу объекта. Вызов static через переменную показан как ловушка, а не рекомендуемый стиль.
 
 Приватный метод Base не переопределяется одноимённым методом Derived. Package-private метод Base из чужого пакета также не переопределяется: это два отдельных объявления. Пример показывает допустимое сужение return Number → Integer и checked IOException → FileNotFoundException.
 

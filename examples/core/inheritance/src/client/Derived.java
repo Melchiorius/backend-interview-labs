@@ -2,6 +2,7 @@ package client;
 
 // Theory: knowledge/01-java-core/access.md
 // Theory: knowledge/01-java-core/conversions.md
+// Theory: knowledge/01-java-core/inheritance.md
 // Research: docs/plans/CORE-INHERITANCE.md
 import base.Base;
 import java.io.FileNotFoundException;

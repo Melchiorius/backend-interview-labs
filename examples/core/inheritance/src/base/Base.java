@@ -3,6 +3,7 @@ package base;
 // Theory: knowledge/01-java-core/classes.md
 // Theory: knowledge/01-java-core/access.md
 // Theory: knowledge/01-java-core/types.md
+// Theory: knowledge/01-java-core/inheritance.md
 // Research: docs/plans/CORE-INHERITANCE.md
 import java.io.IOException;
 
