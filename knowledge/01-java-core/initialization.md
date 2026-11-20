@@ -367,7 +367,7 @@ Base initialized
 
 Для каждого непосредственно реализованного интерфейса Java рекурсивно рассматривает его superinterfaces слева направо, прежде чем вернуться к самому интерфейсу. В инициализацию класса включаются только интерфейсы этого обхода, объявляющие хотя бы один `default`-метод.
 
-В центральном примере `Child implements MiddleFeature, NoDefaultFeature`, а `MiddleFeature extends RootFeature`. Поэтому порядок: `Parent` → `RootFeature` → `MiddleFeature` → `Child`. `NoDefaultFeature` не входит в этот список.
+В центральном примере `Child implements LeafDefault, QuietChild`, а `LeafDefault extends RootDefault`. Суперкласс `Parent` уже инициализирован; среди интерфейсов с `default`-методами порядок — `RootDefault` → `LeafDefault`, затем выполняются статические инициализаторы `Child`. Ни `QuietParent`, ни `QuietChild` не объявляют `default`-методов, поэтому одно лишь `implements QuietChild` не запускает их инициализацию.
 
 Компилятор может создать *synthetic default methods*. Такие методы тоже могут повлиять на то, считается ли интерфейс объявляющим default method для целей инициализации, хотя этого не видно в исходном коде. Это оговорка спецификации, а не основание строить повседневный код на предположениях о синтетических методах. См. [JLS 21 §12.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1) и [§12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2).
 
@@ -568,7 +568,7 @@ Java не отключает динамическую диспетчеризац
 - выполняется тело конструктора суперкласса;
 - instance initializers и тело конструктора подкласса **ещё не выполнялись**.
 
-В центральном примере `Parent()` вызывает `describe()`. Фактический объект — `Child`, поэтому запускается `Child.describe()`. `Parent.parentValue` уже равно `10`, но `Child.value` всё ещё равно `0`. После возврата `Parent()` инициализатор подкласса присвоит полю `68`.
+В центральном примере `Parent()` вызывает `observe()`. Фактический объект — `Child`, поэтому выполняется `Child.observe()`. `Parent.parentValue` к этому моменту уже равно `67`, но `Child.childValue` всё ещё равно `0`, а `Child.childLabel` — `null`. После возврата из `Parent()` инициализаторы подкласса присвоят этим полям `68` и `"ready"` соответственно.
 
 Это обычная динамическая диспетчеризация, применённая к объекту, который ещё создаётся. Общее правило overriding разобрано в [CORE-INHERITANCE](inheritance.md); здесь важен момент времени и доступное состояние объекта. См. [JLS 21 §12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
 
