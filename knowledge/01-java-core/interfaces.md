@@ -318,7 +318,23 @@ interface Broken {
 
 ## Functional interface, marker и abstract class
 
-**Functional interface (SAM)** имеет одну логическую abstract-операцию. Не считаются самостоятельными SAM-операциями его `default`, `static` и `private` методы, а также abstract-декларации, совпадающие с публичными методами `Object`. В центральном примере `Operation` допускает lambda, хотя содержит `equals(Object)`, `twice()` и `identity()`. Аннотация `@FunctionalInterface` проверяет правильность объявления, но не изменяет его типовую семантику.
+**Functional interface (SAM)** в Java 21 — это interface, который **не объявлен с модификатором `sealed`** и имеет одну логическую abstract-операцию. Не считаются самостоятельными SAM-операциями его `default`, `static` и `private` методы, а также abstract-декларации, совпадающие с публичными методами `Object`. В центральном примере `Operation` допускает lambda, хотя содержит `equals(Object)`, `twice()` и `identity()`. Аннотация `@FunctionalInterface` проверяет правильность объявления, но не изменяет его типовую семантику.
+
+Даже одна abstract-операция не делает `sealed`-интерфейс функциональным. Такой интерфейс не может быть целью lambda expression:
+
+```java
+sealed interface ClosedPolicy permits ClosedPolicyImpl {
+    int apply(int value);
+}
+final class ClosedPolicyImpl implements ClosedPolicy {
+    public int apply(int value) { return value; }
+}
+class Probe {
+    ClosedPolicy policy = value -> value + 1; // compile-time error
+}
+```
+
+Это нормативное условие SAM, а не подробный разбор `sealed`/`permits`; последний остаётся за пределами статьи (IC-25).
 
 ```java
 @FunctionalInterface
