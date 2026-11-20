@@ -46,3 +46,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.
+
+
+### Непрерывный цикл GitHub → Firefox (роли 00–06)
+
+[Инструкция по запуску](docs/ROLE_CYCLE.md), [скрипт](tools/role_cycle.py): проверяет GitHub на новые `backend-handoff`, выбирает вкладку соответствующей роли в единственном окне Firefox (00→1, …, 06→7), копирует поручение и ждёт ручных `Ctrl+V`, `Enter`, подтверждения `y`. Затем продолжает опрос. **Не** читает ChatGPT и **не** отправляет сообщения автоматически. Для пилота `py tools/role_cycle.py init-tabs`, затем `py tools/role_cycle.py run --issue 34 --once --dry-run`, потом `py tools/role_cycle.py run --issue 34 --interval 60`.
