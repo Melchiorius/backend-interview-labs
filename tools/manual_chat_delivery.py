@@ -331,7 +331,7 @@ def pending(folder: Path, state: DeliveryState, role: str | None = None):
 def prepare(folder: Path, state: DeliveryState, role: str | None, event: str | None,
             *, dry_run: bool = False, open_chat: bool = True, use_tab: bool = False,
             clipboard=copy_windows_clipboard, opener=webbrowser.open,
-            tab_switcher=switch_firefox_tab) -> tuple[str, str] | None:
+            tab_switcher=switch_firefox_tab, show_confirm_hint: bool = True) -> tuple[str, str] | None:
     items = pending(folder, state, role)
     if event:
         items = [x for x in items if x[1] == event]
@@ -376,8 +376,14 @@ def prepare(folder: Path, state: DeliveryState, role: str | None, event: str | N
     else:
         print("Текст скопирован. Переключитесь на существующую вкладку нужного чата,")
         print("проверьте её адрес, нажмите Ctrl+V и Enter. Новых вкладок скрипт не создавал.")
-    print(f"ПОСЛЕ отправки выполните: py tools/manual_chat_delivery.py confirm --role {current_role} --event {event_id}")
-    print("Если отправка не состоялась, НЕ подтверждайте: поручение останется в очереди.")
+    if show_confirm_hint:
+        print(f"ПОСЛЕ отправки выполните: py tools/manual_chat_delivery.py confirm --role {current_role} --event {event_id}")
+        print("Если отправка не состоялась, НЕ подтверждайте: поручение останется в очереди.")
+    else:
+        print("Цикл не ждёт подтверждения. Статус prepared означает только подготовку текста.")
+        print("Если не успели вставить сообщение, повторите вручную: "
+              f"py tools/manual_chat_delivery.py prepare --role {current_role} "
+              f"--event {event_id} --use-tab")
     return current_role, event_id
 
 
