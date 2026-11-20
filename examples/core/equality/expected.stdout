@@ -1,0 +1,17 @@
+== Identity and correct immutable key ==
+Different references: true
+Equal values and matching hashes: true/true
+Unequal hash-collision keys in HashSet: 2
+HashMap retrieves colliding keys: left/right
+== Deliberately broken keys (OpenJDK 21 observation) ==
+Broken hash: equal/hash-equal=true/false
+Broken hash: HashMap lookup=null
+Asymmetric equals: parent->child/child->parent=true/false
+Mutable key: lookup before/after=stored/null
+== Hash equality vs sorted equality ==
+BigDecimal equals/compareToZero=false/true
+BigDecimal HashSet/TreeSet=2/1
+Case-insensitive String HashSet/TreeSet=2/1
+Nested arrays shallow/deep=false/true
+Objects.equals(null, null)=true
+CHECK PASSED

@@ -89,3 +89,7 @@ CHECK PASSED
 ## Порядок инициализации классов и объектов
 
 [CORE-INIT — автономный пример Java 21](initialization/README.md) показывает class initialization (constant variable, унаследованное static-поле, superinterfaces с default methods) и instance initialization (default values, superclass constructor, virtual dispatch, делегирование this-конструктора и инициализаторы подкласса). Один исходник, полный ожидаемый stdout и проверка diff; отдельный Gradle-модуль не требуется.
+
+## Равенство, хэши и ключи коллекций
+
+[CORE-EQUALITY — воспроизводимый пример Java 21](equality/README.md) разбирает правильный immutable value key, коллизию hash без равенства, нарушения `equals/hashCode`, асимметрию при наследовании, изменяемый ключ и различие `HashSet`/`TreeSet`. Один Java-файл, полный ожидаемый stdout и команда `bash examples/core/equality/verify.sh`; отдельного упражнения и Gradle-подпроекта нет.
