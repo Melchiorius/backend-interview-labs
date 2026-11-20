@@ -39,15 +39,20 @@ def recipient(body: str) -> str | None:
     """Find one standalone 'Кому: 02' header among the first twelve lines."""
     if not isinstance(body, str):
         return None
-    found = [m.group(1) for line in body.splitlines()[:12]
-             if (m := ADDRESS.fullmatch(line))]
+    found = []
+    for line in body.splitlines()[:12]:
+        if line.lstrip().startswith(("```", "~~~")):
+            break  # no addresses inside code fences
+        if (match := ADDRESS.fullmatch(line)):
+            found.append(match.group(1))
     return found[0] if len(found) == 1 else None
 
 
 def github_comment_url(repo: str, item: dict) -> str | None:
     """Accept only a native URL for the exact GitHub comment ID."""
     number, url = item.get("id"), item.get("html_url")
-    if type(number) is not int or number <= 0 or not isinstance(url, str):
+    if (type(number) is not int or number <= 0 or not isinstance(url, str)
+            or any(char in url for char in "\r\n\t")):
         return None
     parts = urlsplit(url)
     prefix = f"/{repo}/"
@@ -148,32 +153,6 @@ def tab_steps(index: int) -> list[tuple[int, int]]:
     if index <= 8:
         return [(0x11, ord(str(index)))]
     return [(0x11, ord("1"))] + [(0x11, 0x22)] * (index - 1)
-
-
-def read_tab_mapping(folder: Path) -> dict[str, int]:
-    path = folder / "chat_tabs.json"
-    if not path.exists():
-        return {}
-    try:
-        mapping = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise DeliveryError(f"invalid tab mapping {path}: {exc}") from exc
-    if not isinstance(mapping, dict) or any(k not in ROLES for k in mapping):
-        raise DeliveryError("tab mapping must be a role -> number JSON object")
-    return {role: validate_tab_index(index) for role, index in mapping.items()}
-
-
-def configure_tab(folder: Path, role: str, index: int) -> None:
-    if role not in ROLES:
-        raise DeliveryError("unknown role")
-    mapping = read_tab_mapping(folder)
-    mapping[role] = validate_tab_index(index)
-    folder.mkdir(parents=True, exist_ok=True)
-    path = folder / "chat_tabs.json"
-    temporary = path.with_name(path.name + ".tmp")
-    temporary.write_text(json.dumps(mapping, indent=2) + "\n", encoding="utf-8")
-    temporary.replace(path)
-    print(f"Роль {role} -> вкладка #{index} (слева направо в одном окне Firefox)")
 
 
 def windows_input_layout(pointer_type=ctypes.c_size_t):
