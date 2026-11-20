@@ -174,3 +174,239 @@ Compile-time constant `int LIMIT = 67` можно прочитать без за
 Отсутствие ключевого слова `public` перед обычным абстрактным методом интерфейса **не делает метод package-private**. Попытка `class X implements Api { void run(){} }` при `interface Api { void run(); }` — ошибка компиляции: реализация снижает видимость public-контракта. Не компилируются и `protected void run();` в интерфейсе, `private abstract void run();`, `static default void run() {}` и `default void run();` без тела.
 
 Вызов `Standard.kind()` из центрального примера отвергается не из-за недоступности, а потому что static-методы интерфейсов **не наследуются классами**. Вызов `Policy.helper()` из клиента отвергается из-за `private`. Эти два ограничения нельзя смешивать. Основание — [JLS 21 §9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4), [§9.4.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.3).
+
+## Разрешение default/abstract: пять разных ситуаций
+
+### 1. Метод класса и default интерфейса
+
+В центральном примере `Descendant extends Parent implements Welcome` получает `Parent.hello()`, возвращающий `"class"`. Конкретный метод класса имеет приоритет; интерфейсный default не подменяет существующую реализацию в иерархии классов.
+
+**Опасное упрощение:** «любой метод суперкласса, даже abstract, уже реализует default». Нет: абстрактный метод класса не даёт готового тела.
+
+```java
+abstract class Parent {
+    public abstract String text();
+}
+interface Welcome {
+    default String text() { return "default"; }
+}
+class Child extends Parent implements Welcome { } // N03: ошибка javac
+```
+
+Несмотря на `Welcome.text()`, конкретный `Child` обязан предоставить реализацию унаследованного абстрактного метода суперкласса. Если `Child` сам абстрактный, такое обязательство может остаться невыполненным, но его тогда нельзя инстанцировать. Причина именно в наследовании и правилах классов, а не в «малой приоритетности» abstract ([JLS 21 §8.4.8.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.4)).
+
+### 2. Два независимых default
+
+```java
+interface Left  { default int count() { return 67; } }
+interface Right { default int count() { return 68; } }
+class Broken implements Left, Right { } // N01: конфликт defaults
+```
+
+Класс должен объявить собственный override. Он может вызвать `Left.super.count()`, `Right.super.count()`, обе реализации либо написать новый алгоритм. В центральном примере `Both` вызывает обе. Никакого правила «победит первый/последний в implements» нет.
+
+Иное положение, если два пути **ведут к одному исходному default**:
+
+```java
+interface Root { default int count() { return 67; } }
+interface First extends Root { }
+interface Second extends Root { }
+class Diamond implements First, Second { }
+// new Diamond().count() -> 67
+```
+
+Одна реализация унаследована двумя путями — это не два независимо объявленных default. Ср. [JLS 21 §9.4.1.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.3), [§8.4.8.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.4).
+
+### 3. Независимые abstract и default — тоже конфликт
+
+```java
+interface Required { String label(); }
+interface Provided { default String label() { return "default"; } }
+class Broken implements Required, Provided { } // N02: нужен override
+```
+
+В `Resolved` центрального примера этот случай разрешён явно: `public String status() { return DefaultStatus.super.status(); }`. Default не удовлетворяет автоматически несовместимому **параллельному** наследованию абстрактного метода другого интерфейса. Это другая причина ошибки, чем N03 с абстрактным методом **суперкласса**. Нельзя сводить оба механизма к одной схеме приоритетов.
+
+### 4. Более специфичный подинтерфейс
+
+`B extends A` может переопределить default из `A`. Поэтому `new Specific().value()` возвращает `"child"`: класс реализует более специфичный `B`.
+
+Подинтерфейс также может переобъявить унаследованный default **абстрактным**:
+
+```java
+interface Base { default String token() { return "base"; } }
+interface MustImplement extends Base {
+    @Override String token();
+}
+class Concrete implements MustImplement {
+    @Override public String token() { return "implemented"; }
+}
+```
+
+У `Concrete` реализация обязательна: более специфичный контракт `MustImplement` действительно требует её. Это не конфликт двух независимых defaults ([JLS 21 §9.4.1.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.1)).
+
+### 5. Квалифицированный `InterfaceName.super.method()`
+
+Такая форма вызывает конкретную default-реализацию **подходящей непосредственно указанной superinterface**. Она не равна приведению типа: `((Left) this).name()` выполняет обычный виртуальный вызов и может снова попасть в переопределение класса.
+
+Два отдельных отрицательных фрагмента:
+
+```java
+interface A { default void run() {} }
+interface B extends A {}
+class N11_NonDirectSuper implements B {
+    void test() { A.super.run(); } // N11: A не direct superinterface
+}
+```
+
+```java
+interface A { default void run() {} }
+interface B extends A {}
+class N12_RedundantSuper implements A, B {
+    void test() { A.super.run(); } // N12: A redundant через B
+}
+```
+
+Во втором случае `A` указана напрямую, но одновременно унаследована более специфичной `B` — такой квалификатор тоже запрещён. Каждую отрицательную программу компилируйте в **отдельном файле**, чтобы повторные объявления `A/B` не скрыли истинную причину отказа. См. [JLS 21 §15.12.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.1).
+
+## Return types и checked exceptions: ещё одно измерение конфликтов
+
+Подстановка реализации должна соблюдать return-type-substitutability, объявленные checked exceptions и достаточную видимость. **Допустимое сужение**:
+
+```java
+import java.io.IOException;
+interface Source { Number get() throws Exception; }
+class Good implements Source {
+    @Override public Integer get() throws IOException { return 67; }
+}
+```
+
+`Integer` — подтип `Number`, `IOException` — подтип `Exception`. Это соответствует последней строке центральной программы.
+
+**Недопустимое расширение возвращаемого типа:**
+
+```java
+interface Source { Integer get(); }
+class Bad implements Source {
+    @Override public Number get() { return 67; } // compile-time error
+}
+```
+
+**Недопустимое расширение checked throws:**
+
+```java
+import java.io.IOException;
+interface Source { int get() throws IOException; }
+class Bad implements Source {
+    @Override public int get() throws Exception { return 67; } // compile-time error
+}
+```
+
+Эти фрагменты намеренно самостоятельны, их типы не должны смешиваться с другими примерами в одной компиляции. Невозможно разрешить всякий конфликт только совпадением имени и параметров: несовместимые возвращаемые типы и checked throws способны сделать реализацию незаконной. Точная основа: [JLS 21 §8.4.8.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.3), [§8.4.8.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.4), [§9.4.1.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.2). Это отдельный контрпример для IC-21, не только reabstract из плана G1.
+
+## Интерфейс и методы `Object`
+
+Интерфейс не наследует `java.lang.Object` как класс. Но JLS задаёт специальные правила для публичных instance methods `Object` ([§9.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.2)). Поэтому **запрещён** default-метод, override-equivalent non-private методу `Object`:
+
+```java
+interface Broken {
+    default String toString() { return "bad"; } // N04
+}
+```
+
+Аналогично нельзя объявить `default boolean equals(Object other)` (N17). Однако **абстрактное** `boolean equals(Object other);` допустимо: тип может требовать этот контракт, и такая декларация не добавляет вторую абстрактную операцию для SAM. Утверждение «в интерфейсах вообще нельзя объявлять equals» неверно. Подробный контракт identity и value-equality — [CORE-OBJECT](object.md), [CORE-EQUALITY](equality.md). Правила: [JLS 21 §9.4.1.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.2).
+
+## Functional interface, marker и abstract class
+
+**Functional interface (SAM)** имеет одну логическую abstract-операцию. Не считаются самостоятельными SAM-операциями его `default`, `static` и `private` методы, а также abstract-декларации, совпадающие с публичными методами `Object`. В центральном примере `Operation` допускает lambda, хотя содержит `equals(Object)`, `twice()` и `identity()`. Аннотация `@FunctionalInterface` проверяет правильность объявления, но не изменяет его типовую семантику.
+
+```java
+@FunctionalInterface
+interface Broken {
+    void first();
+    void second(); // N13: две независимые abstract-операции
+}
+```
+
+Интерфейс может быть вообще без методов — *marker interface*:
+
+```java
+interface Marker {}
+class Tagged implements Marker {}
+// new Tagged() instanceof Marker -> true
+```
+
+Это метка, которую умеет интерпретировать конкретный API/код, но сама по себе она не даёт объекту нового алгоритма. См. [JLS 21 §9.8](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.8). Лямбды, method references и intersection types полностью относятся к будущей CORE-FUNCTIONS.
+
+**Интерфейс и абстрактный класс — не взаимозаменяемые декларации.**
+
+| Характеристика | Интерфейс | Абстрактный класс |
+|---|---|---|
+| Непосредственное наследование | Несколько superinterfaces | Один superclass |
+| Instance fields / конструктор | Нет | Да |
+| Реализация | Default, static, private при ограничениях §9 | Обычные public/protected/private/final методы, abstract и шаблонные методы |
+| Shared invariant / защищённый шаг | Нет собственного instance state | Может иметь protected state и final template |
+| Типовой контракт | Многие несвязанные классы могут его реализовать | Участвует в одной цепочке наследования классов |
+
+```java
+abstract class Counter {
+    protected final int initial;
+    Counter(int initial) { this.initial = initial; }
+    protected abstract int delta();
+    public final int value() { return initial + delta(); }
+}
+class PlusOne extends Counter {
+    PlusOne(int initial) { super(initial); }
+    @Override protected int delta() { return 1; }
+}
+// new PlusOne(67).value() -> 68
+```
+
+Здесь состояние и конструктор являются частью реализации абстрактного класса. Интерфейс не хранит поле `initial` для каждого объекта. Но это не означает, что абстрактный класс *всегда лучше*: когда требуется комбинировать независимые политики, бывает удобнее [CORE-COMPOSITION](composition.md). Основание: [JLS 21 §8.1.1.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.1.1), [§8.1.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.5), [§9.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.3).
+
+## Как правильно проверять отрицательные примеры
+
+Все отрицательные фрагменты сохраняются в **разных** файлах (например, `N02.java` или `N03.java`). У них могут повторяться имена `A/Left/Bad`. Выполняйте:
+
+```sh
+javac --release 21 -d out N02.java
+```
+
+Ожидается **ненулевой exit code именно по нужной причине**. Ошибка «duplicate class» после склейки фрагментов не является доказательством abstract/default conflict. Текст диагностики зависит от компилятора; нормативен механизм JLS, не конкретные слова сообщения. Полный исследовательский комплект N01–N19 приведён в [плане G1 §5.2](../../docs/plans/CORE-INTERFACES-COMPOSITION.md), где роль 01 зафиксировала 19 независимых отказов. Это не означает, что автор данной статьи прогнал все 19 случаев повторно на её HEAD.
+
+## Матрица CORE-INTERFACES
+
+| ID | P | Раскрытие |
+|---|---|---|
+| IC-01 | P0 | «Что обещает интерфейс», центральный пример |
+| IC-02 | P0 | «extends и implements» |
+| IC-03 | P0 | «Четыре вида методов» |
+| IC-04 | P0 | «Поля интерфейса» |
+| IC-05 | P0 | Центральный пример, строка 1; CORE-INHERITANCE |
+| IC-06 | P0 | «Метод класса и default»; N03 |
+| IC-07 | P0 | «Два независимых default»; N01 |
+| IC-08 | P0 | «Abstract и default»; N02 |
+| IC-09 | P0 | «Более специфичный подинтерфейс» |
+| IC-10 | P0 | «InterfaceName.super.method»; N11/N12 |
+| IC-11 | P0 | «Интерфейс и методы Object»; N04/N17 |
+| IC-12 | P0 | «Интерфейс и абстрактный класс» |
+| IC-13 | P0 | «Functional interface, marker» |
+| IC-17 | P1 | «Четыре вида методов», static/private |
+| IC-18 | P1 | Совместимые abstract contracts, marker |
+| IC-19 | P1 | Выбор метода, class/default/specific override |
+| IC-20 | P1 | Инициализация и CORE-INIT |
+| IC-21 | P1 | Return-type и checked throws; два отрицательных контрпримера |
+| IC-25 | P2 | Sealed interfaces — граница CORE-SEALED |
+| IC-26 | P2 | Generics, erasure, bridge — граница CORE-GENERICS |
+| IC-27 | P2 | Lambdas, method refs, intersection — граница CORE-FUNCTIONS |
+| IC-28 | P2 | Source/binary API compatibility — отдельное исследование |
+
+Оставшиеся **IC-14–IC-16 P0** (strategy/delegation/decorator), **IC-22–IC-24 P1** и **IC-29–IC-30 P2** раскрыты в [CORE-COMPOSITION](composition.md). Не нужно переписывать содержание соседней статьи здесь.
+
+## Ограничения и источники
+
+- **Языковые гарантии:** [JLS 21 §9.1–§9.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html), [§9.8](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.8), [§8.4.8](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8), [§15.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12), [§12.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1).
+- **Java SE 21 API:** [Runnable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html), [Comparator](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html), [Function](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html).
+- **Независимые интервью-вопросы:** [in28minutes](https://github.com/in28minutes/JavaInterviewQuestionsAndAnswers), [Hruday-Boppa](https://github.com/Hruday-Boppa/Core-Java-Interview-Questions-List), [Chernyshov RU](https://github.com/ViacheslavChernyshov/java-interview-questions-and-answers), [teamlead](https://github.com/teamlead/java-interview-questions). Это источники формулировок вопросов, **не** доказательство гарантий JLS или частоты на рынке.
+
+**Границы P2.** Sealed/permits (IC-25), generics/erasure (IC-26), продвинутые SAM/lambda (IC-27) и бинарная совместимость API при добавлении default/abstract (IC-28) — отдельные темы. В частности, добавление default к существующему интерфейсу **не** обещает отсутствия source-level конфликтов при множественном наследовании. Полная модель class initialization — в [CORE-INIT](initialization.md), composition/LSP/design — в [CORE-COMPOSITION](composition.md). Успешная компиляция одного сценария не доказывает отсутствие конфликтов во всех реализациях.
