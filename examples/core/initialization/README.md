@@ -6,7 +6,7 @@
 **Полный ожидаемый stdout:** [expected.stdout](expected.stdout)  
 **Проверка точного вывода:** [verify.sh](verify.sh)
 
-Теоретические предпосылки: [CORE-CLASSES — поля и конструкторы](../../../knowledge/01-java-core/classes.md), [CORE-INHERITANCE — переопределение и динамический вызов](../../../knowledge/01-java-core/inheritance.md). Нормативная основа — JLS 21 §§4.12.4–4.12.5, 8.3.2, 8.6–8.8, 9.4, 12.4.1–12.4.2 и 12.5. Статья CORE-INIT готовится отдельно по Issue #51; этот файл не подменяет её.
+Теоретические предпосылки: [CORE-INIT — порядок инициализации](../../../knowledge/01-java-core/initialization.md), [CORE-CLASSES — поля и конструкторы](../../../knowledge/01-java-core/classes.md), [CORE-INHERITANCE — переопределение и динамический вызов](../../../knowledge/01-java-core/inheritance.md). Нормативная основа — JLS 21 §§4.12.4–4.12.5, 8.3.2, 8.6–8.8, 9.4, 12.4.1–12.4.2 и 12.5.
 
 ## Запуск из корня репозитория
 
