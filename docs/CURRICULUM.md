@@ -7,9 +7,11 @@
 Развёрнутый перечень **42 возможных самостоятельных статей**, конкретные примеры, направления углубления и связи с другими разделами: [JAVA_CORE_PLAN.md](JAVA_CORE_PLAN.md). Ниже — **карта групп**, а не список готовых файлов и не обещание создавать ровно 42 Markdown-файла: короткие близкие вопросы можно объяснить внутри одной содержательной статьи.
 
 - **Язык и значения:** `CORE-SYNTAX`, **[CORE-TYPES](../knowledge/01-java-core/types.md)**, `CORE-OPERATORS`, **[CORE-CONVERSIONS](../knowledge/01-java-core/conversions.md)**, **[CORE-PARAMS](../knowledge/01-java-core/parameters.md)**, `CORE-CONTROL`.
-- **Объекты и классы:** **[CORE-CLASSES](../knowledge/01-java-core/classes.md)**, **[CORE-ACCESS](../knowledge/01-java-core/access.md)**, `CORE-OBJECT`, **[CORE-INHERITANCE](../knowledge/01-java-core/inheritance.md)**, `CORE-INTERFACES`, `CORE-COMPOSITION`, `CORE-NESTED`, **[CORE-INIT](../knowledge/01-java-core/initialization.md)**.
+- **Объекты и классы:** **[CORE-CLASSES](../knowledge/01-java-core/classes.md)**, **[CORE-ACCESS](../knowledge/01-java-core/access.md)**, **[CORE-OBJECT](../knowledge/01-java-core/object.md)**, **[CORE-INHERITANCE](../knowledge/01-java-core/inheritance.md)**, `CORE-INTERFACES`, `CORE-COMPOSITION`, `CORE-NESTED`, **[CORE-INIT](../knowledge/01-java-core/initialization.md)**.
+
+Для `CORE-INTERFACES` и `CORE-COMPOSITION` [принят общий исследовательский план G1](plans/CORE-INTERFACES-COMPOSITION.md), но **отдельные статьи ещё не опубликованы**; поэтому их ID пока без ссылок на несуществующие файлы.
 - **Строки, массивы и объекты-значения:** `CORE-ARRAYS`, `CORE-STRINGS`, `CORE-BUILDERS`, `CORE-ENUMS`, `CORE-RECORDS`, `CORE-IMMUTABLE`.
-- **Контракты и система типов:** `CORE-EQUALITY`, `CORE-GENERICS`, `CORE-ERASURE`, `CORE-SEALED`, `CORE-PATTERNS`.
+- **Контракты и система типов:** **[CORE-EQUALITY](../knowledge/01-java-core/equality.md)**, `CORE-GENERICS`, `CORE-ERASURE`, `CORE-SEALED`, `CORE-PATTERNS`.
 - **Ошибки и ресурсы:** `CORE-EXCEPTIONS`, `CORE-RESOURCES`, `CORE-ASSERT`, `CORE-OPTIONAL`.
 - **Функциональный стиль:** `CORE-FUNCTIONS`, `CORE-STREAMS`, `CORE-STREAM-ADV`.
 - **Стандартные API:** `CORE-NUMBERS`, `CORE-DATETIME`, `CORE-REGEX`, `CORE-UTIL`, `CORE-I18N`.
