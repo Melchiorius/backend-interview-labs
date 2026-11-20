@@ -1,6 +1,7 @@
 /**
  * CORE-INIT: one Java SE 21 run through class and instance initialization.
- * Theory: knowledge/01-java-core/classes.md (fields/constructors) and
+ * Theory: knowledge/01-java-core/initialization.md (class/instance initialization),
+ * knowledge/01-java-core/classes.md (fields/constructors) and
  * knowledge/01-java-core/inheritance.md (overriding/dynamic dispatch).
  */
 public final class InitializationDemo {
