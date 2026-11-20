@@ -93,3 +93,7 @@ CHECK PASSED
 ## Равенство, хэши и ключи коллекций
 
 [CORE-EQUALITY — воспроизводимый пример Java 21](equality/README.md) разбирает правильный immutable value key, коллизию hash без равенства, нарушения `equals/hashCode`, асимметрию при наследовании, изменяемый ключ и различие `HashSet`/`TreeSet`. Один Java-файл, полный ожидаемый stdout и команда `bash examples/core/equality/verify.sh`; отдельного упражнения и Gradle-подпроекта нет.
+
+## Интерфейсы и композиция
+
+[CORE-INTERFACES + CORE-COMPOSITION — runnable Java 21](interfaces-composition/README.md) показывает интерфейсную `Policy`, две реализации, декоратор с явным делегированием, `Service(Policy)`, а также независимые случаи разрешения конфликтующих `default` и приоритета метода класса. Воспроизводимый stdout и отдельный запуск `bash examples/core/interfaces-composition/verify.sh`; без Gradle-модуля и обязательного упражнения.

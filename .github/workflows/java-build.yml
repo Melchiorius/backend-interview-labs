@@ -46,3 +46,6 @@ jobs:
 
       - name: Verify CORE-EQUALITY positive and contract-breaking cases
         run: bash examples/core/equality/verify.sh
+
+      - name: Verify CORE-INTERFACES + CORE-COMPOSITION runnable
+        run: bash examples/core/interfaces-composition/verify.sh

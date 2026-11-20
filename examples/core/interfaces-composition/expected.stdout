@@ -1,0 +1,10 @@
+== Service with interchangeable policies ==
+add ten: 77
+double: 134
+decorated double: 135
+default describe: input=67 -> output=77
+null dependency rejected: true
+== Interface default resolution ==
+two defaults: left|right
+class wins: class
+CHECK PASSED
