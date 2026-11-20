@@ -1,0 +1,29 @@
+== 1. Compile-time constant ==
+Child.CONSTANT = 67
+== 2. Inherited non-constant static field ==
+Parent.static field
+Parent.BOXED field
+Parent.static block
+Child.BOXED = 67
+== 3. Child class initialization ==
+RootDefault.<clinit>
+LeafDefault.<clinit>
+Child.static field
+Child.static block
+Child.OWN = 68
+== 3a. Direct interface initialization ==
+QuietChild.<clinit>
+QuietChild.MARK = 1
+== 4. Instance construction ==
+Parent.instance field
+Parent.instance block
+Parent.constructor: before virtual call
+Child.override: childValue=0, childLabel=null
+Parent.constructor: after virtual call
+Child.instance field
+Child.instance reference field
+Child.instance block
+Child(int) constructor body: seed=67
+Child() constructor body
+== 5. Final object state ==
+state=67/68/ready
