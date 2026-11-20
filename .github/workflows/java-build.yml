@@ -37,3 +37,6 @@ jobs:
 
       - name: Compile and run CORE-ACCESS positive and negative cases
         run: bash examples/core/access/verify.sh
+
+      - name: Verify CORE-INHERITANCE positive and negative cases
+        run: bash examples/core/inheritance/verify.sh
