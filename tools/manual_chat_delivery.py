@@ -30,6 +30,10 @@ class DeliveryError(ValueError):
     """An invalid or ambiguous delivery must not be silently acknowledged."""
 
 
+class WindowFocusDeferred(DeliveryError):
+    """Windows disallowed focus change; keep event fresh and retry on next poll."""
+
+
 def validate_chat_url(url: str) -> str:
     if not isinstance(url, str):
         raise DeliveryError("chat URL must be text")
@@ -134,6 +138,25 @@ def windows_input_layout(pointer_type=ctypes.c_size_t):
     return INPUT, INPUTUNION, KEYBDINPUT
 
 
+def ensure_firefox_foreground(user, hwnd, *, sleeper=time.sleep) -> None:
+    """Respect Windows foreground restrictions; never type into another app.
+
+    SetForegroundWindow may return FALSE even if activation completes later.
+    Check actual foreground state, including the already-active case, instead
+    of treating the BOOL as a reliable final focus state.
+    """
+    if user.GetForegroundWindow() == hwnd:
+        return
+    user.SetForegroundWindow(hwnd)
+    for _ in range(3):
+        sleeper(0.15)
+        if user.GetForegroundWindow() == hwnd:
+            return
+    raise WindowFocusDeferred(
+        "Windows не разрешила активировать Firefox. Поручение НЕ потеряно: "
+        "оставьте Firefox активным — цикл повторит попытку на следующем опросе")
+
+
 def switch_firefox_tab(index: int) -> None:
     """Use Windows keystrokes, not Firefox DOM or Marionette; reject multiple windows."""
     steps = tab_steps(index)
@@ -170,11 +193,7 @@ def switch_firefox_tab(index: int) -> None:
     hwnd = windows[0]
     if user.IsIconic(hwnd):
         user.ShowWindow(hwnd, 9)  # SW_RESTORE
-    if not user.SetForegroundWindow(hwnd):
-        raise DeliveryError("Windows refused to activate Firefox; select it manually")
-    time.sleep(0.2)
-    if user.GetForegroundWindow() != hwnd:
-        raise DeliveryError("Firefox is not foreground; no keys sent")
+    ensure_firefox_foreground(user, hwnd)
 
     INPUT, INPUTUNION, KEYBDINPUT = windows_input_layout()
     expected_size = 40 if ctypes.sizeof(ctypes.c_void_p) == 8 else 28
@@ -187,6 +206,10 @@ def switch_firefox_tab(index: int) -> None:
         return INPUT(1, INPUTUNION(ki=KEYBDINPUT(key, 0, 0x0002 if up else 0, 0, 0)))
 
     for control, key in steps:
+        if user.GetForegroundWindow() != hwnd:
+            raise WindowFocusDeferred(
+                "Firefox потерял фокус до нажатия клавиш. "
+                "Поручение осталось в очереди; повторим после возврата в Firefox")
         sequence = (INPUT * 4)(key_event(control), key_event(key),
                                key_event(key, True), key_event(control, True))
         ctypes.set_last_error(0)
