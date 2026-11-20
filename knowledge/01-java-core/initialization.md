@@ -705,3 +705,98 @@ Same-thread recursion распознаётся процедурой инициа
 
 Идентичность runtime-класса зависит не только от binary name, но и от defining class loader. Два загрузчика могут определить классы с одинаковым именем как разные runtime-типы; у таких определений будет отдельное состояние инициализации и отдельные static fields. Это граница JVM-LOADING, а не повод подробно разбирать delegation, модули и class unloading. Нормативные отправные точки: [JLS 21 §12.2.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2.2), [JVMS 21 §5.3](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3).
 
+## Частые ошибочные формулировки
+
+| Ошибочно | Точнее |
+|---|---|
+| «Класс инициализируется при загрузке» | Loading, linking и class initialization — разные действия. Загрузка сама по себе не запускает static initializers. |
+| «Все static-поля выполняются до static-блоков» | Non-constant static field initializers и static blocks выполняются в общем текстовом порядке. Constant variables имеют отдельный ранний шаг. |
+| «При инициализации класса запускаются все его интерфейсы» | Для инициализации класса учитываются superinterfaces, объявляющие default methods, в рекурсивном postorder. |
+| «Если класс реализует интерфейс, интерфейс уже инициализирован» | Сам факт `implements` не запускает интерфейс без default methods. Прямое active use его поля/метода — отдельный триггер. |
+| «Подкласс начинает инициализировать свои поля до конструктора родителя» | Все поля сначала получают default values; инициализаторы подкласса выполняются после возврата конструктора суперкласса. |
+| «В конструкторе родителя вызывается версия метода родителя» | Переопределяемый метод использует обычную динамическую диспетчеризацию и может попасть в override подкласса. |
+| «`this(...)` повторно запускает все field initializers» | Инициализаторы класса выполняются один раз на цепочке делегирования; делегирующий конструктор продолжает тело после возврата `this(...)`. |
+| «Любое исключение из конструктора делает класс unusable» | Ошибка instance initializer/constructor прерывает создание объекта, но сама по себе не делает класс erroneous. |
+| «Рекурсия static initializers — это `ClassCircularityError`» | Same-thread recursive initialization и циклическая иерархия при загрузке — разные случаи. |
+| «Class init lock — это `synchronized (C.class)`» | JVM выбирает mapping типа на initialization lock; JLS не требует использовать монитор объекта `Class`. |
+
+## Карта обязательного покрытия CORE-INIT
+
+P0/P1/P2 — приоритеты исследовательского плана, а не рейтинг частоты на реальных интервью.
+
+| ID плана | Приоритет | Где дан ответ |
+|---|---|---|
+| CI-01 | P0 | «Фазы жизненного цикла класса» |
+| CI-02 | P0 | «Когда класс инициализируется» |
+| CI-03 | P0 | «Constant variables» и центральный пример |
+| CI-04 | P0 | «Инициализируется тип, который объявил static-член» |
+| CI-05 | P0 | Центральный пример; порядок class initialization |
+| CI-06 | P0 | Центральный пример; интерфейсный postorder |
+| CI-07 | P0 | Default values и разбор центрального примера |
+| CI-08 | P0 | Instance initialization и цепочка конструкторов |
+| CI-09 | P0 | Виртуальный вызов из конструктора |
+| CI-10 | P0 | Ошибка инициализации класса |
+| CI-11 | P1 | Рекурсивная инициализация в одном потоке |
+| CI-12 | P1 | Синхронизация class initialization |
+| CI-13 | P1 | Исключение при создании экземпляра |
+| CI-14 | P1 | API `Class.forName` / `ClassLoader.loadClass` |
+| CI-15 | P1 | `this` escape во время construction |
+| CI-16 | P1 | Forward references |
+| CI-17 | P2 | `ClassCircularityError` |
+| CI-18 | P2 | Deadlock между потоками |
+| CI-19 | P2 | Разные class loaders |
+| CI-20 | P2 | Constant variables и бинарная совместимость |
+
+## Границы темы
+
+- **CORE-CLASSES:** здесь не переписывается базовое определение конструктора, default constructor, перегрузка конструкторов и простая последовательность одного класса. Эти понятия изложены в [CORE-CLASSES](classes.md); здесь добавлена иерархическая последовательность.
+- **CORE-INHERITANCE:** общий механизм overriding не пересказывается. Используется только момент вызова override до инициализаторов подкласса; общая модель — в [CORE-INHERITANCE](inheritance.md).
+- **CORE-INTERFACES:** здесь нужна только граница инициализации superinterfaces с default methods. Разрешение конфликтов default methods остаётся за отдельной темой.
+- **JVM-LOADING:** loading/linking описаны ровно настолько, чтобы не путать их с initialization. Delegation, modules, bytecode, metaspace, unloading и особенности HotSpot не являются целью статьи.
+- **CON-JMM:** дано только необходимое объяснение синхронизации и escape при конструировании. Полная модель happens-before, data races, safe publication и final-field semantics требует отдельного материала.
+- **Не заявляется:** runtime воспроизведение `ClassCircularityError`, стресс-тест межпоточного deadlock, полная проверка разных class loaders и визуальная проверка Obsidian/IntelliJ.
+
+## Источники
+
+### Нормативные источники — Java SE 21
+
+- [JLS 21 §4.12.4 — final variables и constant variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4).
+- [JLS 21 §4.12.5 — initial values of variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.5).
+- [JLS 21 §8.3.2 — field initialization](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.3.2) и [§8.3.3 — restrictions on field references in initializers](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.3.3).
+- [JLS 21 §8.6 — instance initializers](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.6) и [§8.7 — static initializers](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.7).
+- [JLS 21 §8.8.7 — constructor body](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.7), [§8.8.7.1 — explicit constructor invocations](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.7.1), [§8.8.9 — default constructor](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.9).
+- [JLS 21 §9.3 — interface fields](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.3), [§9.4.3 — interface default methods](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.3).
+- [JLS 21 §12.1.3 — initialize initial class](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.1.3); [§12.2 — loading](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2); [§12.2.1 — loading process](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2.1); [§12.3 — linking](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.3).
+- [JLS 21 §12.4.1 — when initialization occurs](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1), [§12.4.2 — detailed initialization procedure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2), [§12.5 — creation of new class instances](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
+- [JLS 21 §16.8 — definite assignment of blank `final` static fields](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html#jls-16.8) и [§16.9 — blank `final` instance fields](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html#jls-16.9).
+- [JLS 21 §17.4.5 — happens-before order](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4.5) и [§17.5.1 — final field semantics](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.5.1).
+- [JLS 21 §13.1 — binary form](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.1) и [§13.4.9 — final fields and constant variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.9).
+
+### Граница виртуальной машины и API
+
+- [JVMS 21 §5.3 — creation and loading](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3), [§5.3.5 — derivation](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3.5), [§5.4 — linking](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.4), [§5.5 — initialization](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.5).
+- Java SE 21 API: [Class.forName](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html#forName(java.lang.String)), [ClassLoader.loadClass](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html#loadClass(java.lang.String)), [ExceptionInInitializerError](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ExceptionInInitializerError.html), [NoClassDefFoundError](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/NoClassDefFoundError.html).
+
+JLS определяет языковые гарантии; JVMS — требования к виртуальной машине и class files; API — контракт библиотечных методов. Наблюдения конкретной реализации HotSpot не выдаются за универсальные правила языка.
+
+### Интервью-подборки — только для проверки пробелов
+
+Эти источники помогают увидеть формулировки вопросов и контрпримеры, но не являются нормативными и не доказывают статистическую частоту:
+
+- [Baeldung — Java Class Structure and Initialization Interview Questions](https://www.baeldung.com/java-classes-initialization-questions), обновлено 2024-01-08: constructor chaining, instance/static initializer blocks, static-field Singleton. В тексте встречается упрощённое «during class loading»; в статье оно заменено точными терминами JLS loading и class initialization.
+- [Baeldung — Java Interview Questions](https://www.baeldung.com/java-interview-questions): смежные вопросы о ClassLoader и загрузке классов; не используется как нормативное объяснение инициализации.
+- [teamlead/java-interview-questions](https://github.com/teamlead/java-interview-questions): prompts об ошибках в class initialization block, исключениях конструктора, static blocks, порядке конструкторов и default values. Заявленная авторами статистика публичных интервью не считается независимо валидированной частотностью.
+- [Viacheslav Chernyshov — Java Interview Questions and Answers (RU)](https://github.com/ViacheslavChernyshov/java-interview-questions-and-answers/blob/master/ru/README.md): смежные prompts о Singleton, thread safety и double-checked locking; прямой вопрос о полном порядке class initialization в доступном списке не обнаружен.
+
+## Что статья не утверждает
+
+- Успешная компиляция центрального примера не доказывает полноту всей JLS.
+- Успешная class initialization не делает последующие изменения всех `static`-полей потокобезопасными.
+- Наличие `static final` не означает, что поле — constant variable.
+- Сам факт `implements` не означает инициализацию всех интерфейсов.
+- Вызов override из конструктора не означает, что поля подкласса уже прошли свои initializers.
+- Same-thread recursive initialization не равна `ClassCircularityError`.
+- `ClassCircularityError`, несмотря на имя `LinkageError`, не следует относить к ошибке linking-фазы.
+- Не утверждается, что конкретная JVM использует объект `Class` как initialization lock.
+- Результаты одного запуска не дают детерминированного вывода для межпоточных циклов и deadlock.
+- Синтаксис Java после версии 21 не переносится в эту статью без отдельной проверки и изменения целевой версии.
