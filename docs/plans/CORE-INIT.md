@@ -1,6 +1,6 @@
 # CORE-INIT — исследовательский план до написания статьи
 
-**Статус:** G1, исследовательский план роли 01; 00 запросил исправления, 04 оставил обязательные замечания по прежнему HEAD. Повторное независимое review исправленного HEAD ожидается. **Дата:** 20.11.2026. **Issue:** [#49](https://github.com/Melchiorius/backend-interview-labs/issues/49), родитель [#33](https://github.com/Melchiorius/backend-interview-labs/issues/33). **Нормативная версия:** Java SE 21. **BASE main:** `0615515f27e6f44ccbdf27b039dbe39d0434709e`. Этот файл — исследовательский план, не статья и не доказательство прохождения G1/G2/G4.
+**Статус:** G1 **ACCEPTED** решением 00 в [Issue #49](https://github.com/Melchiorius/backend-interview-labs/issues/49#issuecomment-7042219667), по HEAD `0614e5722f5f89cbaa4425fc707f1a3aa192368d`; исследовательский [PR #50](https://github.com/Melchiorius/backend-interview-labs/pull/50) объединён в `main` squash SHA `c84d90f281d9318e148b0ef3df365194902fe53c`. Статья и runnable-пример позднее опубликованы единым [PR #54](https://github.com/Melchiorius/backend-interview-labs/pull/54): G3 PASS 05 и G4 PASS 04 по предmerge HEAD `80d261df74d4a6d24fe3d62efe811833a7e3e3d6`, G5 squash SHA `261f195a199f61e16abed5b0eaf16605840907b3`. **Дата исходного исследования:** 20.11.2026. **Issue:** [#49](https://github.com/Melchiorius/backend-interview-labs/issues/49), родитель [#33](https://github.com/Melchiorius/backend-interview-labs/issues/33). **Нормативная версия:** Java SE 21. **Исходный BASE main:** `0615515f27e6f44ccbdf27b039dbe39d0434709e` (исторический, не текущий). Это исследовательский план, а не сама учебная статья; он сохраняет исходные исследовательские ограничения и не подменяет отдельные доказательства G3/G4.
 
 ## 1. Вопрос читателя и обещание будущей статьи
 
@@ -32,8 +32,8 @@
 
 ### Другие зависимости и статусы
 
-- `docs/CURRICULUM.md` и `docs/JAVA_CORE_PLAN.md` предусматривают самостоятельную тему CORE-INIT «Порядок инициализации»; это не означает, что статья уже существует.
-- В `docs/COVERAGE.md` на BASE нет опубликованной/проверенной статьи CORE-INIT. План не повышает coverage.
+- **Исторически на исходном BASE:** `docs/CURRICULUM.md` и `docs/JAVA_CORE_PLAN.md` предусматривали самостоятельную тему CORE-INIT «Порядок инициализации». В текущем `main` статья уже [опубликована](../../knowledge/01-java-core/initialization.md) через PR #54; исходная постановка исследовательского плана не изменена.
+- **На исходном BASE** ещё не было опубликованной/проверенной статьи CORE-INIT. После G5 её фактический статус отражён в [COVERAGE](../COVERAGE.md); сам план по-прежнему не подтверждает техническую проверку статьи.
 - Реальные локальные ссылки: `classes.md`, `inheritance.md`. Для `CORE-OBJECT`, `CORE-INTERFACES`, `JVM-LOADING`, `CON-JMM` пока использовать обычные текстовые ID, если соответствующий материал отсутствует; не создавать фиктивные Obsidian-ссылки.
 
 ## 3. Нормативные источники — Java SE 21
@@ -243,7 +243,7 @@ class B { static int y = A.x + 1; }
 
 **Граница покрытия обоих runs:** workflow не запускает CORE-INIT probes из §8; ни run #154, ни run #156 не являются проверкой этих probes. Успех run #156 подтверждает только перечисленные существующие CI steps на указанном HEAD.
 
-**Не выполнялось (`not run`):** локальный Gradle/JUnit/Mockito; runtime `ClassCircularityError` на class file с циклическим superclass/superinterface graph; многопоточный deadlock stress test и отдельный concurrency test initialization lock; IntelliJ/Obsidian visual preview. Независимое review 04 на прежнем HEAD выполнено и запросило изменения; повторное review исправленного HEAD ещё не состоялось.
+**Проверки на этапе исследования G1 (историческая запись, `not run` роли 01):** локальный Gradle/JUnit/Mockito; runtime `ClassCircularityError` на class file с циклическим superclass/superinterface graph; многопоточный deadlock stress test и отдельный concurrency test initialization lock; IntelliJ/Obsidian visual preview. После внесения исправлений исследовательский G1 принят 00 на HEAD `0614e5722f5f89cbaa4425fc707f1a3aa192368d` с отдельным [CI run #157](https://github.com/Melchiorius/backend-interview-labs/actions/runs/44753946170) `completed/success` (существующий CI scope без CORE-INIT probes). Позднейшие отдельные G3/G4 и CI для опубликованной статьи описаны в [COVERAGE](../COVERAGE.md).
 
 ## 10. Границы соседних тем
 
@@ -254,9 +254,9 @@ class B { static int y = A.x + 1; }
 - **JVM-LOADING:** не превращать план в руководство по classloader delegation, modules, verification/linking internals, bytecode, metaspace/unloading или HotSpot implementation. Для `ClassCircularityError` достаточно границы загрузки/derivation (JLS §12.2.1; JVMS §5.3.5); не относить его к ошибкам linking-фазы и не смешивать с `ClassFormatError`.
 - **CON-JMM:** не переносить полную модель happens-before, safe publication patterns, final-field semantics и data races; дать короткую связь и точную ссылку на отдельную тему. Вызов override из конструктора — сначала language initialization order, а не самостоятельная concurrency bug.
 
-## 11. Контракт передачи ролям и решение G1
+## 11. Исторический контракт передачи ролям и принятое решение G1
 
-- **00 — координатор:** оценить границы и приоритеты матрицы, отдельно решить, достаточно ли P0 и не чрезмерно ли CORE-INIT захватывает JVM-LOADING/CON-JMM. Только явное решение 00 принимает G1. До него 02/03 не разблокированы.
+- **00 — координатор (история G1):** проверил границы и приоритеты матрицы и принял G1 по HEAD `0614e5722f5f89cbaa4425fc707f1a3aa192368d` ([Issue #49](https://github.com/Melchiorius/backend-interview-labs/issues/49#issuecomment-7042219667)). После принятия G1 роли 02/03 были разблокированы, подготовили единый материал; G3/G4 PASS, G5 merged. Пункты ниже — исходные критерии распределения работ, а не текущие открытые поручения.
 - **02 — автор после G1:** связный русский текст с одним центральным примером инициализации иерархии; объяснить наблюдаемые значения по шагам; каждый P0 покрыть ответом, ссылкой JLS 21 и positive/negative контрпримером; не дублировать CORE-CLASSES/INHERITANCE.
 - **03 — examples engineer после G1:** рассмотреть один автономный runnable Java 21 пример, если он помогает проверить порядок. Не создавать Gradle/JUnit/exercise модуль ритуально. Негативные исходники держать отдельно от успешно компилируемых.
 - **05 — editor после интеграции 02/03:** проверить точные термины «загрузка/связывание/инициализация/конструирование», ясность порядка и подписи вывода, локальные ссылки; не считать чтение Markdown визуальным review.
@@ -273,4 +273,4 @@ class B { static int y = A.x + 1; }
 6. **Поздние версии Java:** гибкие тела конструкторов после Java 21 не применять. В статье явно закрепить `Java 21`; preview-функции и новые JLS не смешивать с текущей нормой.
 7. **CI evidence и граница покрытия:** run #154 — исторический `completed/success` на HEAD `0d2ca5830f438504cce3fb0809eaa298f54dc4f9`; run #156 — `completed/success` на HEAD `66abb76e8ca7f89825a87c05d67e51242ae5833d`. Оба запуска выполняли Gradle/JUnit, standalone Java Core, CORE-ACCESS и CORE-INHERITANCE checks. Ни один не запускал CORE-INIT probes; не трактовать CI success как автоматическое подтверждение 7/5 локальных сценариев.
 
-**Вывод роли 01:** исследовательский объём определён; отдельный план создан до статьи. Авторский локальный протокол сообщает 7 positive + 5 negative Java 21 проб, но временные исходники/stdout не сохранены, поэтому независимая побайтная воспроизводимость не обеспечена. Repository CI run #156 завершился `completed/success` на HEAD `66abb76e8ca7f89825a87c05d67e51242ae5833d`; run #154 сохранён как исторический результат предыдущего HEAD. Оба workflow runs проверяли существующие Gradle/JUnit, standalone Java Core, CORE-ACCESS и CORE-INHERITANCE steps, но не CORE-INIT probes. Исправления внесены после review 00/04; G1 остаётся **не принятым**, G2 не начат, COVERAGE не изменялся.
+**Итоговая статусная приписка G6 (не изменение исследовательских выводов роли 01):** исторический вывод 01 относился к моменту исправлений G1: авторский протокол 7 positive + 5 negative проб без сохранённых исходников/stdout не стал репозиторным harness, а CI runs #154/#156 не запускали CORE-INIT probes. **Позднее** G1 принят 00 по `0614e5722f5f89cbaa4425fc707f1a3aa192368d`; план опубликован PR #50 / squash `c84d90f281d9318e148b0ef3df365194902fe53c`. Авторы 02/03 подготовили статью и автономный пример, 05 и 04 провели G3/G4 PASS на интегрированном HEAD `80d261df74d4a6d24fe3d62efe811833a7e3e3d6`, затем 00 опубликовал PR #54 / squash `261f195a199f61e16abed5b0eaf16605840907b3`. Отдельный CI [run #44775205389](https://github.com/Melchiorius/backend-interview-labs/actions/runs/44775205389) `completed/success` на предmerge HEAD выполнял уже **новый CORE-INIT `verify.sh`** и Gradle/JUnit, остальные существующие примеры. Post-merge CI на squash SHA при сверке G6 не обнаружен. Все научные ограничения и границы P0/P1/P2 выше сохранены; текущий факт публикации и реальные проверки зафиксированы в [COVERAGE](../COVERAGE.md).
