@@ -1,6 +1,6 @@
 # CORE-OBJECT — `java.lang.Object`, идентичность и базовые методы в Java 21
 
-**Версия:** Java SE 21. **Задача:** [Issue #62](https://github.com/Melchiorius/backend-interview-labs/issues/62). **Исследовательская основа:** принятый план [CORE-OBJECT-EQUALITY](../../docs/plans/CORE-OBJECT-EQUALITY.md) из PR #61 @ `eede792ea16005e9087f4bc8eca5617c73c79761`. План до объединения PR #61 может отсутствовать в текущем `main`; ссылка действует в интегрированном кандидате только после переноса плана.
+**Версия:** Java SE 21. **Задача:** [Issue #62](https://github.com/Melchiorius/backend-interview-labs/issues/62). **Исследовательская основа:** принятый план [CORE-OBJECT-EQUALITY](https://github.com/Melchiorius/backend-interview-labs/blob/eede792ea16005e9087f4bc8eca5617c73c79761/docs/plans/CORE-OBJECT-EQUALITY.md) из PR #61 @ `eede792ea16005e9087f4bc8eca5617c73c79761`. План пока находится в открытом PR #61 и не предполагается существующим в текущем `main`; поэтому дана ссылка на точный принятый commit.
 
 ## Зачем нужен общий базовый класс
 
@@ -205,6 +205,6 @@ synchronized (lock) {
 
 **Нормативные для Java 21:** [JLS §8.1.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.4), [§9.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.2), [§15.21](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.21), [§17.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.2), [Java SE 21 Object](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html), [System.identityHashCode](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#identityHashCode(java.lang.Object)) и перечисленные выше API. Для интерфейсной семантики `Comparable`, Map и HashSet требуется API, не вывод из JLS.
 
-**Исследовательские и интервью-ориентиры:** принятый [G1-план](../../docs/plans/CORE-OBJECT-EQUALITY.md) и [SOURCE_REGISTRY](../../docs/SOURCE_REGISTRY.md), включая Q-HRUDAY, Q-CHERNYSHOV, Q-TEAMLEAD, Q-IN28 и Q-BAELDUNG-COL. Интервью-подборки помогают обнаруживать пробелы, **но не доказывают нормативное поведение, статистическую частоту вопросов или полноту**.
+**Исследовательские и интервью-ориентиры:** принятый [G1-план](https://github.com/Melchiorius/backend-interview-labs/blob/eede792ea16005e9087f4bc8eca5617c73c79761/docs/plans/CORE-OBJECT-EQUALITY.md) и [SOURCE_REGISTRY](../../docs/SOURCE_REGISTRY.md), включая Q-HRUDAY, Q-CHERNYSHOV, Q-TEAMLEAD, Q-IN28 и Q-BAELDUNG-COL. Интервью-подборки помогают обнаруживать пробелы, **но не доказывают нормативное поведение, статистическую частоту вопросов или полноту**.
 
 **Проверяемость:** показанные ожидаемые результаты являются предсказаниями по спецификации; фактические запуск и CI конкретной интегрированной версии документируются в авторском PR. Отдельные небольшие фрагменты помечены как фрагменты; они не являются автономными файлами. Визуальный Obsidian/IntelliJ и специальные class-loader/мониторные сценарии не заявлены проверенными.
