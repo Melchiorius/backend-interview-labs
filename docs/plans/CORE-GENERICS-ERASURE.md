@@ -8,7 +8,7 @@
 
 **Рекомендация 01: две отдельные связанные статьи, один согласованный план, без механического дублирования.**
 - **CORE-GENERICS — статическая типизация:** параметры типа класса/метода, границы, инвариантность, wildcards/PECS, producer/consumer, capture helper, generic methods/inference/diamond и контраст с ковариантными массивами. Для читателя гарантия: объяснить, что компилятор *может* разрешить и запретить, и предсказать результат основных сценариев.
-- **CORE-ERASURE — граница compile-time/runtime:** правила JLS §4.6/§4.7, reifiable/non-reifiable, raw/unchecked, heap pollution, `@SafeVarargs`, недопустимые generic arrays/instanceof/`new T()`, same-erasure name clash, override/bridge. Для читателя гарантия: показать место возникновения runtime cast и почему ошибка может появиться **после** успешного javac.
+- **CORE-ERASURE — граница compile-time/runtime:** правила JLS §4.6/§4.7, reifiable/non-reifiable, raw/unchecked, heap pollution, `@SafeVarargs`, ограничения generic arrays и `instanceof` через checked cast compatibility (Java 16+), `new T()`, same-erasure name clash, override/bridge. Для читателя гарантия: показать место возникновения runtime cast и почему ошибка может появиться **после** успешного javac.
 - **Общий мост:** `List<? extends Number>` читается как `Number`, но не принимает произвольный `Integer`; `List<? super Integer>` принимает `Integer`, но без дополнительных знаний возвращает `Object`; `Collections.copy(List<? super T>, List<? extends T>)` связывает направления. Здесь речь не про списки как реализацию структур данных и не про полное устройство JVM.
 - **Форма примеров после G1:** план §4 содержит один самодостаточный positive `GenericsProbes.java` с 20 наблюдениями, 22 независимых отрицательных компиляции и 4 самостоятельных lint-сценария. Роль 03 должна обосновать один runnable example либо короткие inline-кейсы; **не** создавать два Gradle-проекта по количеству статей, не включать negative snippets в success source set.
 - **Фразам-заблуждениям — явные контрпримеры:** «все generics существуют только во время компиляции» (runtime class/erased casts/метаданные методов остаются), «? extends делает коллекцию immutable» (можно читать и иногда добавлять `null`, изменяемость объекта зависит от реализации), «? super при чтении даёт T» (возвращает Object), «SafeVarargs исправляет unsafe тело» (нет), «массивы инвариантны» (ковариантны, runtime ArrayStoreException), «bridge метода никогда не бывает» (наблюдаем на javac21).
@@ -26,7 +26,7 @@
 - [JLS §5.1.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.9) — unchecked conversion/warning; [§5.1.10](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.10) — capture conversion (в JLS дан пример `Collections.reverse(List<?>)` с helper). [§5.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.2) — assignment contexts/inference и conversion.
 - [JLS §8.1.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.2), [§8.4.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.4) — generic классы и методы; [§8.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.2) — сигнатуры/name clash; [§8.4.8.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.3) — overriding/return compatibility и предупреждения при unsafe overriding. Фактические bridge methods в `javac` можно наблюдать через Reflection API, но **не** приписывать JLS фиксированное число classfile methods.
 - [JLS §9.6.4.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.6.4.7), [Java 21 @SafeVarargs](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/SafeVarargs.html) — обещание автора о varargs безопасности и условия применения, а не проверка тела/исправление heap pollution. `-Xlint:varargs` может указать опасный код внутри аннотированного метода.
-- [JLS §10.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-10.html#jls-10.5) — array store checks и `ArrayStoreException` при ковариантности; [§15.20.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.20.2) — `instanceof` и reifiable restrictions; [§15.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.9) — class instance creation, отсутствие `new T()`.
+- [JLS §10.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-10.html#jls-10.5) — array store checks и `ArrayStoreException` при ковариантности; [§15.20.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.20.2) — type-comparison `instanceof`: левое выражение должно быть **checked cast compatible** с типом справа по [§5.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.5); прежнее общее требование reifiability для типа справа снято в Java 16. Нереifiable parameterization всё ещё может быть запрещён в конкретной паре типов, если narrowing cast был бы unchecked; [§15.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.9) — class instance creation, отсутствие `new T()`.
 - [Java 21 Collections.copy](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html#copy(java.util.List,java.util.List)) — норма API: `<T> void copy(List<? super T> dest, List<? extends T> src)`; размер dest должен быть достаточен, модификация — поддерживаться. Не утверждать, что `Collections.copy` растит список назначения.
 - [Java 21 List](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html) — element contract; [Class](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html#getDeclaredMethods()), [Method.isBridge](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/reflect/Method.html#isBridge()) — наблюдение bridge через Reflection (не необходимость bytecode inspection).
 - [Java 21 Collections.emptyList](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html#emptyList()), [ArrayList](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayList.html), [Arrays](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html) — inference/array context при использовании.
@@ -61,7 +61,7 @@
 | GE-08 | **P0**. Что такое wildcard capture? `List<?>` иногда передаётся generic helper, который удерживает один captured T между get/set; не значит разрешить добавление чужого типа. | §5.1.10; P07/N16 | GENERICS |
 | GE-09 | **P0**. Почему массивы ковариантны и где происходит `ArrayStoreException`, в отличие от инвариантных generics? | §10.5; P14/N20 | GENERICS, граница CORE-ARRAYS |
 | GE-10 | **P0**. Что стирается и что остаётся? `List<String>`/`List<Integer>` могут иметь одну runtime implementation class; bound T стирается к Number, сигнатура generic method — к Object. | §4.6; P08/P10/P11 | ERASURE |
-| GE-11 | **P0**. Почему `instanceof List<?>` допустим, а `instanceof List<String>` обычно нет? Reifiable/non-reifiable определяет допустимые проверки; не говорить «вся информация о generics полностью исчезла». | §4.7, §15.20.2; P09/P16/N09/N10 | ERASURE |
+| GE-11 | **P0**. Почему `instanceof List<?>` и даже `typed instanceof ArrayList<String>` допустимы при статическом типе `List<String>`, а `Object o; o instanceof List<String>` — нет? Решает checked cast compatibility (§5.5), а не один лишь факт reifiability. Runtime проверяет erased class (`ArrayList`), не восстанавливает и не проверяет произвольный type argument `String`. | §4.7, §5.5, §15.20.2; P09/P16/P21/N09/N10 | ERASURE |
 | GE-12 | **P0**. Почему не `new T()`, `T.class`, `new T[2]` или `new List<String>[2]`? При runtime отсутствует требуемая reified компонентная информация/конструкторная сущность. | §4.6/4.7, §15.9/§10; N05–N08 | ERASURE |
 | GE-13 | **P0**. Что делают raw types, unchecked warnings и cast? Небезопасный alias может поместить Integer в List<String>; компилятор предупреждает, а ClassCastException возникает при извлечении как String, не обязательно при вставке. | §4.8, §5.1.9, §4.12.2; P12, W01/W04 | ERASURE |
 | GE-14 | **P0**. Что такое heap pollution и почему `@SafeVarargs` не гарантирует безопасность? Можно подменить varargs-array через Object[], привести к CCE; `-Xlint:varargs` замечает опасный код и с аннотацией. | §4.12.2, §9.6.4.7; P13, W02/W03 | ERASURE |
@@ -211,7 +211,29 @@ P19=68
 P20=true,67
 ```
 
-**Смысл измерения:** 1 successful compilation + 1 Java launch + 20 observations, а **не** 20 самостоятельных тестовых классов. `P17=2,1,child` отражает конкретный `javac` 21 и Reflection; количество/расположение bridge не обещано неизменным для всех компиляторов. `P05` вставляет `null` в изменяемый `ArrayList`, а не в immutable `List.of`. `P12/13/14` — контролируемые runtime failures, перехваченные в коде.
+**P21 — отдельная положительная минипроба Java 21 для GE-11 (не входит в исходные P01–P20):**
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+class P21_InstanceofParameterized {
+    public static void main(String[] args) {
+        List<String> typed = new ArrayList<>();
+        System.out.println(typed instanceof ArrayList<String>);
+    }
+}
+```
+
+Команда: `javac --release 21 -d out P21_InstanceofParameterized.java && java -cp out P21_InstanceofParameterized`. **Фактический stdout OpenJDK 21.0.12.1:**
+
+```text
+true
+```
+
+Пара к N09: `typed` имеет статический тип `List<String>`, поэтому сужение до `ArrayList<String>` checked cast compatible и компилируется; `Object` → `List<String>` потребовал бы unchecked narrowing cast, поэтому type-comparison `instanceof` не проходит compile-time проверку. В runtime положительная проверка видит класс `ArrayList` после erasure; она не проверяет фактический параметр элемента `String`.
+
+**Смысл измерения:** 1 successful compilation + 1 Java launch + 20 observations в основном `GenericsProbes.java`, а **не** 20 самостоятельных тестовых классов. Дополнительный P21 — отдельная успешная компиляция и запуск, отдельно от исходных 20 наблюдений. `P17=2,1,child` отражает конкретный `javac` 21 и Reflection; количество/расположение bridge не обещано неизменным для всех компиляторов. `P05` вставляет `null` в изменяемый `ArrayList`, а не в immutable `List.of`. `P12/13/14` — контролируемые runtime failures, перехваченные в коде.
 
 **При `-Xlint:unchecked -Xlint:varargs` у этого positive source — 2 warnings:** `[varargs]` из опасного присвоения `Object[] alias = lists` в методе с `@SafeVarargs` и `[unchecked]` из вызова `raw.add(67)`. Строки/путь в диагностике зависят от файла и javac; здесь утверждаются категории и фактическое число для выбранного JDK, не универсальные тексты JLS.
 
@@ -229,7 +251,7 @@ P20=true,67
 | `N06_TypeVariableClassLiteral` | `class N06_TypeVariableClassLiteral<T> { Class<?> c = T.class; }` | `T.class` недопустим |
 | `N07_NewTypeVariableArray` | `class N07_NewTypeVariableArray<T> { T[] make() { return new T[2]; } }` | Generic array creation |
 | `N08_NewParameterizedArray` | `import java.util.*; class N08_NewParameterizedArray { List<String>[] v = new List<String>[2]; }` | Non-reifiable array creation |
-| `N09_InstanceofParameterized` | `import java.util.*; class N09_InstanceofParameterized { boolean m(Object o) { return o instanceof List<String>; } }` | Нельзя проверить произвольный non-reifiable parameterization |
+| `N09_InstanceofParameterized` | `import java.util.*; class N09_InstanceofParameterized { boolean m(Object o) { return o instanceof List<String>; } }` | Compile-time error: `Object` → `List<String>` не checked cast compatible (потребовалось бы unchecked narrowing); это частный отрицательный случай, не универсальный запрет параметризованного типа справа |
 | `N10_ParameterizedClassLiteral` | `import java.util.*; class N10_ParameterizedClassLiteral { Class<?> c = List<String>.class; }` | Неверный class literal для parameterized type |
 | `N11_ErasureNameClash` | `import java.util.*; class N11_ErasureNameClash { void m(List<String> s) {} void m(List<Integer> n) {} }` | Two declarations have same erased signature |
 | `N12_BoundOrder` | `class N12_BoundOrder<T extends Comparable<T> & Number> {}` | Class Number не может идти после interface bound |
@@ -243,6 +265,8 @@ P20=true,67
 | `N20_ArrayWrongDirection` | `class N20_ArrayWrongDirection { Integer[] ints = new Number[1]; }` | Нельзя присвоить массив надтипа в переменную массива подтипа |
 | `N21_UnboundedWildcardRead` | `import java.util.*; class N21_UnboundedWildcardRead { void m(List<?> xs) { String x = xs.get(0); } }` | Unknown captured type при чтении |
 | `N22_UnboundedWildcardAddAll` | `import java.util.*; class N22_UnboundedWildcardAddAll { void m(List<String> dst,List<?> src){dst.addAll(src);} }` | `Collection<?>` не гарантирует String-элементы |
+
+**N09 не означает, что `instanceof List<String>` запрещён всегда:** в нём источник имеет статический тип `Object`, поэтому checked cast compatibility отсутствует. Положительный парный случай P21 использует источник `List<String>` и цель `ArrayList<String>`.
 
 **Не называть compile errors то, что компилируется с unchecked warning:** raw-вставка, unchecked cast, unsafe varargs в обычной конфигурации `javac`, и `@SafeVarargs`-метод с опасным телом — другой класс ошибок, специально вынесенный в §7.
 
@@ -338,7 +362,7 @@ class W04_UncheckedInsertion {
 **Будущие ID без фиктивных Markdown-ссылок:** CORE-GENERICS, CORE-ERASURE (две цели текущего исследования), CORE-ARRAYS, COL-CONTRACTS, CORE-REFLECTION, JVM-BYTECODE, CORE-FUNCTIONS (G1 принят, статьи ещё нет), CORE-STREAMS, DB-JPA, SPR-DI, CORE-IMMUTABLE, TEST-DESIGN. На момент G2 заново проверить фактический main; если файл опубликован, дать настоящую локальную ссылку, иначе краткое объяснение на месте/запись пробела.
 
 **Действия по ролям:**
-- **04 — независимое G1 review по точному HEAD:** проверить P0 GE-01–17, текст нормативных ссылок и локальные target paths, E/negative/warning сценarii; особое внимание GE-05/06/08 (extends/super/capture), GE-10/11/12 (erasure/reifiable), GE-13/14 (unchecked/SafeVarargs), GE-15/16 (clash/bridge), GE-09 (array covariance). При блокере — конкретный GE/N/W и норма. Авторские успешные пробы и зелёный CI ≠ независимое review.
+- **04 — независимое G1 review по точному HEAD:** проверить P0 GE-01–17, текст нормативных ссылок и локальные target paths, E/negative/warning сценarii; особое внимание GE-05/06/08 (extends/super/capture), GE-10/11/12 (erasure, checked cast compatibility for `instanceof`, reifiable arrays), GE-13/14 (unchecked/SafeVarargs), GE-15/16 (clash/bridge), GE-09 (array covariance). При блокере — конкретный GE/N/W и норма. Авторские успешные пробы и зелёный CI ≠ независимое review.
 - **00 — решение по G1 *после* предметного review:** согласовать две статьи и матрицу 17 P0 / 8 P1 / 5 P2, границы между PECS и erasure; ACCEPTED либо CHANGES с ID/критерием. **До явного решения 00 роли 02/03 по этой паре не открывать.**
 - **02 (после G1):** CORE-GENERICS — PECS через списки и copy, инвариантность и реальные типовые ограничения; CORE-ERASURE — unsafe/runtime/bounds/bridge с объяснением, где именно тип теряется, а где остаётся runtime check. Базовые правила нельзя считать объяснёнными одной таблицей.
 - **03 (после G1):** изолированные compile-negative cases и lint cases нельзя класть в обычный runnable success source set; создать только оправданный самостоятельный пример, если демонстрации §5–7 недостаточно. Mockito/JUnit без содержательной причины не требовать.
