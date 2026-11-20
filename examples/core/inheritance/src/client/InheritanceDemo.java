@@ -4,6 +4,7 @@ package client;
 // Theory: knowledge/01-java-core/types.md
 // Theory: knowledge/01-java-core/conversions.md
 // Theory: knowledge/01-java-core/parameters.md
+// Theory: knowledge/01-java-core/inheritance.md
 // Research: docs/plans/CORE-INHERITANCE.md
 // From repository root: bash examples/core/inheritance/verify.sh
 import base.Base;
