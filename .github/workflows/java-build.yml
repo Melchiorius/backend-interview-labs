@@ -43,3 +43,6 @@ jobs:
 
       - name: Verify CORE-INIT initialization order example
         run: bash examples/core/initialization/verify.sh
+
+      - name: Verify CORE-EQUALITY positive and contract-breaking cases
+        run: bash examples/core/equality/verify.sh
