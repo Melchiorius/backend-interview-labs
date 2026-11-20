@@ -476,3 +476,232 @@ class OrderedInstance {
 
 Порядок: `first field` → `first block` → `second field` → `second block`. Тело конструктора выполняется после них. Нормативная опора — [JLS 21 §8.3.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.3.2), [§8.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.6) и [§12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
 
+## Опасность виртуального вызова из конструктора
+
+Java не отключает динамическую диспетчеризацию при создании объекта. Если конструктор суперкласса вызывает переопределяемый экземплярный метод, JVM выбирает реализацию по фактическому классу объекта.
+
+В этот момент:
+
+- все поля объекта уже имеют default values;
+- инициализаторы и initializer blocks суперкласса уже выполнились;
+- выполняется тело конструктора суперкласса;
+- instance initializers и тело конструктора подкласса **ещё не выполнялись**.
+
+В центральном примере `Parent()` вызывает `describe()`. Фактический объект — `Child`, поэтому запускается `Child.describe()`. `Parent.parentValue` уже равно `10`, но `Child.value` всё ещё равно `0`. После возврата `Parent()` инициализатор подкласса присвоит полю `68`.
+
+Это обычная динамическая диспетчеризация, применённая к объекту, который ещё создаётся. Общее правило overriding разобрано в [CORE-INHERITANCE](inheritance.md); здесь важен момент времени и доступное состояние объекта. См. [JLS 21 §12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
+
+Практическое правило: **не вызывайте из конструктора методы, которые подкласс может переопределить**, если контракт явно не рассчитан на частично сконструированный объект. Вынесите такую работу в метод, вызываемый после создания объекта, либо используйте `private`/`final` helper там, где это соответствует дизайну. Само объявление helper как `final` не исправляет любой дефект порядка: метод всё ещё может читать неустановленное состояние.
+
+### `this` escape во время construction
+
+Риск усиливается, если override публикует ссылку `this` наружу:
+
+```java
+class Parent {
+    Parent() {
+        register();
+    }
+    void register() { }
+}
+
+class Child extends Parent {
+    int value = 67;
+    static volatile Child escaped;
+
+    @Override
+    void register() {
+        escaped = this;
+    }
+}
+```
+
+При `new Child()` вызов `register()` из `Parent()` попадёт в `Child.register()`. В момент записи в `escaped` поле `Child.value` ещё содержит `0`; инициализатор `= 67` выполнится позже.
+
+`volatile` здесь не «достраивает» объект. Запись ссылки в volatile-поле происходит **до** присваивания `Child.value = 67` и не публикует эту будущую запись как уже завершённую. Другой поток может получить ссылку на частично сконструированный объект. Точный результат конкурентного чтения зависит от синхронизации и момента чтения; нельзя обещать один детерминированный вывод.
+
+Same-thread dispatch из конструктора и межпоточный `this` escape — разные вопросы. Первый сам по себе не является data race. Второй создаёт возможность наблюдать объект до завершения construction и затрагивает Java Memory Model; полная модель безопасной публикации относится к CON-JMM.
+
+## Ошибка инициализации класса
+
+Если class initialization завершается ошибкой, JVM запоминает это состояние. При следующем обращении класс не запускает static initializers повторно.
+
+```java
+class Broken {
+    static {
+        fail();
+    }
+
+    static void fail() {
+        throw new IllegalStateException("boom");
+    }
+
+    static int VALUE = 67;
+}
+
+public class InitFailureDemo {
+    public static void main(String[] args) {
+        try {
+            System.out.println(Broken.VALUE);
+        } catch (ExceptionInInitializerError error) {
+            System.out.println("first: "
+                    + error.getClass().getSimpleName()
+                    + ", cause="
+                    + error.getCause().getClass().getSimpleName());
+        }
+
+        try {
+            System.out.println(Broken.VALUE);
+        } catch (NoClassDefFoundError error) {
+            System.out.println("second: "
+                    + error.getClass().getSimpleName());
+        }
+    }
+}
+```
+
+Ожидаемый результат:
+
+```text
+first: ExceptionInInitializerError, cause=IllegalStateException
+second: NoClassDefFoundError
+```
+
+Первое чтение `Broken.VALUE` — active use. Static block вызывает `fail()`, который выбрасывает `IllegalStateException`. Это исключение не является `Error`; JVM заменяет его на `ExceptionInInitializerError` с исходным исключением в качестве причины. Инициализация `Broken` завершается неуспешно, и тип помечается как *erroneous*.
+
+При следующем active use JVM не выполняет static block повторно. Инициализация невозможна, поэтому возникает `NoClassDefFoundError`.
+
+Если из инициализатора выброшен объект класса `Error` или его подкласса, он передаётся без обязательной упаковки в `ExceptionInInitializerError`. Например, `AssertionError` остаётся `AssertionError` при первом неуспешном active use; последующее использование всё равно встретит erroneous state и приведёт к `NoClassDefFoundError`.
+
+Если инициализация суперкласса или требуемого superinterface завершилась ошибкой, инициализируемый класс также помечается erroneous. Сообщение `NoClassDefFoundError` и текст stack trace не являются надёжным способом определить первопричину: ищите исходную ошибку первой попытки.
+
+Это правило относится к class initialization. Оно не означает, что любое исключение из любого метода навсегда «ломает класс»: если класс уже успешно инициализирован, исключение из обычного static-метода не меняет его состояние инициализации.
+
+Нормативный алгоритм — [JLS 21 §12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2). API: [ExceptionInInitializerError](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ExceptionInInitializerError.html) и [NoClassDefFoundError](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/NoClassDefFoundError.html).
+
+## Исключение при создании экземпляра — другая ситуация
+
+Исключение из instance initializer или конструктора прерывает создание **конкретного объекта**, но не переводит класс в erroneous state. Если class initialization прошла успешно, следующая попытка `new` может пройти нормально.
+
+```java
+class Retryable {
+    static int attempts;
+
+    {
+        if (++attempts == 1) {
+            throw new IllegalStateException("first attempt");
+        }
+    }
+}
+
+public class InstanceFailureDemo {
+    public static void main(String[] args) {
+        try {
+            new Retryable();
+        } catch (IllegalStateException error) {
+            System.out.println("first: " + error.getMessage());
+        }
+
+        new Retryable();
+        System.out.println("second: success");
+    }
+}
+```
+
+Вывод:
+
+```text
+first: first attempt
+second: success
+```
+
+При первом `new` инициализация самого класса `Retryable` проходит успешно, затем instance initializer бросает исключение. Объект не возвращается вызывающему коду, но класс остаётся инициализированным. При втором `new` блок выполняется снова; счётчик уже равен двум, поэтому создание завершается успешно.
+
+| Где возникло исключение | Что не удалось | Что будет при следующем использовании |
+|---|---|---|
+| `static` field initializer / `static` block | Инициализация класса | Класс erroneous; active use приводит к `NoClassDefFoundError` |
+| Instance field initializer / instance block | Создание одного объекта | Класс не становится erroneous только из-за этой ошибки; следующий `new` может пройти |
+| Тело конструктора | Создание одного объекта | Класс не становится erroneous только из-за ошибки конструктора |
+| Обычный метод после успешной class initialization | Вызов метода | Состояние class initialization не меняется |
+
+## Рекурсивная инициализация в одном потоке
+
+Инициализатор одного класса может обратиться к другому классу, а тот — снова к первому. Если повторный запрос приходит **из того же потока**, который уже инициализирует класс, JVM не запускает инициализатор повторно и не считает ситуацию ошибкой сама по себе.
+
+```java
+class A {
+    static int x = B.y + 1;
+}
+
+class B {
+    static int y = A.x + 1;
+}
+
+public class RecursiveInitDemo {
+    public static void main(String[] args) {
+        System.out.println(A.x + "/" + B.y);
+    }
+}
+```
+
+Вывод:
+
+```text
+2/1
+```
+
+Если первым active use становится чтение `A.x`:
+
+1. Начинается инициализация `A`; до выполнения инициализатора `A.x` имеет default value `0`.
+2. Вычисление `A.x` читает `B.y`, поэтому начинается инициализация `B`.
+3. Вычисление `B.y` читает `A.x`. `A` уже инициализируется тем же потоком.
+4. Рекурсивный запрос на инициализацию `A` завершается нормально, без повторного выполнения инициализатора `A`.
+5. `B.y` получает `0 + 1`, то есть `1`.
+6. Инициализация `B` заканчивается; вычисление `A.x` продолжается и получает `1 + 1`, то есть `2`.
+
+Это допустимая, но неочевидная конструкция. В реальном коде циклические зависимости статических инициализаторов лучше устранять: значение может быть прочитано до присваивания, которое программист ожидал увидеть первым.
+
+## Синхронизация class initialization и безопасная публикация
+
+Для каждого класса или интерфейса JLS задаёт уникальную блокировку инициализации. Если один поток уже инициализирует тип, другой поток, которому требуется инициализировать тот же тип, ожидает завершения процедуры. Если тот же поток рекурсивно запрашивает инициализацию типа, который он уже инициализирует, повторный запуск не выполняется.
+
+**Как JVM отображает тип на lock — деталь реализации.** JLS не требует, чтобы блокировкой был именно объект `C.class`. Нельзя считать, что JVM обязательно выполняет `synchronized (C.class)`. Реализация может оптимизировать проверки уже инициализированного класса, но должна сохранить требуемые happens-before отношения. См. [JLS 21 §12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2), [JVMS 21 §5.5](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.5) и [JLS 21 §17.4.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4.5).
+
+Из этого следуют две границы:
+
+- Успешная class initialization обеспечивает корректную публикацию статического состояния, созданного в инициализаторах, для последующего использования типа. Поэтому статическая инициализация часто применяется для создания неизменяемого singleton.
+- Это **не** означает, что все последующие операции с изменяемыми `static`-полями автоматически потокобезопасны. После завершения class initialization обычные записи/чтения должны использовать подходящую синхронизацию, `volatile`, атомарные классы и т. п.
+
+Не следует смешивать это с *final-field semantics*. Для `final`-полей объекта существуют отдельные гарантии Java Memory Model при корректном завершении конструктора ([JLS 21 §17.5.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.5.1)). Если `this` утекает из конструктора до завершения создания объекта, нельзя безоговорочно применять к такому объекту рассуждение о корректно сконструированном состоянии. Полная модель безопасной публикации, happens-before и data races относится к CON-JMM.
+
+## Что не следует смешивать с class initialization
+
+### `ClassCircularityError` — не рекурсивный static initializer
+
+Рекурсивный запрос `A → B → A` не означает циклическую иерархию классов. Это разные механизмы.
+
+`ClassCircularityError` связан с **загрузкой и derivation**: загружаемый класс или интерфейс оказывается собственным прямым или косвенным superclass/superinterface. Основание — [JLS 21 §12.2.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2.1) и [JVMS 21 §5.3.5](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3.5). Хотя `ClassCircularityError` относится к семейству `LinkageError`, обнаружение циклической иерархии относится к loading/derivation, а не к фазе linking.
+
+Обычный исходный код:
+
+```java
+class A extends B { }
+class B extends A { }
+```
+
+отвергается `javac` на этапе компиляции. Runtime-сценарий `ClassCircularityError` требует циклического графа в загружаемом class file, например при работе собственного class loader. Не следует изображать его как обычный пример с двумя static-блоками.
+
+### Возможный deadlock между потоками — отдельный P2-случай
+
+Same-thread recursion распознаётся процедурой инициализации. Но теоретически два потока могут образовать цикл ожиданий:
+
+- поток A начал инициализировать `ClassA` и в ходе `<clinit>` обращается к `ClassB`;
+- поток B начал инициализировать `ClassB` и в ходе `<clinit>` обращается к `ClassA`;
+- каждый ждёт завершения инициализации другого типа.
+
+Это может привести к взаимной блокировке. Нельзя обещать детерминированный вывод или точный тайминг: результат зависит от расписания потоков и конкретных зависимостей. Стресс-тест такого deadlock в рамках статьи не заявляется.
+
+### Разные class loaders — разные определения классов
+
+Идентичность runtime-класса зависит не только от binary name, но и от defining class loader. Два загрузчика могут определить классы с одинаковым именем как разные runtime-типы; у таких определений будет отдельное состояние инициализации и отдельные static fields. Это граница JVM-LOADING, а не повод подробно разбирать delegation, модули и class unloading. Нормативные отправные точки: [JLS 21 §12.2.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2.2), [JVMS 21 §5.3](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3).
+
