@@ -3,7 +3,7 @@
 // Theory: knowledge/01-java-core/types.md
 // Theory: knowledge/01-java-core/classes.md
 // Theory: knowledge/01-java-core/inheritance.md
-// Research: docs/plans/CORE-OBJECT-EQUALITY.md (PR #61, pending merge)
+// Research: docs/plans/CORE-OBJECT-EQUALITY.md (G1 ACCEPTED, PR #61 merged in main)
 
 import java.math.BigDecimal;
 import java.util.Arrays;
