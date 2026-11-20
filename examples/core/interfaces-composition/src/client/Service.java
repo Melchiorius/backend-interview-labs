@@ -1,5 +1,7 @@
 package client;
 
+// Theory: knowledge/01-java-core/interfaces.md
+// Theory: knowledge/01-java-core/composition.md
 import api.Policy;
 import java.util.Objects;
 

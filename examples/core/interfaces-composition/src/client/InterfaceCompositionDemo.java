@@ -1,5 +1,7 @@
 package client;
 
+// Theory: knowledge/01-java-core/interfaces.md
+// Theory: knowledge/01-java-core/composition.md
 // Theory: knowledge/01-java-core/inheritance.md
 // Theory: knowledge/01-java-core/access.md
 // Research: docs/plans/CORE-INTERFACES-COMPOSITION.md

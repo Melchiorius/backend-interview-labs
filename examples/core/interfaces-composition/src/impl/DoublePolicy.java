@@ -1,5 +1,6 @@
 package impl;
 
+// Theory: knowledge/01-java-core/composition.md
 import api.Policy;
 
 // Research: docs/plans/CORE-INTERFACES-COMPOSITION.md
