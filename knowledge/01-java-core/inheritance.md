@@ -501,7 +501,8 @@ bash examples/core/inheritance/verify.sh
 ## Границы и дальнейшие темы
 
 - **Действующие локальные материалы:** [классы и конструкторы](classes.md), [доступность членов](access.md), [статический и фактический типы](types.md), [преобразования и перегрузки](conversions.md), [передача аргументов](parameters.md), [порядок инициализации](initialization.md).
-- **Объект и равенство:** [CORE-OBJECT](object.md), [CORE-EQUALITY](equality.md).\n- **Будущие темы, пока без локальных ссылок:** `CORE-INTERFACES`, `CORE-COMPOSITION`, `CORE-EXCEPTIONS`, `CORE-ERASURE`, `CORE-GENERICS`, `CORE-SEALED`, `CORE-RECORDS`, `JVM-BYTECODE`, `JVM-JIT` и особенности фреймворков/прокси.
+- **Объект и равенство:** [CORE-OBJECT](object.md), [CORE-EQUALITY](equality.md).
+- **Будущие темы, пока без локальных ссылок:** `CORE-INTERFACES`, `CORE-COMPOSITION`, `CORE-EXCEPTIONS`, `CORE-ERASURE`, `CORE-GENERICS`, `CORE-SEALED`, `CORE-RECORDS`, `JVM-BYTECODE`, `JVM-JIT` и особенности фреймворков/прокси.
 
 Здесь не исследуется полностью, как generic erasure и bridge methods поддерживают переопределение; не раскрываются подробно sealed/record ограничения (`record` как класс является `final`); не измеряется работа JIT. **JLS 21 не требует конкретной универсальной таблицы vtable или обязательной формы байткода для каждого вызова**: реализацию JVM не подменяем правилами языка. Контракты `Object.equals/hashCode/toString` и взаимодействие proxy/ORM с наследованием требуют отдельного обсуждения.
 
