@@ -12,7 +12,7 @@
 
 ## Центральный пример: Strategy + constructor injection + Decorator
 
-Ниже один **самодостаточный диагностический пример** в файле `CompositionWalkthrough.java`. Он нужен для понимания архитектуры без отдельного Gradle-модуля. Роль 03 готовит единый интеграционный multi-file пример для двух статей в [Issue #71](https://github.com/Melchiorius/backend-interview-labs/issues/71); не путайте один inline-файл с её проектом.
+Ниже один **самодостаточный диагностический пример** в файле `CompositionWalkthrough.java`. Он нужен для последовательного разбора архитектуры без отдельного Gradle-модуля. Дополнительно роль 03 опубликовала [общий многофайловый runnable для двух статей](../../examples/core/interfaces-composition/README.md). Его пакеты, имена классов и stdout **отличаются** от независимого inline-примера; это два разных набора исходников, а не два запуска одного файла.
 
 ```java
 import java.util.Objects;
@@ -303,4 +303,45 @@ if (fake.lastInput != 67 || fake.calls != 1) {
 
 **Границы P2:** реальная Spring DI/AOP, proxy equality, bean scope и lifecycle (IC-29); JMM, safe publication, races, cancellation и многопоточность (IC-30) не воспроизводились. `final Policy` не делает методы автоматически thread-safe. Визуальное открытие Markdown-ссылок в Obsidian/IntelliJ не заявляется. Документ не является эталоном внедрения зависимостей для любой системы и не обещает универсальной LSP-корректности произвольных реализаций.
 
-**Практическая граница G2:** отдельный общий runnable из [Issue #71](https://github.com/Melchiorius/backend-interview-labs/issues/71) должен быть интегрирован и сопоставлен с двумя статьями до передачи G3; один корректный inline-файл ещё не является общим принятым примером роли 03.
+**Практическая граница G2:** общий runnable из [Issue #71](https://github.com/Melchiorius/backend-interview-labs/issues/71) включён в эту авторскую ветку; его доказательства компиляции/stdout относятся к конкретным файлам, а не к полной корректности любой реализации Policy. До редакционного G3 и независимого G4 этот материал не считается проверенной публикацией.
+
+
+## Интегрированный общий пример: те же границы на уровне пакетов
+
+[README и 10-строчный stdout](../../examples/core/interfaces-composition/README.md) · [Policy.java](../../examples/core/interfaces-composition/src/api/Policy.java) · [Service.java](../../examples/core/interfaces-composition/src/client/Service.java) · [IncrementingDecorator.java](../../examples/core/interfaces-composition/src/impl/IncrementingDecorator.java).
+
+У общего runnable роли 03 другие конкретные имена и операции, чем у `CompositionWalkthrough` выше. Зафиксируем разницу, чтобы не смешивать два вывода:
+
+| Деталь | Inline CompositionWalkthrough | Общий multi-file runnable |
+|---|---|---|
+| Реализации политики | `AddOne` и `DoubleIt` | `impl.AddTenPolicy` и `impl.DoublePolicy` |
+| Декоратор | `AddTenDecorator` добавляет 10 | `impl.IncrementingDecorator` добавляет 1 |
+| Сервис | вложенный `Service.execute` | `client.Service.execute/explain` |
+| Проверка инъекции | `Objects.requireNonNull(policy, "policy")` | То же в отдельном классе client.Service |
+| Контракт интерфейса | Одна abstract операция | `api.Policy.apply` + default `describe` + private formatter |
+| Демонстрация тестирования | Ручной recording fake и случай исключения | Вывод 10 строк, ручные assert-ы в entry point; fake отдельно **не** включён |
+
+Для общего проекта вход равен 67: `AddTenPolicy` возвращает 77, `DoublePolicy` возвращает 134, `IncrementingDecorator(DoublePolicy)` — 135. Вызов `Service.explain(67)` попадает в default `Policy.describe`, который один раз вызывает `apply(67)` и форматирует `input=67 -> output=77`. Null dependency отбрасывается через `Objects.requireNonNull`. В конце сценарий разрешает независимый default/default как `left|right` и показывает class precedence как `class` — эти правила подробно описаны в [CORE-INTERFACES](interfaces.md).
+
+Ожидаемый полный stdout именно **общего** проекта:
+
+```text
+== Service with interchangeable policies ==
+add ten: 77
+double: 134
+decorated double: 135
+default describe: input=67 -> output=77
+null dependency rejected: true
+== Interface default resolution ==
+two defaults: left|right
+class wins: class
+CHECK PASSED
+```
+
+Для запуска и проверки полного сохранённого вывода из корня:
+
+```sh
+bash examples/core/interfaces-composition/verify.sh
+```
+
+Скрипт компилирует с `javac --release 21` и сравнивает stdout с [expected.stdout](../../examples/core/interfaces-composition/expected.stdout). При совпадении выдаёт дополнительное сообщение после вывода Java-программы. Это одна проверка связного сценария, не универсальное доказательство LSP, lifecycle или потокобезопасности.
