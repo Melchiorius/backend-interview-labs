@@ -85,3 +85,7 @@ CHECK PASSED
 ## Наследование, перегрузка и переопределение
 
 [CORE-INHERITANCE — многофайловый пример Java 21](inheritance/README.md) различает compile-time overload и runtime override, скрытие статических методов и полей, `super`, ковариантные результаты и checked `throws`. Двенадцать отрицательных файлов компилируются отдельно, без создания обязательного упражнения.
+
+## Порядок инициализации классов и объектов
+
+[CORE-INIT — автономный пример Java 21](initialization/README.md) показывает class initialization (constant variable, унаследованное static-поле, superinterfaces с default methods) и instance initialization (default values, superclass constructor, virtual dispatch, делегирование this-конструктора и инициализаторы подкласса). Один исходник, полный ожидаемый stdout и проверка diff; отдельный Gradle-модуль не требуется.
