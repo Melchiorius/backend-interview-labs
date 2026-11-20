@@ -1,16 +1,16 @@
 # CORE-INTERFACES — интерфейсы Java 21, контракты и выбор методов
 
-**Java SE 21 · G2 / Issue [#70](https://github.com/Melchiorius/backend-interview-labs/issues/70).** Основа: принятый [исследовательский план](../../docs/plans/CORE-INTERFACES-COMPOSITION.md) (IC-01–IC-30); решение [G1 ACCEPTED 00](https://github.com/Melchiorius/backend-interview-labs/issues/64#issuecomment-7049387322). Статья о **правилах языка**; о замене наследования делегированием и стоимости такого выбора — самостоятельная [CORE-COMPOSITION](composition.md).
+**Java SE 21 · Issue [#70](https://github.com/Melchiorius/backend-interview-labs/issues/70).** Основа: принятый [исследовательский план](../../docs/plans/CORE-INTERFACES-COMPOSITION.md) (IC-01–IC-30); решение [G1 ACCEPTED 00](https://github.com/Melchiorius/backend-interview-labs/issues/64#issuecomment-7049387322). Статья о **правилах языка**; о замене наследования делегированием и стоимости такого выбора — самостоятельная [CORE-COMPOSITION](composition.md).
 
 ## Что обещает интерфейс
 
 Представим сервис, который получает число 67 и применяет к нему одну из политик расчёта. Код сервиса должен знать, **какую операцию вправе потребовать**, а не **какой конкретный класс её исполняет**. Интерфейс задаёт ссылочный тип и набор условий, которым обязуются соответствовать реализации. Интерфейс нельзя создать через `new Policy()`; создаются экземпляры классов-реализаторов.
 
-Java 21 interface — не «класс без реализации»: интерфейс может объявлять abstract, default, static и private методы, но не может хранить instance fields или иметь конструкторы экземпляров. Правила: [JLS 21 §9.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.1), [§9.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.3), [§9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4).
+Интерфейс Java 21 — не «класс без реализации»: интерфейс может объявлять abstract, default, static и private методы, но не может хранить instance fields или иметь конструкторы экземпляров. Правила: [JLS 21 §9.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.1), [§9.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.3), [§9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4).
 
 ## Центральный проверяемый пример: кто исполняет метод
 
-Ниже отдельный **диагностический листинг** для правил интерфейсов. Помимо него в общем [интегрированном runnable CORE-INTERFACES + CORE-COMPOSITION](../../examples/core/interfaces-composition/README.md) роль 03 реализовала межпакетный сценарий `api.Policy` → `client.Service` → `impl` с десятью проверяемыми строками. Этот листинг не следует выдавать за исходник общего проекта: он отдельно проверяет более широкий набор правил разрешения методов.
+Ниже отдельный **диагностический листинг** для правил интерфейсов. Помимо него [общий запускаемый пример CORE-INTERFACES + CORE-COMPOSITION](../../examples/core/interfaces-composition/README.md) показывает взаимодействие `api.Policy`, `client.Service` и реализаций из пакета `impl` с десятью проверяемыми строками вывода. Этот листинг не следует выдавать за исходник общего проекта: он отдельно проверяет более широкий набор правил разрешения методов.
 
 Сохраните в `InterfaceMechanics.java`:
 
@@ -118,14 +118,14 @@ default
 
 **Порядок девяти строк:**
 
-1. `68` — компилятор допускает `policy.apply(int)` по статическому типу `Policy`, а во время выполнения по фактическому классу объекта `Standard` выбирается его реализация. Компиляция и runtime dispatch — разные этапы ([JLS 21 §15.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12)).
-2. `policy/68` — унаследованный экземплярный default `label()` вызывает private helper и виртуальную операцию `apply(67)`. Default имеет тело, но это не означает статическое связывание всех вызовов внутри него.
+1. `68` — компилятор допускает `policy.apply(int)` по статическому типу `Policy`, а во время выполнения по фактическому классу объекта `Standard` выбирается его реализация. Проверка допустимости вызова и выбор реализации во время выполнения — разные этапы ([JLS 21 §15.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12)).
+2. `policy/68` — унаследованный экземплярный default `label()` вызывает вспомогательный `private`-метод и виртуальную операцию `apply(67)`. Default имеет тело, но это не означает статическое связывание всех вызовов внутри него.
 3. `interface` — метод `kind()` статический, поэтому вызывается через `Policy.kind()`, а не через `Standard.kind()` и не через переменную.
 4. `left+right` — при двух независимых default класс `Both` **явно разрешает конфликт** и вызывает две допустимые реализации через `InterfaceName.super`.
 5. `class` — конкретный метод, унаследованный от класса `Parent`, имеет приоритет перед default из `Welcome`.
 6. `child` — подинтерфейс `B extends A` более специфичен, чем `A`; переопределив default, он выбирает своё поведение. Порядок перечисления интерфейсов не является алгоритмом «первый побеждает».
-7. `default` — independent abstract/default конфликт разрешён объявлением собственного метода `Resolved.status()`; внутри него автор явно вызывает default.
-8. `136` — functional interface имеет один логический abstract method `calculate`. Объявление `equals(Object)`, соответствующее публичному методу Object, и default/static members не создают вторую SAM-операцию. Лямбда даёт 68, default удваивает результат.
+7. `default` — конфликт независимых `abstract`- и `default`-деклараций разрешён объявлением собственного метода `Resolved.status()`; внутри него автор явно вызывает default.
+8. `136` — функциональный интерфейс имеет один абстрактный метод `calculate`. Объявление `equals(Object)`, соответствующее публичному методу Object, а методы `default` и `static` не создают вторую абстрактную операцию. Лямбда даёт 68, default удваивает результат.
 9. `67` — реализация `NumberSource.get()` сужает return type с `Number` до `Integer` и checked throws с `Exception` до `IOException`. Это допустимый случай, а не разрешение менять сигнатуры как угодно.
 
 Общая механика dispatch/override — [CORE-INHERITANCE](inheritance.md); в этой статье рассматривается именно **дополнительный конфликт нескольких интерфейсных контрактов**.
@@ -413,9 +413,9 @@ javac --release 21 -d out N02.java
 
 ## Связь с единым многофайловым примером роли 03
 
-[README, команды и источники](../../examples/core/interfaces-composition/README.md) · [код интерфейса Policy](../../examples/core/interfaces-composition/src/api/Policy.java) · [Java entry point](../../examples/core/interfaces-composition/src/client/InterfaceCompositionDemo.java) · [expected.stdout](../../examples/core/interfaces-composition/expected.stdout).
+[README, команды и источники](../../examples/core/interfaces-composition/README.md) · [код интерфейса Policy](../../examples/core/interfaces-composition/src/api/Policy.java) · [точка входа Java-программы](../../examples/core/interfaces-composition/src/client/InterfaceCompositionDemo.java) · [expected.stdout](../../examples/core/interfaces-composition/expected.stdout).
 
-Это **одна** группа из восьми Java-файлов с реальными пакетами. Контракт `api.Policy` имеет единственную абстрактную операцию `int apply(int)`, default `describe(int)` и закрытый private static formatter. Клиентский `Service` принимает политику через конструктор; классы-реализаторы и декоратор живут в `impl`. Для проверки JLS в entry point две отдельные небольшие иллюстрации:
+Это **одна** группа из восьми Java-файлов с реальными пакетами. Контракт `api.Policy` имеет единственную абстрактную операцию `int apply(int)`, default `describe(int)` и закрытый вспомогательный метод форматирования `private static`. Клиентский `Service` принимает политику через конструктор; классы-реализаторы и декоратор живут в `impl`. Для проверки JLS в entry point две отдельные небольшие иллюстрации:
 
 - `Resolved implements LeftOrigin, RightOrigin` явно вызывает `LeftOrigin.super.origin()` и `RightOrigin.super.origin()` → `left|right`;
 - `ClassWins extends OriginBase implements LeftOrigin` использует конкретный метод родителя вместо default → `class`.
