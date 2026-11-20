@@ -11,11 +11,11 @@
 | IH-01 | «Иерархия, extends и границы наследования» | Один прямой superclass; Object без superclass, обычный класс без extends наследует Object; private/package members, конструкторы не наследуются |
 | IH-02 | «Одна переменная — два важных типа» | Upcast `Document ref = new Report()`, declared/runtime type, нельзя вызвать только Sub-метод через Base |
 | IH-03 | «Overloading и overriding — различие» | Signature/subsignature, return-only overload — ошибка |
-| IH-04 | «Главный пример» | `Base ref = new Derived()`, выбранный метод экземпляра исполняет override `derived-object` |
-| IH-05 | «Главный пример» | `ref.describe("X")` vs `((Derived)ref).describe("X")` → `derived-object/derived-string`, overload compile-time |
-| IH-06 | «Почему static методы не переопределяются» | `Base.kind()/Derived.kind()` → `base-static/derived-static`; static/instance conflict — ошибка |
-| IH-07 | «Поля тоже не переопределяются» | `ref.value` и `((Derived)ref).value` → `67/68`; static/instance field hiding |
-| IH-08 | «this, super и приведение» | `super.describe("X")` → `base-object`; cast не отключает override; `super.value` → 67 |
+| IH-04 | «Главный пример» | `Base ref = new Derived()`, выбранный метод экземпляра исполняет override `derived:object` |
+| IH-05 | «Главный пример» | `ref.describe("X")` vs `((Derived)ref).describe("X")` → `derived:object/derived:string`, overload compile-time |
+| IH-06 | «Почему static методы не переопределяются» | `Base.kind()/Derived.kind()` → `base:static/derived:static`; static/instance conflict — ошибка |
+| IH-07 | «Поля тоже не переопределяются» | `ref.code` и `((Derived)ref).code` → `67/68`; static/instance field hiding |
+| IH-08 | «this, super и приведение» | `super.describe("X")` → `base:object`; cast не отключает override; `super.value` → 67 |
 | IH-09 | «private и package-private» | Private метод Base исполняется из Base; package-private Base в другом пакете не override |
 | IH-10 | «final» | Нельзя extends final class, override final instance и скрыть final static |
 | IH-11 | «Нельзя уменьшать доступность» | protected → public допустимо, protected → package-private запрещено |
@@ -60,7 +60,7 @@
 
 **Семь успешно компилированных и запущенных вариантов:**
 
-- `Dispatch`: шесть строк `derived-object`, `derived-string`, `base-static/derived-static`, `67/68`, `base-object/derived-object`, `67`.
+- `Dispatch`: шесть строк `derived:object`, `derived:string`, `base:static/derived:static`, `67/68`, `base:object/derived:object`, `67`.
 - `Covariant`: `Integer:68`; narrower checked throws.
 - `PrivateDispatch`: `base-private/child-public`.
 - `Init`: `0`.
@@ -70,11 +70,11 @@
 
 **Двенадцать отдельных ожидаемых отказов компиляции:** `BadAmbiguity`, `BadFinal`, `BadHiding`, `BadOverride`, `BadReturn`, `BadThrows`, `BadFinalStatic`, `BadAccess`, `BadReturnOnly`, `BadStaticOther`, `BadMultipleExtends` и `BadPackageOverride`. Для каждого проверен ненулевой результат `javac` и наличие диагностики по намеренно запрещённому случаю. Это изолированные эквивалентные пробы — **не исходники будущего примера 03**.
 
-**Не выполнялось:** GitHub CI на черновике до создания PR; `bash` / Java-файлы роли 03 (ещё не интегрированы); локальные Gradle/JUnit/Mockito; визуализация и переходы в Obsidian/IntelliJ; автоматическая проверка всех внешних URL. Успех отдельных проб не доказывает полноту JLS.
+**Не выполнялось ролью 02 локально:** `bash examples/core/inheritance/verify.sh` на новом интегрированном HEAD (ожидается проверка CI и/или 03); локальные Gradle/JUnit/Mockito; визуализация и переходы в Obsidian/IntelliJ; автоматическая проверка всех внешних URL. Успех отдельных проб не доказывает полноту JLS.
 
 ## Дальнейшие ворота
 
-- [Issue #39](https://github.com/Melchiorius/backend-interview-labs/issues/39), роль 03: согласовать фактические имена/путь и проверить runnable+negative; собрать единый интегрированный HEAD.
+- [Issue #39](https://github.com/Melchiorius/backend-interview-labs/issues/39), роль 03: пример из [PR #44](https://github.com/Melchiorius/backend-interview-labs/pull/44) уже включён в общую ветку PR #43; подтвердить проверки на новом интегрированном HEAD.
 - [Issue #40](https://github.com/Melchiorius/backend-interview-labs/issues/40), роль 05: редактура текста, имён, навигации, понятности участников.
 - [Issue #41](https://github.com/Melchiorius/backend-interview-labs/issues/41), роль 04: независимый G4 после интеграции и G3, по конкретному SHA.
 - Роль 00 решает merge. Роль 06 после merge сверяет COVERAGE. **Статус CORE-INHERITANCE не повышать до публикации.**
