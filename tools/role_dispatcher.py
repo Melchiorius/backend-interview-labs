@@ -181,8 +181,6 @@ def make_markdown(obj: dict, target: str, issue_url: str, comment_url: str) -> s
             f"этап: {obj['gate']} · тип: {obj['action']}\n\n"
             f"Issue: {issue_url}\n{pr_line}{sha_line}"
             f"Источник сообщения: {comment_url}\n\n"
-            "Перед началом повторно сверьте фактический GitHub, Issue, PR и SHA. "
-            "Это автоматическая доставка, а не доказательство качества или завершения gate.\n\n"
             f"## Задание\n\n{obj['message']}\n")
 
 
