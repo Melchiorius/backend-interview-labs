@@ -40,3 +40,6 @@ jobs:
 
       - name: Verify CORE-INHERITANCE positive and negative cases
         run: bash examples/core/inheritance/verify.sh
+
+      - name: Verify CORE-INIT initialization order example
+        run: bash examples/core/initialization/verify.sh
