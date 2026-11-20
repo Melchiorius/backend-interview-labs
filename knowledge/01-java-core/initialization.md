@@ -16,160 +16,235 @@
 
 Нормативная основа — [JLS 21, глава 12: Execution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html), прежде всего §§12.2–12.5. В статье используются только правила Java SE 21.
 
-## Центральный пример: статическая инициализация и создание объекта
+## Центральный пример: class initialization и создание экземпляра
 
-Пример соединяет class initialization, интерфейсы с `default`-методами, compile-time constant, default values, `this(...)`, неявный `super()` и динамическую диспетчеризацию в конструкторе родителя.
+Роль 03 подготовила один автономный файл [InitializationDemo.java](../../examples/core/initialization/src/InitializationDemo.java), README с командами и разбором, а также сохранённый [expected.stdout](../../examples/core/initialization/expected.stdout). В статье ниже приведён тот же исходник, чтобы теория и runnable-пример не расходились. Автоматическая проверка точного stdout описана в [README примера](../../examples/core/initialization/README.md).
 
-Сохраните листинг в `InitializationOrderDemo.java`:
+Сохраните исходник в файл `InitializationDemo.java`:
 
 ```java
-final class Trace {
-    static int value(String label, int value) {
-        System.out.println(label);
+/**
+ * CORE-INIT: one Java SE 21 run through class and instance initialization.
+ * Theory: knowledge/01-java-core/initialization.md (class/instance initialization),
+ * knowledge/01-java-core/classes.md (fields/constructors) and
+ * knowledge/01-java-core/inheritance.md (overriding/dynamic dispatch).
+ */
+public final class InitializationDemo {
+    private InitializationDemo() {
+    }
+
+    private static void log(String event) {
+        System.out.println(event);
+    }
+
+    private static int markInt(String event, int value) {
+        log(event);
         return value;
     }
 
-    static void event(String label) {
-        System.out.println(label);
-    }
-}
-
-interface RootFeature {
-    int INITIALIZED = Trace.value("static: RootFeature", 1);
-    default void rootFeature() { }
-}
-
-interface MiddleFeature extends RootFeature {
-    int INITIALIZED = Trace.value("static: MiddleFeature", 1);
-    default void middleFeature() { }
-}
-
-interface NoDefaultFeature {
-    int INITIALIZED = Trace.value("static: NoDefaultFeature", 1);
-}
-
-class Parent {
-    static int state = Trace.value("static: Parent field", 1);
-    static {
-        Trace.event("static: Parent block");
+    private static Integer markInteger(String event, int value) {
+        log(event);
+        return value;
     }
 
-    int parentValue = Trace.value("instance: Parent field", 10);
-    {
-        Trace.event("instance: Parent block");
+    private static String markString(String event, String value) {
+        log(event);
+        return value;
     }
 
-    Parent() {
-        Trace.event("constructor: Parent body");
-        describe();
+    interface RootDefault {
+        int MARK = InitializationDemo.markInt("RootDefault.<clinit>", 1);
+
+        default void rootDefault() {
+        }
     }
 
-    void describe() {
-        Trace.event("Parent.describe");
-    }
-}
+    interface LeafDefault extends RootDefault {
+        int MARK = InitializationDemo.markInt("LeafDefault.<clinit>", 1);
 
-class Child extends Parent implements MiddleFeature, NoDefaultFeature {
-    static final int CONSTANT = 67;
-    static final Integer BOXED = Trace.value("static: Child boxed field", 68);
-    static {
-        Trace.event("static: Child block");
+        default void leafDefault() {
+        }
     }
 
-    int value = Trace.value("instance: Child field", 68);
-    {
-        Trace.event("instance: Child block");
+    interface QuietParent {
+        int MARK = InitializationDemo.markInt("QuietParent.<clinit>", 1);
     }
 
-    Child() {
-        this(67);
-        Trace.event("constructor: Child() remainder");
+    interface QuietChild extends QuietParent {
+        int MARK = InitializationDemo.markInt("QuietChild.<clinit>", 1);
     }
 
-    Child(int argument) {
-        Trace.event("constructor: Child(int) body, argument=" + argument);
+    static class Parent {
+        static final int CONSTANT = 67;
+        static int staticValue = markInt("Parent.static field", 67);
+        static final Integer BOXED = markInteger("Parent.BOXED field", 67);
+
+        static {
+            log("Parent.static block");
+        }
+
+        int parentValue = markInt("Parent.instance field", 67);
+
+        {
+            log("Parent.instance block");
+        }
+
+        Parent() {
+            log("Parent.constructor: before virtual call");
+            observe();
+            log("Parent.constructor: after virtual call");
+        }
+
+        void observe() {
+        }
     }
 
-    @Override
-    void describe() {
-        Trace.event("override: Child.describe sees value=" + value);
-    }
-}
+    static final class Child extends Parent implements LeafDefault, QuietChild {
+        static int OWN = markInt("Child.static field", 68);
 
-public class InitializationOrderDemo {
+        static {
+            log("Child.static block");
+        }
+
+        int childValue = markInt("Child.instance field", 68);
+        String childLabel = markString("Child.instance reference field", "ready");
+
+        {
+            log("Child.instance block");
+        }
+
+        Child() {
+            this(67);
+            log("Child() constructor body");
+        }
+
+        Child(int seed) {
+            super();
+            log("Child(int) constructor body: seed=" + seed);
+        }
+
+        @Override
+        void observe() {
+            log("Child.override: childValue=" + childValue + ", childLabel=" + childLabel);
+        }
+    }
+
     public static void main(String[] args) {
-        System.out.println("constant=" + Child.CONSTANT);
-        System.out.println("before boxed");
-        System.out.println("boxed=" + Child.BOXED);
-        System.out.println("before new Child");
+        log("== 1. Compile-time constant ==");
+        log("Child.CONSTANT = " + Child.CONSTANT);
 
+        log("== 2. Inherited non-constant static field ==");
+        log("Child.BOXED = " + Child.BOXED);
+
+        log("== 3. Child class initialization ==");
+        log("Child.OWN = " + Child.OWN);
+
+        log("== 3a. Direct interface initialization ==");
+        log("QuietChild.MARK = " + QuietChild.MARK);
+
+        log("== 4. Instance construction ==");
         Child child = new Child();
-        System.out.println("final state=" + child.parentValue + "/" + child.value);
-        System.out.println("direct interface field=" + NoDefaultFeature.INITIALIZED);
+
+        log("== 5. Final object state ==");
+        log("state=" + child.parentValue + "/" + child.childValue + "/" + child.childLabel);
     }
 }
 ```
 
-Запуск на JDK 21:
+Команды из корня репозитория (JDK 21):
 
 ```sh
-javac --release 21 InitializationOrderDemo.java
-java InitializationOrderDemo
+javac --release 21 -d examples/core/initialization/build/classes examples/core/initialization/src/InitializationDemo.java
+java -cp examples/core/initialization/build/classes InitializationDemo
+```
+
+Для полной проверки, включая точное сравнение с сохранённым stdout:
+
+```sh
+bash examples/core/initialization/verify.sh
 ```
 
 Полный ожидаемый вывод:
 
 ```text
-constant=67
-before boxed
-static: Parent field
-static: Parent block
-static: RootFeature
-static: MiddleFeature
-static: Child boxed field
-static: Child block
-boxed=68
-before new Child
-instance: Parent field
-instance: Parent block
-constructor: Parent body
-override: Child.describe sees value=0
-instance: Child field
-instance: Child block
-constructor: Child(int) body, argument=67
-constructor: Child() remainder
-final state=10/68
-static: NoDefaultFeature
-direct interface field=1
+== 1. Compile-time constant ==
+Child.CONSTANT = 67
+== 2. Inherited non-constant static field ==
+Parent.static field
+Parent.BOXED field
+Parent.static block
+Child.BOXED = 67
+== 3. Child class initialization ==
+RootDefault.<clinit>
+LeafDefault.<clinit>
+Child.static field
+Child.static block
+Child.OWN = 68
+== 3a. Direct interface initialization ==
+QuietChild.<clinit>
+QuietChild.MARK = 1
+== 4. Instance construction ==
+Parent.instance field
+Parent.instance block
+Parent.constructor: before virtual call
+Child.override: childValue=0, childLabel=null
+Parent.constructor: after virtual call
+Child.instance field
+Child.instance reference field
+Child.instance block
+Child(int) constructor body: seed=67
+Child() constructor body
+== 5. Final object state ==
+state=67/68/ready
 ```
 
-### Пошаговый разбор
+### Пошаговый разбор центрального примера
 
-**1. `Child.CONSTANT` не запускает инициализацию `Child`.** Поле имеет тип `int`, объявлено `static final` и инициализировано constant expression `67`. Это *constant variable* по [JLS 21 §4.12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4). Использование такой переменной не является active use; компилятор может встроить её значение в клиентский код. Поэтому строка `constant=67` появляется до любых static-маркеров.
+**1. `Child.CONSTANT` читается без инициализации ни `Parent`, ни `Child`.**
 
-**2. `Child.BOXED` запускает class initialization.** Тип `Integer` — ссылочный, а не примитивный или `String`; поле не является constant variable. Чтение неконстантного static-поля, объявленного в `Child`, — active use, поэтому Java должна инициализировать класс до чтения.
+Поле `CONSTANT` объявлено в `Parent` как `static final int` и инициализировано constant expression `67`. `Child` наследует это поле, поэтому обращение `Child.CONSTANT` допустимо. Это constant variable по [JLS 21 §4.12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4); значение может быть встроено в клиентский код. Поэтому сначала появляется только `Child.CONSTANT = 67` — ни один инициализатор родителя или подкласса ещё не запускался.
 
-**3. Сначала инициализируется `Parent`.** После отдельного раннего шага с constant variables инициализация класса сначала инициализирует его суперкласс. Внутри `Parent` сначала выполняется инициализатор поля `state`, затем static block. Это единая последовательность в порядке исходного текста.
+**2. `Child.BOXED` запускает именно `Parent`.**
 
-**4. Затем идут superinterfaces, объявляющие default methods.** `Child implements MiddleFeature, NoDefaultFeature`, а `MiddleFeature extends RootFeature`. У `RootFeature` и `MiddleFeature` есть default methods, поэтому при инициализации `Child` Java обходит эту ветвь в postorder: сначала `RootFeature`, затем `MiddleFeature`. `NoDefaultFeature` не объявляет default method, поэтому не инициализируется только из-за `implements`.
+Поле `BOXED` также объявлено в `Parent`, но имеет тип `Integer` и не является constant variable. Имя `Child` здесь лишь квалификатор унаследованного поля; фактический declaring type — `Parent`. Поэтому перед чтением инициализируется `Parent`, но не `Child`. Внутри `Parent` в текстовом порядке исполняются `staticValue`, `BOXED` и static block. Именно поэтому видны три строки с префиксом `Parent`, а строки `Child.static...` пока нет.
 
-**5. После суперкласса и нужных интерфейсов выполняются static initializers `Child`.** Сначала вычисляется `BOXED`, затем static block — в текстовом порядке. Constant variable `CONSTANT` имеет отдельный ранний шаг подробной процедуры: её значение присваивается до инициализации суперкласса. Этот шаг не печатает строку и потому не виден в stdout.
+**3. `Child.OWN` запускает инициализацию самого `Child`.**
 
-**6. Перед конструированием все поля объекта уже имеют default values.** Когда выполняется `new Child()`, class initialization завершена. Память выделяется под один объект с полями `Parent.parentValue` и `Child.value`. Сначала оба равны `0`; выражения инициализаторов ещё не выполнялись.
+Теперь используется static-поле, объявленное непосредственно в `Child`. Суперкласс `Parent` уже инициализирован на предыдущем шаге. При инициализации класса Java рассматривает superinterfaces, объявляющие default methods: рекурсивный обход выполняется в postorder, поэтому сначала печатается `RootDefault.<clinit>`, затем `LeafDefault.<clinit>`. После интерфейсов исполняются собственные static field initializer и static block `Child`.
 
-**7. `Child()` делегирует через `this(67)`.** Его первый оператор вызывает другой конструктор того же класса — `Child(int)`. В нём нет явного вызова `this(...)` или `super(...)`, поэтому Java 21 применяет неявный `super()`. Цепочка доходит до `Object`; у `Object` нет суперкласса.
+`QuietParent` и `QuietChild` не объявляют default methods. Сам факт `implements QuietChild` не запускает их инициализацию, поэтому их маркеров здесь нет.
 
-**8. После возврата конструктора `Object` выполняются instance initializers `Parent`.** Сначала `parentValue` получает `10`, затем выполняется instance block. Только после этого начинается тело `Parent()`.
+**4. Прямое чтение `QuietChild.MARK` инициализирует `QuietChild`, но не `QuietParent`.**
 
-**9. `Parent()` вызывает `describe()`, но исполняется override из `Child`.** Динамическая диспетчеризация действует и во время construction. Фактический объект — `Child`, поэтому вызывается `Child.describe()`. Но инициализатор `Child.value = 68` ещё не выполнялся: поле всё ещё равно `0`. В этот момент поле родителя уже равно `10`, а поле подкласса ещё равно `0`.
+Это отдельное active use поля интерфейса. Инициализация интерфейса сама по себе не инициирует его superinterfaces. Поэтому появляется `QuietChild.<clinit>`, но не `QuietParent.<clinit>`.
 
-**10. После возврата `Parent()` выполняются инициализаторы `Child`.** Поле `value` получает `68`, затем выполняется instance block. После этого выполняется тело `Child(int)`.
+**5. Перед конструкторами все instance fields уже имеют default values.**
 
-**11. Затем продолжается тело `Child()`.** Делегированный конструктор вернулся, поэтому выполняется оставшаяся часть исходного конструктора. Инициализаторы `Child` второй раз не запускаются.
+К моменту `new Child()` инициализация класса завершена. Память выделяется под объект, содержащий поля и `Parent`, и `Child`. До запуска конструкторов `childValue == 0`, а `childLabel == null`. Поле `parentValue` тоже сначала получает `0`; позднее его initializer присвоит `67`.
 
-**12. Теперь объект имеет итоговое состояние `10/68`.** Только после завершения всей цепочки `new Child()` возвращает ссылку вызывающему коду.
+**6. `Child()` делегирует через `this(67)`, а `Child(int)` вызывает `super()`.**
 
-**13. `NoDefaultFeature` инициализируется при прямом чтении своего поля.** Последняя строка обращается к неконстантному static-полю интерфейса. Это самостоятельное active use, поэтому теперь появляется `static: NoDefaultFeature`. Тем самым пример показывает: `implements` само по себе не запускает интерфейс без default method, но чтение его собственного неконстантного static-поля запускает.
+Первый оператор `Child()` вызывает другой конструктор того же класса. Конструктор `Child(int)` явно вызывает конструктор суперкласса `Parent`. Затем цепочка доходит до `Object`, у которого нет суперкласса. Инициализаторы текущего класса не запускаются повторно из-за `this(...)`.
+
+**7. После возврата `Object` выполняются инициализаторы экземпляра `Parent`.**
+
+Сначала выполняется initializer поля `parentValue`, затем instance initializer block. После этого начинается тело конструктора `Parent()`.
+
+**8. Конструктор `Parent()` вызывает виртуальный метод, и срабатывает override `Child.observe()`.**
+
+Динамическая диспетчеризация не отключается во время создания объекта. Фактический объект — `Child`, поэтому вызывается его реализация. Но инициализаторы `Child` ещё не выполнялись: override видит `childValue=0` и `childLabel=null`. Это обычный виртуальный вызов на частично сконструированном объекте, а не специальный режим конструкторов.
+
+**9. После возврата `Parent()` выполняются инициализаторы `Child`.**
+
+Поле `childValue` получает `68`, затем `childLabel` получает `"ready"`, после чего выполняется instance initializer block `Child`. Только затем продолжается тело `Child(int)`.
+
+**10. После возврата `Child(int)` продолжается тело `Child()`.**
+
+Выполняется остаток делегирующего конструктора. Все инициализаторы полей и блоки `Child` уже выполнены ровно один раз.
+
+**11. Готовый объект имеет состояние `67/68/ready`.**
+
+Суперклассовое поле `parentValue` равно `67`, поле `childValue` — `68`, ссылочное поле `childLabel` — `"ready"`. Теперь создание завершено и ссылка возвращается вызывающему коду.
 
 ## Loading, linking и class initialization — разные этапы
 
