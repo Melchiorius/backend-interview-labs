@@ -52,28 +52,28 @@ Document ref = new Report();
 
 ## Главный пример: сначала выбирается метод, потом — реализация
 
-Ниже **законченное самостоятельное** демо из одного файла `Dispatch.java`. Названия `Base`/`Derived` и строковые результаты согласуются с предложенным для роли 03 контрактом; готовый многоклассовый пример будет ссылаться отдельно только после его фактического появления.
+Ниже **законченное самостоятельное** демо из одного файла `Dispatch.java`. Здесь показан компактный вариант механизма: в **отдельном многофайловом примере** [CORE-INHERITANCE](../../examples/core/inheritance/README.md) роль 03 использует те же имена `Base`/`Derived`, метод `describe`, статический `kind()` и поле `code`, но размещает классы в двух пакетах и добавляет проверки других правил. Оба примера самостоятельны: не копируйте их классы в одну директорию для общей компиляции.
 
 ```java
 public class Dispatch {
     static class Base {
-        String describe(Object arg) { return "base-object"; }
-        static String kind() { return "base-static"; }
-        int value = 67;
+        String describe(Object arg) { return "base:object"; }
+        static String kind() { return "base:static"; }
+        int code = 67;
     }
 
     static class Derived extends Base {
         @Override
-        String describe(Object arg) { return "derived-object"; }
+        String describe(Object arg) { return "derived:object"; }
 
-        String describe(String arg) { return "derived-string"; }
+        String describe(String arg) { return "derived:string"; }
 
-        static String kind() { return "derived-static"; }
-        int value = 68;
+        static String kind() { return "derived:static"; }
+        int code = 68;
 
         String throughSuper() { return super.describe("X"); }
         String throughCast() { return ((Base) this).describe("X"); }
-        int parentValue() { return super.value; }
+        int parentCode() { return super.code; }
     }
 
     public static void main(String[] args) {
@@ -81,10 +81,10 @@ public class Dispatch {
         System.out.println(ref.describe("X"));
         System.out.println(((Derived) ref).describe("X"));
         System.out.println(Base.kind() + "/" + Derived.kind());
-        System.out.println(ref.value + "/" + ((Derived) ref).value);
+        System.out.println(ref.code + "/" + ((Derived) ref).code);
         System.out.println(((Derived) ref).throughSuper()
                 + "/" + ((Derived) ref).throughCast());
-        System.out.println(((Derived) ref).parentValue());
+        System.out.println(((Derived) ref).parentCode());
     }
 }
 ```
@@ -92,11 +92,11 @@ public class Dispatch {
 Вывод:
 
 ```text
-derived-object
-derived-string
-base-static/derived-static
+derived:object
+derived:string
+base:static/derived:static
 67/68
-base-object/derived-object
+base:object/derived:object
 67
 ```
 
@@ -107,9 +107,9 @@ javac --release 21 Dispatch.java
 java Dispatch
 ```
 
-**Почему первая строка — `derived-object`?** Компилятор видит `ref` типа `Base`. Среди доступных ему методов с именем `describe` есть только `describe(Object)`, значит сигнатура выбрана **при компиляции**. Переданный `String` допустимо преобразуется к `Object`. Затем во время выполнения для выбранного экземплярного метода находится переопределение в фактическом объекте `Derived`: возвращается `"derived-object"`.
+**Почему первая строка — `derived:object`?** Компилятор видит `ref` типа `Base`. Среди доступных ему методов с именем `describe` есть только `describe(Object)`, значит сигнатура выбрана **при компиляции**. Переданный `String` допустимо преобразуется к `Object`. Затем во время выполнения для выбранного экземплярного метода находится переопределение в фактическом объекте `Derived`: возвращается `"derived:object"`.
 
-**Почему вторая — `derived-string`?** Выражение `((Derived) ref)` имеет статический тип `Derived`. Теперь при поиске перегрузок доступны `describe(Object)` и `describe(String)`. Для аргумента `"X"` наиболее специфичен `describe(String)`, поэтому компилятор выбирает **другую сигнатуру**. Искомая реализация уже находится в `Derived`.
+**Почему вторая — `derived:string`?** Выражение `((Derived) ref)` имеет статический тип `Derived`. Теперь при поиске перегрузок доступны `describe(Object)` и `describe(String)`. Для аргумента `"X"` наиболее специфичен `describe(String)`, поэтому компилятор выбирает **другую сигнатуру**. Искомая реализация уже находится в `Derived`.
 
 Это не два конкурирующих способа виртуального выбора. Последовательность одна: **статический тип → поиск и выбор перегрузки → допустимость вызова → исполнение выбранной реализации**. Простейшие преобразования аргументов и этапы перегрузки изложены в [CORE-CONVERSIONS](conversions.md); подробная спецификация — [JLS 21 §§15.12.1–15.12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12).
 
@@ -136,8 +136,8 @@ class Wrong {
 Правильная, читаемая форма вызова — через имя класса:
 
 ```java
-System.out.println(Base.kind());    // base-static
-System.out.println(Derived.kind()); // derived-static
+System.out.println(Base.kind());    // base:static
+System.out.println(Derived.kind()); // derived:static
 ```
 
 Java допускает и выражение `ref.kind()`, однако выбор статического метода не зависит от фактического объекта `Derived`. Для `Base ref` это будет `Base.kind()`, что легко ошибочно принять за динамическую диспетчеризацию. Предпочитайте `Base.kind()`.
@@ -154,7 +154,7 @@ class B extends A { void act() {} } // instance вместо static
 
 ## Поля тоже не переопределяются
 
-У `Base` и `Derived` в примере есть собственные поля `value`. При обращении `ref.value` компилятор разрешает имя поля через **статический тип** `Base` и получает `Base.value = 67`. После приведения к `Derived` разрешается другое объявление: `Derived.value = 68`. Здесь нет «виртуального выбора поля» по фактическому классу объекта.
+У `Base` и `Derived` в примере есть собственные поля `code`. При обращении `ref.code` компилятор разрешает имя поля через **статический тип** `Base` и получает `Base.code = 67`. После приведения к `Derived` разрешается другое объявление: `Derived.code = 68`. Здесь нет «виртуального выбора поля» по фактическому классу объекта.
 
 Эти поля хранятся в одном объекте, но представляют **два разных члена**. Скрытие работает даже тогда, когда поля имеют разные типы. Java также допускает скрытие `static` поля экземплярным полем и наоборот — в отличие от запрета на такую же подмену формы у методов:
 
@@ -175,9 +175,9 @@ System.out.println(((ChildField) ref).code); // 68
 
 В `Derived` из основного примера:
 
-- `super.describe("X")` вызывает реализацию метода суперкласса `Base`, поэтому возвращает `base-object`.
-- `((Base) this).describe("X")` **не отключает** динамическую диспетчеризацию; выбранная через тип `Base` сигнатура `describe(Object)` исполняется в объекте `Derived` и возвращает `derived-object`.
-- `super.value` обращается к **полю Base**, поэтому возвращает 67; приведение `((Base) this).value` для поля тоже разрешило бы имя по `Base`, но для метода это не эквивалент `super`.
+- `super.describe("X")` вызывает реализацию метода суперкласса `Base`, поэтому возвращает `base:object`.
+- `((Base) this).describe("X")` **не отключает** динамическую диспетчеризацию; выбранная через тип `Base` сигнатура `describe(Object)` исполняется в объекте `Derived` и возвращает `derived:object`.
+- `super.code` обращается к **полю Base**, поэтому возвращает 67; приведение `((Base) this).code` для поля тоже разрешило бы имя по `Base`, но для метода это не эквивалент `super`.
 
 `super` разрешено использовать только в подходящем контексте экземпляра подкласса. Например, `super.describe("X")` внутри `static` метода невозможно. Нельзя вызывать `super` через произвольную внешнюю ссылку как `other.super.describe()`. Это языковая форма обращения из тела текущего класса, а не способ выбрать любой объект «на уровень выше».
 
@@ -482,7 +482,15 @@ final class OptionalSaver {
 - Вызов `super.method()` из статического контекста.
 - Неоднозначный вызов `print(null)` при `print(String)` и `print(Integer)`.
 
-Это **разные причины отказа** на этапе компиляции; нельзя трактовать любой ненулевой код завершения `javac` как доказательство нужного правила. Готовую положительную демонстрацию и отрицательные файлы разрабатывает роль 03 по [Issue #39](https://github.com/Melchiorius/backend-interview-labs/issues/39); их ссылки и результаты проверки будут внесены после подтверждения существования файлов.
+Это **разные причины отказа** на этапе компиляции; нельзя трактовать любой ненулевой код завершения `javac` как доказательство нужного правила. Полный рабочий пример роли 03 уже включён в эту интеграционную ветку: [README, исходники и 12 отдельных negative cases](../../examples/core/inheritance/README.md), работа — [Issue #39](https://github.com/Melchiorius/backend-interview-labs/issues/39) / [PR #44](https://github.com/Melchiorius/backend-interview-labs/pull/44). Входная точка — `client.InheritanceDemo`, файлы находятся в `examples/core/inheritance/` и **не входят** в текстовые одноклассовые фрагменты выше.
+
+На JDK 21 из корня репозитория можно запустить все положительные и отрицательные проверки:
+
+```sh
+bash examples/core/inheritance/verify.sh
+```
+
+Скрипт должен вывести `CHECK PASSED`, затем 12 строк `EXPECTED REJECTION` с диагностикой компилятора и закончить `ALL EXPECTED OUTCOMES OBSERVED`. Каждый отрицательный файл компилируется отдельно. Команды для одиночного положительного запуска без Bash, точный stdout и пояснения каждого отрицательного файла даны в [README](../../examples/core/inheritance/README.md). Результаты CI **для объединённого HEAD** необходимо сверять отдельно: старый зелёный CI PR #44 относится к другой версии дерева.
 
 ## Как отвечать на нестандартный фрагмент кода
 
