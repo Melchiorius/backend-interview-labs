@@ -58,3 +58,6 @@ jobs:
 
       - name: Verify CORE-EXCEPTIONS + CORE-RESOURCES runnable
         run: bash examples/core/exceptions-resources/verify.sh
+
+      - name: Verify CORE-STREAMS + CORE-STREAM-ADV runnable
+        run: bash examples/core/streams/verify.sh
