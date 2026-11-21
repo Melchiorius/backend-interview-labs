@@ -47,6 +47,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Вложенные классы и функциональные выражения Java 21:** [static nested, inner, local и anonymous классы](knowledge/01-java-core/nested-classes.md), [SAM, лямбды и ссылки на методы](knowledge/01-java-core/functions.md) с [одним общим запускаемым примером](examples/core/nested-functions/README.md) и сравнением 17 наблюдений.
 
+**Обобщённые типы и стирание Java 21:** [параметры типов, инвариантность, PECS и wildcard](knowledge/01-java-core/generics.md), [стирание типов, raw/unchecked и проверки при выполнении](knowledge/01-java-core/erasure.md) с [единым запускаемым примером P01–P20](examples/core/generics-erasure/README.md).
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.

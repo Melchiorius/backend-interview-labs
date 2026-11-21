@@ -371,7 +371,7 @@ class Overloads {
 
 Явное приведение или уже типизированная переменная делают ожидаемый контракт известным. Но универсальное правило «всегда можно добавить cast» неверно: типы параметров, checked exceptions и return-совместимость должны соответствовать назначению. Подробный алгоритм overload resolution относится к [JLS §15.12.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.2); эта статья показывает практический частный случай, не реконструируя весь алгоритм специфичности.
 
-Сочетания generic overloads, intersection types, inference и raw types способны сделать ситуацию сложнее. Их границы обозначены в матрице ниже; за полной моделью — будущий блок CORE-GENERICS/ERASURE, а не неподтверждённая «эвристика компилятора».
+Сочетания generic overloads, intersection types, inference и raw types способны сделать ситуацию сложнее. Их границы обозначены в матрице ниже; за базовыми правилами параметризации и стирания обращайтесь к [CORE-GENERICS](generics.md) и [CORE-ERASURE](erasure.md); сложный вывод типов остаётся отдельным углублением, а не «эвристикой компилятора».
 
 ## 10. Identity lambda и детали JVM: что НЕ обещает JLS
 
@@ -415,7 +415,7 @@ class Overloads {
 | NF-23 | P1 | Generic overloads и inference — граница §9 |
 | NF-24 | P1 | Anonymous и lambda не взаимозаменяемы — §5 и CORE-NESTED |
 | NF-25 | P2 | `invokedynamic`/hidden classes — граница JVM |
-| NF-26 | P2 | Generics/erasure/intersection — граница будущей темы |
+| NF-26 | P2 | Основы [generics](generics.md)/[erasure](erasure.md) разобраны; intersection и сложный inference — граница углубления |
 | NF-27 | P2 | Serialization и стабильность бинарного имени — граница |
 | NF-28 | P2 | Stream API/Collectors — отдельная тема |
 | NF-29 | P2 | Java Memory Model/thread-safety — граница |
