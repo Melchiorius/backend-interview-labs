@@ -1,3 +1,5 @@
+// Theory: knowledge/01-java-core/nested-classes.md
+// Theory: knowledge/01-java-core/functions.md
 // Theory: knowledge/01-java-core/interfaces.md
 // Research: docs/plans/CORE-NESTED-FUNCTIONS.md
 // Java SE 21: one integrated example for nested classes, captures and lambdas.
