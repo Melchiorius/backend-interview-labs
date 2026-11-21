@@ -98,6 +98,34 @@ class Jagged {
 
 **Важно различать синтаксис:** `new int[1][1]` создаёт двумерный массив размером 1×1; это **не** обращение по индексам. Для демонстрации ошибки границ сначала создайте массив, затем обращайтесь к элементу с неверным индексом. В следующем примере все три фрагмента **компилируются**, а исключения возникают при выполнении:
 
+~~~java
+class ArrayRuntimeFailures {
+    public static void main(String[] args) {
+        try {
+            int[] items = new int[1];
+            System.out.println(items[1]);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("wrong index");
+        }
+
+        try {
+            int[] invalid = new int[-1];
+            System.out.println(invalid.length);
+        } catch (NegativeArraySizeException e) {
+            System.out.println("negative length");
+        }
+
+        try {
+            int[] absent = null;
+            System.out.println(absent.length);
+        } catch (NullPointerException e) {
+            System.out.println("null array");
+        }
+    }
+}
+~~~
+
+Ожидаемый вывод: `wrong index`, `negative length`, `null array` (по одной строке). **Именно этот самостоятельный фрагмент** проверен автором на OpenJDK/javac 21.0.12.1: `javac --release 21` и запуск `java ArrayRuntimeFailures` завершились успешно. Это не проверка всех остальных inline-фрагментов статьи и не часть CI.
 
 **Правило:** размерность выражения массива, количество индексных операций и длина *каждой строки* — разные вещи. Лишние квадратные скобки после `new int[n]` не являются способом «проверить индекс».
 
