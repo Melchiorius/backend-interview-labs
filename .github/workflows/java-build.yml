@@ -52,3 +52,6 @@ jobs:
 
       - name: Verify CORE-NESTED + CORE-FUNCTIONS runnable
         run: bash examples/core/nested-functions/verify.sh
+
+      - name: Verify CORE-GENERICS + CORE-ERASURE runnable
+        run: bash examples/core/generics-erasure/verify.sh
