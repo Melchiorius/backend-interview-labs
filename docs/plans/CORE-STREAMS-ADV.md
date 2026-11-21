@@ -82,8 +82,8 @@
 | ST-16 **P0** | Контракты null зависят от метода: toUnmodifiableMap запрещает null key/value; toMap с null mapped value — конкретный диагностический опыт. | Collectors.toUnmodifiableMap, toMap | P16/P17; различать API и OpenJDK | STREAM-ADV |
 | ST-17 **P0** | groupingBy и partitioningBy: группировка по classifier или boolean, не обещать тип конкретной Map и порядок ключей. | Collectors.groupingBy/partitioningBy | P18/P19, N17 | STREAM-ADV |
 | ST-18 **P0** | IntStream/LongStream/DoubleStream: примитивные специализации, mapToInt, boxed; не путать Stream<Integer> и IntStream. | IntStream, Stream.mapToInt | P20/P21, N02/N03/N05/N12 | STREAMS |
-| ST-19 **P0** | Terminal Optional/OptionalInt для отсутствующего результата; find/match/anyMatch и orElse типизированы. | Stream.findFirst, Optional | P27, N07/N13/N16 | STREAMS |
-| ST-20 **P0** | reduce требует identity и ассоциативной аккумуляции при параллельном свёртывании; отделить от мутабельного collect. | Stream.reduce, Collector | P26/N14; доказательство identity/associativity | STREAM-ADV |
+| ST-19 **P0** | `Stream.findFirst/findAny` → `Optional<T>`, `IntStream.findFirst/findAny` → `OptionalInt` (аналоги `OptionalLong/OptionalDouble` для других primitive streams). `anyMatch/allMatch/noneMatch` возвращают `boolean`; для пустого Stream соответственно `false/true/true`. `Optional<T>.orElse(T)` — метод Optional, не boolean. | Stream.findFirst/findAny/anyMatch/allMatch/noneMatch, Optional/OptionalInt API | P27, N07/N13/N16; **C06–C11** из §5a | STREAMS |
+| ST-20 **P0** | `Stream.reduce(BinaryOperator)` и `IntStream.reduce(IntBinaryOperator)` **без** identity → `Optional<T>` / `OptionalInt`; overload `reduce(identity, accumulator)` — **с** нейтральным identity, трёхаргументный `Stream.reduce(identity, accumulator, combiner)` требует совместимости accumulator/combiner. Редукция должна соблюдать ассоциативность; `reduce(10, Integer::sum)` не задаёт нейтральный элемент для суммы. Отделить от mutable `collect`. | Stream.reduce overloads, IntStream.reduce, Collector | **C01–C05** из §5a; P26/N14 не доказывают различие overloads | STREAM-ADV |
 | ST-21 **P0** | parallel() не означает асинхронность или ускорение, и не защищает побочные изменения общего ArrayList; stateless/non-interfering. | Stream package, Collector | P26; unsafe shared state не запускать как гарантированный fail | STREAM-ADV |
 | ST-22 **P0** | BaseStream.close/onClose: terminal не обязан закрывать источник; try-with-resources и закрытие обработчиков в порядке регистрации. | BaseStream.close/onClose, Stream | P23/P24, N15 | STREAM-ADV |
 | ST-23 **P1** | Collector: supplier/accumulator/combiner/finisher, identity/associativity, CONCURRENT/UNORDERED/IDENTITY_FINISH. | Collector API | Схема partitions -> combine, отдельно без готового custom collector | STREAM-ADV |
@@ -94,12 +94,75 @@
 | ST-28 **P1** | mapMulti и плоское отображение, где полезнее flatMap; новые методы Java 16+ и граница версий. | Stream.mapMulti | Встроенный фрагмент только после проверки | STREAMS |
 | ST-29 **P1** | Mutable reduction и ошибки совместного состояния: collect(Supplier,Accumulator,Combiner), почему collect(Collectors.toList()) уместнее side effects. | Stream.collect, Collector | Схема и контрпример опасного shared ArrayList (not run) | STREAM-ADV |
 | ST-30 **P1** | Источник из Collection, мутация до/после terminal и условия non-interference; view/late binding не универсальны. | Stream package, Spliterator | Граничный сценарий, не объявлять deterministic ConcurrentModificationException | STREAM-ADV |
-| ST-31 **P1** | Checked exceptions в lambdas для Stream: контракт Function/Predicate не объявляет checked; deferred runtime exception видна на terminal. | CORE-FUNCTIONS, JLS 15.27 | P31, N15; разделение с CORE-EXCEPTIONS | STREAMS |
+| ST-31 **P1** | Checked exception в `Stream.map(Function)` / `filter(Predicate)` нельзя выбросить из lambda без обработки, так как SAM не объявляет такой `throws`; unchecked ошибка из mapper может проявиться лишь на terminal. | CORE-FUNCTIONS, JLS 15.27, Function/Predicate API | P31 (отложенная runtime-ошибка), **проверенный `CheckedFunctionProbe` из §5a** (checked); N15 касается только `onClose(Runnable)`, не `map/filter` | STREAMS |
 | ST-32 **P1** | groupingByConcurrent и collect с CONCURRENT/UNORDERED: не обещать encounter order в concurrent grouping; trade-off. | Collectors.groupingByConcurrent, Collector | Нормативный разбор, без perf claim | STREAM-ADV |
 | ST-33 **P2** | Потоки из Files.lines и иных IO источников: закрытие AutoCloseable, исключения чтения/IO. | Files API, CORE-RESOURCES | Граница будущего IO-FILES | STREAM-ADV |
 | ST-34 **P2** | Параллельные стримы и ForkJoinPool, планирование/производительность/CPU-bound vs IO-bound, реальные бенчмарки. | Stream, Spliterator, CON-FORKJOIN | Отдельный эксперимент, не JDK scheduler guarantee | STREAM-ADV |
 | ST-35 **P2** | Собственный Collector, нарушения associativity/identity, concurrency characteristics — самостоятельная проверка. | Collector API | Контрпример/тест при G2 если нужен | STREAM-ADV |
 | ST-36 **P2** | API новых JDK после 21, Stream Gatherers и чужие версии; не переносить новые методы задним числом. | Version scope Java SE 21 | Только граница совместимости | STREAM-ADV |
+
+## 5a. Точечные нормативные проверки ST-20 / ST-19 / ST-31 (после G1-review 04)
+
+**B1 / ST-20.** Официальные контракты Java SE 21: [Stream.reduce(BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(java.util.function.BinaryOperator)), [Stream.reduce(T, BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(T,java.util.function.BinaryOperator)), [Stream.reduce(U, BiFunction, BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(U,java.util.function.BiFunction,java.util.function.BinaryOperator)), [IntStream.reduce(IntBinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/IntStream.html#reduce(java.util.function.IntBinaryOperator)). Без identity результат выражается через \`Optional\` / \`OptionalInt\`, пустой Stream даёт пустой Optional. С явным identity он должен быть нейтральным; для трёхаргументной формы дополнительно важна совместимость accumulator и combiner. Редукция основана на ассоциативной операции. P26 (sum) и N14 (ошибка типов) **не являются прямым доказательством** этих перегрузок.
+
+**B2 / ST-19.** [Stream.findFirst](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#findFirst()), [Stream.anyMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#anyMatch(java.util.function.Predicate)), [Stream.allMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#allMatch(java.util.function.Predicate)), [Stream.noneMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#noneMatch(java.util.function.Predicate)), [IntStream.findFirst](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/IntStream.html#findFirst()), [Optional.orElse](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html#orElse(T)): \`find*\` возвращают Optional-объект, \`*Match\` — **примитивный boolean**. Для пустого Stream: \`anyMatch = false\`, \`allMatch = true\`, \`noneMatch = true\` (vacuous truth). \`orElse\` применяется к Optional, не к boolean.
+
+**Отдельный positive probe**, не часть сохранённого источника P01–P33. Полный файл \`StreamG1Clarifications.java\`:
+
+\`\`\`java
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+class StreamG1Clarifications {
+    public static void main(String[] args) {
+        System.out.println("C01=" + Stream.of(1, 2, 3).reduce(Integer::sum));
+        System.out.println("C02=" + Stream.<Integer>empty().reduce(Integer::sum));
+        System.out.println("C03=" + Stream.of(1, 2, 3).reduce(0, Integer::sum));
+        System.out.println("C04=" + Stream.of(1, 2, 3).reduce(0, Integer::sum, Integer::sum));
+        System.out.println("C05=" + IntStream.of(1, 2, 3).reduce(Integer::sum));
+        Optional<Integer> first = Stream.of(1, 2, 3).findFirst();
+        OptionalInt primitive = IntStream.of(1, 2, 3).findFirst();
+        System.out.println("C06=" + first + "," + primitive);
+        System.out.println("C07=" + Stream.of(1, 2, 3).anyMatch(x -> x > 2));
+        System.out.println("C08=" + Stream.<Integer>empty().anyMatch(x -> true));
+        System.out.println("C09=" + Stream.<Integer>empty().allMatch(x -> false));
+        System.out.println("C10=" + Stream.<Integer>empty().noneMatch(x -> true));
+        System.out.println("C11=" + Stream.<Integer>empty().findFirst().orElse(67));
+    }
+}
+\`\`\`
+
+**Фактически проверено отдельно ролью 01:** OpenJDK/javac **21.0.12.1**, \`javac --release 21 -d out StreamG1Clarifications.java\` — exit 0; \`java -cp out StreamG1Clarifications\` — exit 0, **11/11 строк** совпали с ожидаемыми (одна компиляция + один запуск, не 11 независимых тестов):
+
+\`\`\`text
+C01=Optional[6]
+C02=Optional.empty
+C03=6
+C04=6
+C05=OptionalInt[6]
+C06=Optional[1],OptionalInt[1]
+C07=true
+C08=false
+C09=true
+C10=true
+C11=67
+\`\`\`
+
+**N1 / ST-31.** Прямой отдельный отрицательный пример checked в \`Stream.map(Function)\`, **не** переименовывает, не заменяет и не увеличивает список N01–N17:
+
+\`\`\`java
+import java.io.IOException;
+import java.util.stream.Stream;
+class CheckedFunctionProbe {
+    void work() { Stream.of(1).map(x -> { throw new IOException("io"); }); }
+}
+\`\`\`
+
+\`javac --release 21 -d out-negative CheckedFunctionProbe.java\` на OpenJDK 21.0.12.1: **exit 1**, категория \`unreported exception IOException; must be caught or declared to be thrown\`, не parser/EOF error. Причина — \`Function.apply\` не объявляет checked \`throws IOException\`; обработка возможна внутри lambda либо через другой SAM-контракт. **N15** из §7 — иное ограничение \`onClose(Runnable)\` и не используется как прямое доказательство для \`map\`.
+
+**Границы новых проверок:** выполнены только эти две точечные Java 21 компиляции и один запуск C01–C11. **Сохранённый** source §6 с P01–P33, исходники N01–N17 и их ранее проверенные результаты **не менялись и заново не запускались** в рамках данной дельты. GitHub CI не извлекает пробы из Markdown; Obsidian/IntelliJ GUI, другие JVM, benchmark/JMH, реальный IO/JDBC/Spring — not run.
 
 ## 6. Positive и runtime-ловушки — полная программа для Java 21
 
@@ -271,7 +334,7 @@ javac --release 21 -d out-negative negative/N01_MismatchedMapper.java
 1. **Laziness и оптимизация:** `count()` может исключить вызовы `peek`/mapper; `map(x -> log())` — недостоверный способ проверить весь pipeline. Внедрять диагностику через тестируемый результат или отдельные явно контролируемые тесты, не через предположение «вся lambda обязательно сработает».
 2. **Encounter order ≠ порядок выполнения:** `forEachOrdered` гарантирует порядок эффекта терминального действия для ordered stream, но из этого не следует, что прочие mapper будут выполняться на том же потоке, последовательно либо в том же порядке.
 3. **Parallel correctness:** non-interference/statelessness важны даже для sequential; у `parallel()` нет обещаний speedup. `collect(Collectors.toList())` может использовать отдельные локальные контейнеры и merge; самодельный общий `ArrayList` в `forEach` не становится безопасным. `groupingByConcurrent` и `CONCURRENT` — отдельные условия API, не «магическое ускорение».
-4. **Reduction algebra:** identity должна быть нейтральна, аккумулятор и combiner ассоциативны/совместимы по правилу API. Сложение с identity=0 безопасный пример; `reduce(10,Integer::sum)` на нескольких partition нарушает identity (10 не нейтрален) и не имеет обещания одинакового результата sequential и parallel.
+4. **Reduction algebra:** в перегрузках **с identity** он должен быть нейтральным; `reduce(BinaryOperator)` **без identity** возвращает `Optional<T>` и не требует передавать нейтральный элемент. Для трёхаргументного `reduce(identity, accumulator, combiner)` нужны совместимость функций и требования ассоциативности по Stream API. Сложение с identity=0 — корректный пример; `reduce(10, Integer::sum)` не имеет нейтрального элемента для сложения, поэтому не стоит ожидать одинаковой суммы от sequential и parallel. Проверка перегрузок и пустого потока — C01–C05 из §5a.
 5. **Null и duplicate:** правила `Stream.toList`, `Collectors.toList`, `toUnmodifiableList`, `toMap` и `toUnmodifiableMap` **различны**. Не использовать наблюдение P17 для выводов о null keys во всех `toMap` overloads. Не обещать `HashMap`, `ArrayList` или их mutability как типовой контракт результата Collector.
 6. **Закрытие:** Stream является AutoCloseable, но обычные коллекционные streams чаще не удерживают внешних ресурсов; `Files.lines()` и подобные I/O streams требуют реального close. Terminal `count()` не подменяет `try-with-resources`; детальные контракты IO относятся к будущему IO-FILES.
 7. **Версии:** `Stream.toList` — с Java 16, `takeWhile/dropWhile` с Java 9, `mapMulti` с Java 16. Новые API после 21 не приписывать Java SE 21. JDK implementation и публичный API не смешивать.
