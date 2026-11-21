@@ -2,7 +2,7 @@
 
 **Один учебный runnable** состоит из двух автономных Java-исходников в общей папке, проверяемых одной командой. [StreamPipelineProbes.java](src/StreamPipelineProbes.java) демонстрирует **P01–P33** из §6 принятого [G1-плана](../../../docs/plans/CORE-STREAMS-ADV.md). [StreamG1Clarifications.java](src/StreamG1Clarifications.java) отдельно проверяет **C01–C11** из §5a, добавленные после исправления обязательных P0-требований ST-19 и ST-20. **44 подписанные строки — два Java-процесса и две последовательности наблюдений, а не 44 независимых теста.** Исходные выражения и ожидаемый вывод сохранены из G1; в Java добавлены только три комментария `// Theory/Research` в начале файлов.
 
-Связанные статьи: [CORE-STREAMS](../../../knowledge/01-java-core/streams.md) и [CORE-STREAM-ADV](../../../knowledge/01-java-core/stream-advanced.md). Оба файла существуют в авторской ветке G2; обратные ссылки на этот README добавляет роль 02 при интеграции. **Файлы примера:** [два исходника](src/StreamPipelineProbes.java), [эталон полного stdout](expected.stdout), [скрипт проверки](verify.sh).
+Связанные статьи: [CORE-STREAMS](../../../knowledge/01-java-core/streams.md) и [CORE-STREAM-ADV](../../../knowledge/01-java-core/stream-advanced.md); из обеих статей можно перейти обратно к этому примеру. **Файлы примера:** [StreamPipelineProbes.java — P01–P33](src/StreamPipelineProbes.java), [StreamG1Clarifications.java — C01–C11](src/StreamG1Clarifications.java), [эталон полного stdout](expected.stdout), [скрипт проверки](verify.sh).
 
 ## Запуск из корня репозитория
 
