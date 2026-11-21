@@ -97,3 +97,7 @@ CHECK PASSED
 ## Интерфейсы и композиция
 
 [CORE-INTERFACES + CORE-COMPOSITION — runnable Java 21](interfaces-composition/README.md) показывает интерфейсную `Policy`, две реализации, декоратор с явным делегированием, `Service(Policy)`, а также независимые случаи разрешения конфликтующих `default` и приоритета метода класса. Воспроизводимый stdout и отдельный запуск `bash examples/core/interfaces-composition/verify.sh`; без Gradle-модуля и обязательного упражнения.
+
+## Вложенные классы, захват переменных и лямбды
+
+[CORE-NESTED + CORE-FUNCTIONS — автономный Java 21 пример](nested-functions/README.md): static nested / inner / local / anonymous, `Outer.this`, effectively-final capture, `this` у anonymous и lambda, четыре вида method references и ранний NPE bound reference. Один исходник, полный stdout из 17 строк и `bash examples/core/nested-functions/verify.sh`; без Gradle-подпроекта и обязательного упражнения.
