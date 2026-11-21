@@ -225,7 +225,7 @@ P20=other
 | `N01_UnhandledChecked` | `import java.io.*; class N01_UnhandledChecked {void work(){ throw new IOException("x"); }}` | Unhandled checked IOException |
 | `N02_ThrowsNotHandled` | `import java.io.*; class N02_ThrowsNotHandled {void f() throws IOException{} void g(){f();}}` | Объявленного `throws IOException` вызываемому методу достаточно для проверки вызывающего |
 | `N03_WrongCatchOrder` | `import java.io.*; class N03_WrongCatchOrder {void g(){try{throw new IOException();}catch(Exception e){}catch(IOException e){}}}` | `IOException` уже перехвачено более общим catch |
-| `N04_UnrelatedMultiCatch` | `import java.io.*; class N04_UnrelatedMultiCatch {void g(){try{throw new IOException();}catch(IOException \| Exception e){}}` | Multi-catch не допускает связанные subclass alternatives |
+| `N04_UnrelatedMultiCatch` | `import java.io.*; class N04_UnrelatedMultiCatch {void g(){try{throw new IOException();}catch(IOException \| Exception e){}}}` | Multi-catch не допускает связанные subclass alternatives |
 | `N05_MultiCatchAssignment` | `import java.io.*; class N05_MultiCatchAssignment {void g(){try{if(System.nanoTime()<0)throw new IOException();else throw new IllegalArgumentException();}catch(IOException \| IllegalArgumentException e){e=new IllegalArgumentException();}}}` | Параметр multi-catch нельзя переназначить |
 | `N06_NotThrowable` | `class N06_NotThrowable {void g(){throw new Object();}}` | `throw` требует Throwable |
 | `N07_CatchNeverThrown` | `import java.io.*; class N07_CatchNeverThrown {void g(){try{int x=67;}catch(IOException e){}}}` | Checked IOException не может быть выброшено из try |
@@ -242,6 +242,8 @@ P20=other
 | `N18_GenericThrowable` | `class N18_GenericThrowable<T> extends Exception {}` | Generic Throwable-subclass недопустим, отдельная граница CORE-ERASURE |
 | `N19_CloseExceptionCatchUnreachable` | `import java.io.*; class N19_CloseExceptionCatchUnreachable {static class R implements AutoCloseable{public void close(){}} void g(){try(R r=new R()){}catch(IOException e){}}}` | Checked IOException из `close()`, который ничего checked не объявляет, не предполагается статически |
 | `N20_ThrowsTypeNotThrowable` | `class N20_ThrowsTypeNotThrowable {void g() throws String{}}` | `throws` ожидает Throwable subtype |
+
+**Повторная проверка после исправления B1 / review #6005825300:** все N01–N20 по отдельности реконструированы из приведённых однострочных Java sources с удалением только Markdown-экранирования `\|` → `|`; каждый из 20 вызовов `javac --release 21 -d out-negative negative/<ID>.java` завершился nonzero **именно по заявленной диагностической категории** (20/20), без `reached end of file while parsing` и иных ошибок синтаксического разбора исходника. Для N04 после добавления последней `}` результат: `Alternatives in a multi-catch statement cannot be related by subclassing`, потому что `IOException` — подкласс `Exception` (JLS 21 §14.20.1). Это отдельная локальная проверка роли 01 на OpenJDK 21.0.12.1; GitHub CI не исполняет код внутри Markdown.
 
 **Предосторожность при копировании:** в Markdown ячейках multi-catch запись `\|` — экранирование вертикальной черты для разметки таблицы. Для Java source удалить только Markdown escape перед `|`: на диск должен попасть оператор `|`, а не обратная косая черта. Иначе будет отказ по неверной причине. Более надёжно извлекать содержимое между backticks Markdown-парсером, который убирает этот escape.
 
