@@ -104,4 +104,4 @@ CHECK PASSED
 
 ## Generics, PECS и erasure
 
-[CORE-GENERICS + CORE-ERASURE — автономный Java 21 пример](generics-erasure/README.md) связывает границы `T extends`, PECS, `Collections.copy`, wildcard capture, Java 21 `instanceof`, erased return types, намеренное raw heap pollution с `ClassCastException`, `ArrayStoreException` у ковариантного массива и вызов override через generic parent. Один исходник, полный stdout (18 строк) и точный `bash examples/core/generics-erasure/verify.sh`; без отдельного Gradle-проекта.
+[CORE-GENERICS + CORE-ERASURE — автономный Java 21 пример](generics-erasure/README.md) связывает границы `T extends`, PECS, `Collections.copy`, wildcard capture, erasure/reflection, raw и varargs heap pollution с `ClassCastException`, ковариантный массив с `ArrayStoreException` и bridge при overriding. Один `GenericsProbes.java`, полный G1 stdout P01–P20, ожидаемые lint warnings и `bash examples/core/generics-erasure/verify.sh`; без отдельного Gradle-проекта.
