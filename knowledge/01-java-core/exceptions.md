@@ -312,7 +312,7 @@ class ThrowNull {
 
 - **ER-27 / P2:** *precise rethrow* может уточнять checked-типы для фактически не переназначаемого catch-параметра; это отдельная часть [JLS §11.2.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.2). Не строим здесь полную матрицу disjunctive types и generalized exception analysis.
 - **ER-28 / P2:** ошибка инициализации класса, `ExceptionInInitializerError` и erroneous class принципиально отличаются от ошибки обычного конструктора; изложение уже есть в [CORE-INIT](initialization.md), не дублируем полную JVM-модель.
-- **ER-30 / P2:** exception translation во фреймворке, политики rollback, HTTP error contracts, structured logging/trace IDs требуют конкретной версии Spring и архитектуры. Это будущие SPR-WEB/SPR-TX, не нормы JLS и не результат этого G2.
+- **ER-30 / P2:** exception translation во фреймворке, политики rollback, HTTP error contracts, structured logging/trace IDs требуют конкретной версии Spring и архитектуры. Это будущие SPR-WEB/SPR-TX: не нормы JLS и не предмет этой статьи.
 
 ## Карта ER-01–ER-30
 
@@ -327,7 +327,7 @@ class ThrowNull {
 | ER-19 · P1 | Ручное suppressed и его отличие от cause; [TWR-последовательность](resources.md) |
 | ER-20–ER-22 · P1 | Override checked, `throw null`, Error и прерывания |
 | ER-23 · P1 | Более узкий throws close — [CORE-RESOURCES](resources.md) |
-| ER-24 · P1 | Пределы гарантий наконец-то завершения/закрытия |
+| ER-24 · P1 | Пределы гарантий выполнения `finally` и закрытия ресурсов |
 | ER-25 · P1 | Вложенные primary/suppressed — [CORE-RESOURCES](resources.md) |
 | ER-26 · P1 | Конструкторы, finally, Runnable/lambda checked |
 | ER-27 · P2 | Precise rethrow — граница, ссылка на JLS |
