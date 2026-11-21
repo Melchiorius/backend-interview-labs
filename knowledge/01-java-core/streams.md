@@ -276,7 +276,7 @@ class Primitive {
 
 `Stream<Integer>.sum()` **не существует**; нужно `mapToInt(Integer::intValue).sum()`, `collect(summingInt(...))` или `reduce(0, Integer::sum)`. И `IntStream.collect(Collector)` не совпадает с `Stream.collect(Collector)`: у IntStream другая перегрузка `collect(Supplier, ObjIntConsumer, BiConsumer)`. Аналоги `LongStream` и `DoubleStream` имеют собственные примитивные операции/Optional-специализации. [IntStream API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/IntStream.html).
 
-## 9. Префикс, бесконечные источники и mapMulti (ST-26–ST-28, P1)
+## 9. Префикс, бесконечные источники и mapMulti (ST-26 / ST-27 / ST-28 · P1)
 
 **`takeWhile` и `dropWhile`** на *ordered* stream работают с префиксом: первая возвращает наибольший начальный участок подходящих элементов, вторая удаляет такой начальный участок. Они **не** равны `filter`, который отбирает все подходящие элементы где бы они ни находились:
 
@@ -400,7 +400,7 @@ class CheckedMapperHandled {
 | ST-18–ST-19 · P0 | §§8, 5: IntStream, OptionalInt, *Match boolean, пустая последовательность |
 | ST-20–ST-22 · P0 | [CORE-STREAM-ADV](stream-advanced.md): reduce, parallel, close/onClose |
 | ST-23–ST-25 · P1 | [CORE-STREAM-ADV](stream-advanced.md): Collector, Spliterator, onClose errors |
-| ST-26–ST-28 · P1 | §9: takeWhile/dropWhile, generators и mapMulti |
+| ST-26 / ST-27 / ST-28 · P1 | §9: takeWhile/dropWhile, generators и mapMulti |
 | ST-29–ST-30 · P1 | [CORE-STREAM-ADV](stream-advanced.md): mutable reduction и изменение источника |
 | ST-31 · P1 | §10: checked Function и deferred unchecked failure |
 | ST-32 · P1 | [CORE-STREAM-ADV](stream-advanced.md): concurrent grouping |
