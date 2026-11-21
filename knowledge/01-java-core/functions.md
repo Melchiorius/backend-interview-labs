@@ -4,7 +4,7 @@
 
 Такая модель объясняет сразу несколько собеседовательных случаев: почему `var f = x -> x + 1` не компилируется, почему `String::length` требует аргумент-строку, почему `missing::trim` бросает `NullPointerException` раньше `() -> missing.trim()` и почему `this` в lambda не равен `this` в anonymous class.
 
-Перед чтением полезны [интерфейсные методы и SAM](interfaces.md), [типы и значения](types.md), [перегрузки и наследование](inheritance.md), [вложенные и анонимные классы](nested-classes.md) и [контракты Object](object.md). Полная матрица проверок NF-01–NF-30 приведена в [принятом исследовательском плане](../../docs/plans/CORE-NESTED-FUNCTIONS.md).
+Перед чтением полезны [интерфейсные методы и SAM](interfaces.md), [типы и значения](types.md), [перегрузки и наследование](inheritance.md), [вложенные и анонимные классы](nested-classes.md) и [контракты Object](object.md). Полная матрица проверок NF-01–NF-30 приведена в [принятом исследовательском плане](../../docs/plans/CORE-NESTED-FUNCTIONS.md). **Общий Java 21 runnable:** [инструкция и разбор](../../examples/core/nested-functions/README.md), [полный исходник](../../examples/core/nested-functions/src/NestedFunctionsProbes.java), [17 строк эталона](../../examples/core/nested-functions/expected.stdout). P09–P14/P17 из него связывают target typing, четыре ссылки на методы, bound receiver, overload и checked exception. 17 строк — наблюдения **одного** запуска.
 
 ## 1. Что означает функциональный интерфейс (SAM)
 
@@ -434,7 +434,7 @@ javac --release 21 -d out-negative N11_AmbiguousLambdaOverload.java
 
 Ожидается ненулевой exit status по причине overload ambiguity, а не по случайной «duplicate class». У разных компиляторов формулировки диагностики отличаются, поэтому сравнивать её с одной буквальной строкой не нужно. Полные короткие исходники, включая недопустимые `return`, checked `throws`, `this` в static и несоответствия return/arity, доступны в [§6 исследовательского плана](../../docs/plans/CORE-NESTED-FUNCTIONS.md).
 
-**Позитивное сопоставление:** [§5 исследовательского плана](../../docs/plans/CORE-NESTED-FUNCTIONS.md) содержит один исходник `NestedFunctionsProbes.java` и **17 строк stdout**; это *одна* compilation/run, не 17 отдельных тестов. Материал статьи объясняет механизмы, а не объявляет G1-исследование автоматически исполненным CI G2.
+**Позитивное сопоставление:** [§5 исследовательского плана](../../docs/plans/CORE-NESTED-FUNCTIONS.md) содержит один исходник `NestedFunctionsProbes.java` и **17 строк stdout**; это *одна* compilation/run, не 17 отдельных тестов. Этот исходник включён в [общий G2 runnable](../../examples/core/nested-functions/README.md), компилируемый отдельным `verify.sh` и CI-step; это проверка **позитивного сценария**, а не автоматическая компиляция двадцати отрицательных листингов.
 
 ## 14. Первоисточники, ограничения проверки и дальнейшие связи
 
