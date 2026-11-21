@@ -197,7 +197,7 @@ System.out.println(method.getGenericReturnType()); // java.util.List<java.lang.S
 
 | ID | Раскрытая тема |
 |---|---|
-| GE-10 | Erasure: первая граница, generic signature, runtime object |
+| GE-02 (совместно с CORE-GENERICS), GE-10 | Erasure: первая граница, generic signature, runtime object |
 | GE-11 | Java 21 `instanceof`: checked cast compatibility, отличие `List<?>` от `List<String>` |
 | GE-12 | `new T()`, `T.class`, generic arrays и reifiability |
 | GE-13 | Raw/unchecked, runtime cast и точка `ClassCastException` |
@@ -205,7 +205,7 @@ System.out.println(method.getGenericReturnType()); // java.util.List<java.lang.S
 | GE-15 | Same-erasure name clash |
 | GE-16 | Overriding и bridge |
 | GE-18, GE-20, GE-22, GE-23, GE-24 (P1) | Массивы `List<?>`, запрет generic Throwable, reflection, lint, допустимость `@SafeVarargs` |
-| GE-27, GE-29 (P2) | Bytecode/Signature, `ParameterizedType` — очерчены границы без заявления полного разбора |
+| GE-27, GE-28, GE-29 (P2) | Bytecode/Signature и `ParameterizedType`, framework DAO/proxy — очерчены границы без заявления полного разбора |
 
 **Не входит в заявленный объём:** Java bytecode descriptors/Signature attributes, бинарная совместимость подробно, JIT/HotSpot memory layout и benchmark, фреймворковые прокси, generic DAO/JPA, достоверная информация о фактическом параметре типа произвольного объекта по его identity. Эти вопросы относятся к отдельным JVM/REFLECTION/DB/SPR темам (GE-27–29); самостоятельных статей ещё нет, фиктивных локальных ссылок не добавляем.
 
