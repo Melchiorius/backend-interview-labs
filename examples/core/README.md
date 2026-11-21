@@ -109,3 +109,7 @@ CHECK PASSED
 ## Исключения и управление ресурсами
 
 [CORE-EXCEPTIONS + CORE-RESOURCES — один Java 21 runnable](exceptions-resources/README.md) демонстрирует `finally` и потерю первичного исключения, цепочку `getCause()`, TWR с двумя ресурсами, primary/suppressed exceptions, partial initialization, existing effectively-final resource и порядок `close` перед внешним `finally`. Один источник, точный stdout P01–P20 и `bash examples/core/exceptions-resources/verify.sh`, без Gradle-модуля и отдельного упражнения.
+
+## Stream API: pipeline, collectors и reduce
+
+[CORE-STREAMS + CORE-STREAM-ADV — один воспроизводимый Java 21 пример](streams/README.md) объединяет два G1-сценария: StreamPipelineProbes P01–P33 и StreamG1Clarifications C01–C11. Один `bash examples/core/streams/verify.sh` компилирует оба исходника и сравнивает полный stdout (44 наблюдения двух запусков). Лень вычислений, `peek/count`, `toList`/коллекторы, `reduce` без/с identity, Optional и parallel без обещаний scheduler/JMH.
