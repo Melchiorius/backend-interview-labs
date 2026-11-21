@@ -49,3 +49,6 @@ jobs:
 
       - name: Verify CORE-INTERFACES + CORE-COMPOSITION runnable
         run: bash examples/core/interfaces-composition/verify.sh
+
+      - name: Verify CORE-NESTED + CORE-FUNCTIONS runnable
+        run: bash examples/core/nested-functions/verify.sh
