@@ -64,3 +64,6 @@ jobs:
 
       - name: Verify CORE-ARRAYS + CORE-STRINGS/BUILDERS runnable
         run: bash examples/core/arrays-strings/verify.sh
+
+      - name: Verify CORE-RECORDS + CORE-IMMUTABLE runnable
+        run: bash examples/core/records-immutability/verify.sh
