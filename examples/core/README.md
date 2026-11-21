@@ -101,3 +101,7 @@ CHECK PASSED
 ## Вложенные классы, захват переменных и лямбды
 
 [CORE-NESTED + CORE-FUNCTIONS — автономный Java 21 пример](nested-functions/README.md): static nested / inner / local / anonymous, `Outer.this`, effectively-final capture, `this` у anonymous и lambda, четыре вида method references и ранний NPE bound reference. Один исходник, полный stdout из 17 строк и `bash examples/core/nested-functions/verify.sh`; без Gradle-подпроекта и обязательного упражнения.
+
+## Generics, PECS и erasure
+
+[CORE-GENERICS + CORE-ERASURE — автономный Java 21 пример](generics-erasure/README.md) дополняет две статьи: [CORE-GENERICS](../../knowledge/01-java-core/generics.md) (bounds, invariance, PECS/capture) и [CORE-ERASURE](../../knowledge/01-java-core/erasure.md) (raw/unchecked, runtime casts, reifiability, bridge). Пример связывает эти механизмы, включая Java 21 `instanceof`, `Collections.copy`, `ClassCastException` при намеренном raw heap pollution и `ArrayStoreException` у ковариантного массива. Один исходник, полный stdout (18 строк) и точный `bash examples/core/generics-erasure/verify.sh`; без отдельного Gradle-проекта.

@@ -1,0 +1,18 @@
+== Compile-time generic constraints ==
+bounded NumberBox: 67
+bounded compare: -1
+PECS Collections.copy: [67, 68]
+wildcard extends read/null: 67/2
+wildcard super write/Object read: 67
+wildcard capture helper: [a, a]
+generic method inference: typed
+== Erasure and runtime boundaries ==
+same runtime List class: true
+instanceof List<?>: true
+Java 21 checked instanceof: true
+erased bound/return: Number/Object
+raw heap pollution: ClassCastException
+covariant array store: ArrayStoreException
+reifiable List<?>[] element: 67
+override through Parent<String>: child
+CHECK PASSED
