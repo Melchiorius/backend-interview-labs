@@ -1,6 +1,6 @@
 # CORE-GENERICS + CORE-ERASURE — исследовательский план Java SE 21 (G1)
 
-**Статус:** исследование роли 01 **до написания статей**, решение 00 по G1 ещё не принято. **Issue:** [#80](https://github.com/Melchiorius/backend-interview-labs/issues/80); родитель [#33](https://github.com/Melchiorius/backend-interview-labs/issues/33). **Исходный BASE main (21.11.2026):** `a9cf928e5d95d511bbca0468e07827886a0b2832`; текущий HEAD исследовательского PR и его Actions фиксируются после коммита. **Целевая версия:** Java SE 21, JLS 21 и Java SE 21 API. **Среда локальных проверок:** OpenJDK 21.0.12.1 / javac 21.0.12.1, Debian. **G1 не означает Implemented/Verified, G2 не разблокирован; COVERAGE/статьи/Java source/Gradle в этом PR не редактируются.**
+**Статус:** G1 ACCEPTED координатором 00 в [Issue #80](https://github.com/Melchiorius/backend-interview-labs/issues/80#issuecomment-7051633981) после [независимого G1 PASS 04](https://github.com/Melchiorius/backend-interview-labs/pull/81#pullrequestreview-5999669867); [PR #81](https://github.com/Melchiorius/backend-interview-labs/pull/81) опубликован squash `101ef992c218452c4da9b41d6e5b9de01e309af0`. **Основание:** Issue #80, родитель #33; исторический BASE `a9cf928e5d95d511bbca0468e07827886a0b2832`, проверенный G1 HEAD `6799d700ab20a2511344bf9911f7a2d98007ba5b`. **Версия:** JLS/API Java SE 21; пробы исследователя — OpenJDK/javac 21.0.12.1, Debian. Это **принятый G1-план, не Implemented/Verified учебные статьи**; G2 — очередь Issues #82/#83.
 
 ## 1. Обещание читателю и решение о двух статьях
 
