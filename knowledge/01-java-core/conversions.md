@@ -190,7 +190,7 @@ accept((String) null);     // явное приведение выбирает �
 `null` совместим с обоими **несвязанными** ссылочными типами, и ни одна перегрузка не является более специфичной. Это ошибка **компиляции**, а не `NullPointerException`.
 
 > [!note]- Углубление: точный выбор перегрузки
-> JLS 21 §15.12 определяет применимость методов и «наиболее специфичный» вариант. Простая фраза «всегда widening перед boxing» — полезная подсказка для приведённого примера, но **не универсальный алгоритм** для всех generic, varargs, лямбд, методов и конструкторов. Вывод типов, стирание и bridge methods будут разобраны в `CORE-GENERICS`, `CORE-ERASURE` и `JVM-BYTECODE`.
+> JLS 21 §15.12 определяет применимость методов и «наиболее специфичный» вариант. Простая фраза «всегда widening перед boxing» — полезная подсказка для приведённого примера, но **не универсальный алгоритм** для всех generic, varargs, лямбд, методов и конструкторов. Вывод параметров типов и стирание разобраны в [CORE-GENERICS](generics.md) и [CORE-ERASURE](erasure.md); подробный разбор bridge-байткода остаётся задачей будущей `JVM-BYTECODE`.
 
 ## Преобразования ссылок: приведение не превращает объект в другой
 
@@ -255,7 +255,7 @@ System.out.println(first.equals(created));      // true
 java examples/core/ConversionsDemo.java
 ```
 
-Другие связанные материалы: [CORE-TYPES](types.md), [CORE-PARAMS](parameters.md), будущие `CORE-NUMBERS`, `CORE-STRINGS`, `CORE-GENERICS`, `CORE-ERASURE`.
+Другие связанные материалы: [CORE-TYPES](types.md), [CORE-PARAMS](parameters.md), [CORE-GENERICS](generics.md), [CORE-ERASURE](erasure.md). Будущие темы: `CORE-NUMBERS`, `CORE-STRINGS`.
 
 ## Первоисточники
 

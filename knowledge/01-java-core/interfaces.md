@@ -413,7 +413,7 @@ javac --release 21 -d out N02.java
 | IC-20 | P1 | Инициализация и CORE-INIT |
 | IC-21 | P1 | Return-type и checked throws; два отрицательных контрпримера |
 | IC-25 | P2 | Sealed interfaces — граница CORE-SEALED |
-| IC-26 | P2 | Generics, erasure, bridge — граница CORE-GENERICS |
+| IC-26 | P2 | Основы обобщённых типов и стирания — [CORE-GENERICS](generics.md), [CORE-ERASURE](erasure.md); детали bridge-байткода — граница |
 | IC-27 | P2 | Лямбды и ссылки на методы — [CORE-FUNCTIONS](functions.md); intersection types — граница углубления |
 | IC-28 | P2 | Source/binary API compatibility — отдельное исследование |
 
@@ -425,7 +425,7 @@ javac --release 21 -d out N02.java
 - **Java SE 21 API:** [Runnable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html), [Comparator](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html), [Function](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html).
 - **Независимые интервью-вопросы:** [in28minutes](https://github.com/in28minutes/JavaInterviewQuestionsAndAnswers), [Hruday-Boppa](https://github.com/Hruday-Boppa/Core-Java-Interview-Questions-List), [Chernyshov RU](https://github.com/ViacheslavChernyshov/java-interview-questions-and-answers), [teamlead](https://github.com/teamlead/java-interview-questions). Это источники формулировок вопросов, **не** доказательство гарантий JLS или частоты на рынке.
 
-**Границы P2.** Sealed/permits (IC-25), generics/erasure (IC-26), продвинутые SAM/lambda (IC-27) и бинарная совместимость API при добавлении default/abstract (IC-28) — отдельные темы. В частности, добавление default к существующему интерфейсу **не** обещает отсутствия source-level конфликтов при множественном наследовании. Полная модель class initialization — в [CORE-INIT](initialization.md), composition/LSP/design — в [CORE-COMPOSITION](composition.md). Успешная компиляция одного сценария не доказывает отсутствие конфликтов во всех реализациях.
+**Границы P2.** Sealed/permits (IC-25), продвинутые SAM/lambda (IC-27) и бинарная совместимость API при добавлении default/abstract (IC-28) — отдельные темы. Основы generics и erasure (IC-26) разобраны в [CORE-GENERICS](generics.md) и [CORE-ERASURE](erasure.md). В частности, добавление default к существующему интерфейсу **не** обещает отсутствия source-level конфликтов при множественном наследовании. Полная модель class initialization — в [CORE-INIT](initialization.md), composition/LSP/design — в [CORE-COMPOSITION](composition.md). Успешная компиляция одного сценария не доказывает отсутствие конфликтов во всех реализациях.
 
 ## Связь с единым многофайловым примером роли 03
 
