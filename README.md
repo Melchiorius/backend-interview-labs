@@ -45,6 +45,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Интерфейсы и композиция Java 21:** [интерфейсные контракты и `default`-методы](knowledge/01-java-core/interfaces.md), [композиция, делегирование и выбор архитектуры](knowledge/01-java-core/composition.md) с [общим многофайловым примером](examples/core/interfaces-composition/README.md).
 
+**Вложенные классы и функциональные выражения Java 21:** [static nested, inner, local и anonymous классы](knowledge/01-java-core/nested-classes.md), [SAM, лямбды и ссылки на методы](knowledge/01-java-core/functions.md) с [одним общим запускаемым примером](examples/core/nested-functions/README.md) и сравнением 17 наблюдений.
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.
