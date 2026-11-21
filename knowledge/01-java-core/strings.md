@@ -147,7 +147,7 @@ class RegexSplit {
 
 ## 7. replace, replaceAll и join — разные API (TX-10, TX-11)
 
-`replace(CharSequence,CharSequence)` заменяет **буквальные последовательности**. `replaceAll(regex,replacement)` использует **регулярное выражение** и синтаксис replacement (включая специальные `$`/`\\`); если нужен literal replacement, учитывайте `Matcher.quoteReplacement`.
+`replace(CharSequence,CharSequence)` заменяет **буквальные последовательности**. `replaceAll(regex,replacement)` использует **регулярное выражение** и синтаксис replacement (включая специальные `$`/`\`); если нужен literal replacement, учитывайте `Matcher.quoteReplacement`.
 
 ~~~java
 class Replacement {
@@ -181,7 +181,7 @@ class NullOverload {
 }
 ~~~
 
-**Нюанс:** у String нет специальной перегрузки `valueOf(String)`; для \`(String)null\` здесь применима \`valueOf(Object)\`. При передачах nullable-данных делайте целевой тип явно, вместо предположения «null всегда одинаков». Это **runtime failure после успешного overload resolution**, не compile-negative. Нормы: [String.valueOf(Object)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#valueOf(java.lang.Object)), [valueOf(char[])](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#valueOf(char%5B%5D)), [JLS §15.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12).
+**Нюанс:** у String нет специальной перегрузки `valueOf(String)`; для `(String)null` здесь применима `valueOf(Object)`. При передачах nullable-данных делайте целевой тип явно, вместо предположения «null всегда одинаков». Это **runtime failure после успешного overload resolution**, не compile-negative. Нормы: [String.valueOf(Object)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#valueOf(java.lang.Object)), [valueOf(char[])](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#valueOf(char%5B%5D)), [JLS §15.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12).
 
 ## 9. String switch, сравнение, форматирование и Unicode normalization (TX-15–TX-18 · P1)
 
@@ -352,7 +352,7 @@ class AppendNull {
 }
 ~~~
 
-Здесь обе строки **успешно компилируются**; отличие проявляется при выполнении. Для некастованного literal `null` правила выбора перегрузки нужно анализировать по их параметрам, а не угадывать по итоговой печати. Связанный случай \`String.valueOf(null)\` разобран в §8.
+Здесь обе строки **успешно компилируются**; отличие проявляется при выполнении. Для некастованного literal `null` правила выбора перегрузки нужно анализировать по их параметрам, а не угадывать по итоговой печати. Связанный случай `String.valueOf(null)` разобран в §8.
 
 ## 15. delete, reverse, вставка и конкатенация в цикле (BL-07, BL-08)
 
@@ -376,7 +376,7 @@ class BuilderOperations {
 }
 ~~~
 
-Техническое правило: в явном цикле с многократным наращиванием текста Builder часто выражает намерение лучше повторных \`s = s + x\`. Но **конкретное число аллокаций/CPU/оптимизация JIT и обязательное ускорение** не гарантируются JLS и не измерены здесь. Форматирование с `String.format` тоже выбирается по необходимости читаемости и локали, а не по неподтверждённому microbenchmark.
+Техническое правило: в явном цикле с многократным наращиванием текста Builder часто выражает намерение лучше повторных `s = s + x`. Но **конкретное число аллокаций/CPU/оптимизация JIT и обязательное ускорение** не гарантируются JLS и не измерены здесь. Форматирование с `String.format` тоже выбирается по необходимости читаемости и локали, а не по неподтверждённому microbenchmark.
 
 ## 16. Сопоставление строковых ошибок: compile-time и runtime
 
@@ -386,12 +386,12 @@ class BuilderOperations {
 | `StringBuilder b = "x";` | **Compile error** | String не StringBuilder |
 | `"abc".length` | **Compile error** | У String `length()` — метод |
 | `new char[]{'x'}.length()` | **Compile error** | У массива `length` — поле |
-| `"abc".charAt(3)` | **Runtime** \`StringIndexOutOfBoundsException\` | Неверный UTF-16 индекс |
-| `String.valueOf(null)` | **Runtime** \`NullPointerException\` | Выбран overload \`char[]\` |
-| `String.valueOf((Object)null)` | Строка `"null"` | Выбран overload \`Object\` |
+| `"abc".charAt(3)` | **Runtime** `StringIndexOutOfBoundsException` | Неверный UTF-16 индекс |
+| `String.valueOf(null)` | **Runtime** `NullPointerException` | Выбран overload `char[]` |
+| `String.valueOf((Object)null)` | Строка `"null"` | Выбран overload `Object` |
 | `new StringBuilder().append((String)null)` | Содержит `"null"` | Контракт String overload |
-| `new StringBuilder().append((char[])null)` | **Runtime** \`NullPointerException\` | Нужен реальный char[] |
-| `new StringBuilder().charAt(0)` | **Runtime** \`StringIndexOutOfBoundsException\` | Builder пуст |
+| `new StringBuilder().append((char[])null)` | **Runtime** `NullPointerException` | Нужен реальный char[] |
+| `new StringBuilder().charAt(0)` | **Runtime** `StringIndexOutOfBoundsException` | Builder пуст |
 
 Все «runtime» строки компилируются и выбрасывают исключение **только при достижении указанной операции**. В G1 §7 отдельно вынесены N01–N24 как **самостоятельные исходники, которые должны не скомпилироваться по ожидаемой причине**, не по случайной отсутствующей скобке.
 
@@ -399,24 +399,24 @@ class BuilderOperations {
 
 | ID | Уровень | Конкретное объяснение |
 |---|---|---|
-| TX-01 | P0 | §1: immutable/final; \`concat\` не меняет источник |
-| TX-02 | P0 | §1: \`equals\` vs \`==\` |
-| TX-03 | P0 | §2: литерал, compile-time constant, \`new String\`, \`intern\` |
+| TX-01 | P0 | §1: immutable/final; `concat` не меняет источник |
+| TX-02 | P0 | §1: `equals` vs `==` |
+| TX-03 | P0 | §2: литерал, compile-time constant, `new String`, `intern` |
 | TX-04 | P0 | §3: строки + числа, left associativity, null conversion |
 | TX-05 | P0 | §4: UTF-16 units, surrogate pairs |
-| TX-06 | P0 | §4: \`codePointAt/codePointCount/codePoints/offsetByCodePoints\` |
-| TX-07 | P0 | §4: \`substring\` end-exclusive и range exception |
-| TX-08 | P0 | §5: \`trim/strip/isBlank/isEmpty\` |
-| TX-09 | P0 | §6: regex \`split\`, экранирование, limit |
-| TX-10 | P0 | §7: literal \`replace\` vs regex \`replaceAll\` |
-| TX-11 | P0 | §7: \`join\` и null element |
-| TX-12 | P0 | §8: \`valueOf(null)\` vs \`(Object)null\`, overload |
-| TX-13 | P0 | §4: \`charAt\` как char и \`codePointAt\` как int |
-| TX-14 | P0 | §§1,16: String не \`char[]\`/Builder, \`length()\` метод |
+| TX-06 | P0 | §4: `codePointAt/codePointCount/codePoints/offsetByCodePoints` |
+| TX-07 | P0 | §4: `substring` end-exclusive и range exception |
+| TX-08 | P0 | §5: `trim/strip/isBlank/isEmpty` |
+| TX-09 | P0 | §6: regex `split`, экранирование, limit |
+| TX-10 | P0 | §7: literal `replace` vs regex `replaceAll` |
+| TX-11 | P0 | §7: `join` и null element |
+| TX-12 | P0 | §8: `valueOf(null)` vs `(Object)null`, overload |
+| TX-13 | P0 | §4: `charAt` как char и `codePointAt` как int |
+| TX-14 | P0 | §§1,16: String не `char[]`/Builder, `length()` метод |
 | TX-15 | P1 | §9: visually equal Unicode без normalization |
-| TX-16 | P1 | §9: \`switch(String)\` по значению и case null Java21 |
-| TX-17 | P1 | §9: \`compareTo\` не locale collation |
-| TX-18 | P1 | §9: \`String.format\` и явная \`Locale.ROOT\` |
+| TX-16 | P1 | §9: `switch(String)` по значению и case null Java21 |
+| TX-17 | P1 | §9: `compareTo` не locale collation |
+| TX-18 | P1 | §9: `String.format` и явная `Locale.ROOT` |
 | TX-19 | P2 | §2: Compact Strings, pool layout, JIT concat **не исследованы** |
 | TX-20 | P2 | §4/9: grapheme clusters/ZWJ, charset и normalization **вне полного охвата** |
 
@@ -427,7 +427,7 @@ class BuilderOperations {
 | BL-01 | P0 | §10: mutable Builder, append/insert |
 | BL-02 | P0 | §11: Builder без synchronization; Buffer synchronized методы, не составной инвариант |
 | BL-03 | P0 | §12: length/capacity/ensureCapacity |
-| BL-04 | P0 | §13: \`equals\` identity vs \`String.contentEquals\` |
+| BL-04 | P0 | §13: `equals` identity vs `String.contentEquals` |
 | BL-05 | P0 | §14: append String null vs char[] null |
 | BL-06 | P0 | §12: setLength и U+0000, суррогаты |
 | BL-07 | P1 | §15: цикл + vs Builder, JIT perf не обещается |
@@ -438,7 +438,7 @@ class BuilderOperations {
 
 **Нормативные документы:** [JLS §3.10.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.10.5), [§15.18.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.18.1), [§15.12 overload](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12), [String Java21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html), [Character](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html), [StringBuilder](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html), [StringBuffer](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuffer.html), [Normalizer](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/text/Normalizer.html). Уровень интервью-вопросов и независимые источники — в [G1-плане](../../docs/plans/CORE-ARRAYS-STRINGS.md) и [SOURCE_REGISTRY](../../docs/SOURCE_REGISTRY.md).
 
-В принятом G1 есть **полный `StringsG1.java` на 28 строк stdout S01–S28**, отдельно полный `ArraysG1.java` на 24 строки, вместе **52 наблюдения двух Java-процессов**, а не 52 независимых unit tests. Для воспроизводимости согласован общий технический набор с [ролью 03, Issue #123](https://github.com/Melchiorius/backend-interview-labs/issues/123). **Относительная ссылка на runnable появится только после добавления исходников в это Git-дерево**. Негативные N01–N24 остаются отдельными \`javac --release 21\` compilation units, а не тестами ожидаемых runtime ошибок.
+В принятом G1 есть **полный `StringsG1.java` на 28 строк stdout S01–S28**, отдельно полный `ArraysG1.java` на 24 строки, вместе **52 наблюдения двух Java-процессов**, а не 52 независимых unit tests. Для воспроизводимости согласован общий технический набор с [ролью 03, Issue #123](https://github.com/Melchiorius/backend-interview-labs/issues/123). **Относительная ссылка на runnable появится только после добавления исходников в это Git-дерево**. Негативные N01–N24 остаются отдельными `javac --release 21` compilation units, а не тестами ожидаемых runtime ошибок.
 
 **NOT RUN (до отдельного evidence):** автоматическое извлечение и компиляция всех Java snippets из Markdown; negative N01–N24 в CI; GUI Obsidian/IntelliJ; JDK/JVM/OS помимо заявленного; реальные кодировки/файловый IO/locale integration; grapheme segmentation/ZWJ и сложная Unicode-нормализация; Concurrent Builder/Buffer stress; JMH, HotSpot internals, GC и JIT. Никаких выводов о реальной производительности Builder и thread-safety произвольного составного алгоритма здесь не делается.
 
