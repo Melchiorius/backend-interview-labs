@@ -206,8 +206,15 @@ class ShallowListElements {
 
 **Как сделать содержимое действительно устойчивым:** определите, что является *значением* вложенного элемента. Если это собственный immutable value object, часто достаточно snapshot структурных ссылок (например, `List<String>`, поскольку String immutable). Если элемент — mutable DTO, нужно скопировать или преобразовать каждый элемент в устойчивое представление, **затем** построить unmodifiable коллекцию. Возврат `List.copyOf(mutables)` сам по себе не выполняет deep copy.
 
+Второй пример — **самостоятельная единица компиляции**: для него повторно приведён минимальный `MutableCounter`. Копируйте и запускайте каждый из двух Java-блоков отдельно, а не объединяйте их в один файл (иначе два объявления `MutableCounter` конфликтуют).
+
 ~~~java
 import java.util.List;
+
+final class MutableCounter {
+    int value;
+    MutableCounter(int value) { this.value = value; }
+}
 
 record CounterValue(int count) {}
 
