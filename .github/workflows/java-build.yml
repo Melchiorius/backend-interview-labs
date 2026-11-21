@@ -55,3 +55,6 @@ jobs:
 
       - name: Verify CORE-GENERICS + CORE-ERASURE runnable
         run: bash examples/core/generics-erasure/verify.sh
+
+      - name: Verify CORE-EXCEPTIONS + CORE-RESOURCES runnable
+        run: bash examples/core/exceptions-resources/verify.sh
