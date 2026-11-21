@@ -4,7 +4,7 @@
 
 **Файлы:** [NestedFunctionsProbes.java](src/NestedFunctionsProbes.java), [полный эталон expected.stdout](expected.stdout), [проверочный verify.sh](verify.sh). Единственная точка входа — `NestedFunctionsProbes.main` (default package), никаких внешних зависимостей, JUnit, Mockito или нового Gradle-модуля нет.
 
-Из опубликованной теории применимы [CORE-INTERFACES](../../../knowledge/01-java-core/interfaces.md) — SAM и `@FunctionalInterface` — и [CORE-CLASSES](../../../knowledge/01-java-core/classes.md) — объекты и поля. **Обе самостоятельные статьи уже включены в общий авторский PR:** [CORE-NESTED — вложенные классы и захват](../../../knowledge/01-java-core/nested-classes.md) и [CORE-FUNCTIONS — SAM, лямбды и method references](../../../knowledge/01-java-core/functions.md). Первая подробно объясняет P01–P08/P15–P16, вторая — P09–P14/P17; это распределение тем, а не два запуска программы. Из каждой статьи есть обратная ссылка на этот README и исходник.
+Для понимания примера полезны [CORE-INTERFACES](../../../knowledge/01-java-core/interfaces.md) — SAM и `@FunctionalInterface` — и [CORE-CLASSES](../../../knowledge/01-java-core/classes.md) — объекты и поля. Две основные статьи находятся в том же дереве репозитория: [CORE-NESTED — вложенные классы и захват](../../../knowledge/01-java-core/nested-classes.md) и [CORE-FUNCTIONS — SAM, лямбды и ссылки на методы](../../../knowledge/01-java-core/functions.md). Первая подробно объясняет P01–P08/P15–P16, вторая — P09–P14/P17; это распределение тем, а не два запуска программы. Из каждой статьи есть обратная ссылка на этот README и исходник.
 
 ## Запуск из корня репозитория
 

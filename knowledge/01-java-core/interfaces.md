@@ -352,7 +352,7 @@ class Tagged implements Marker {}
 // new Tagged() instanceof Marker -> true
 ```
 
-Это метка, которую умеет интерпретировать конкретный API/код, но сама по себе она не даёт объекту нового алгоритма. См. [JLS 21 §9.8](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.8). Лямбды, method references и intersection types полностью относятся к будущей CORE-FUNCTIONS.
+Это метка, которую умеет интерпретировать конкретный API/код, но сама по себе она не даёт объекту нового алгоритма. См. [JLS 21 §9.8](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.8). Лямбды и основные формы ссылок на методы разобраны в [CORE-FUNCTIONS](functions.md); сложные случаи intersection types и generics остаются границей отдельного углубления.
 
 **Интерфейс и абстрактный класс — не взаимозаменяемые декларации.**
 
@@ -414,7 +414,7 @@ javac --release 21 -d out N02.java
 | IC-21 | P1 | Return-type и checked throws; два отрицательных контрпримера |
 | IC-25 | P2 | Sealed interfaces — граница CORE-SEALED |
 | IC-26 | P2 | Generics, erasure, bridge — граница CORE-GENERICS |
-| IC-27 | P2 | Lambdas, method refs, intersection — граница CORE-FUNCTIONS |
+| IC-27 | P2 | Лямбды и ссылки на методы — [CORE-FUNCTIONS](functions.md); intersection types — граница углубления |
 | IC-28 | P2 | Source/binary API compatibility — отдельное исследование |
 
 Оставшиеся **IC-14–IC-16 P0** (strategy/delegation/decorator), **IC-22–IC-24 P1** и **IC-29–IC-30 P2** раскрыты в [CORE-COMPOSITION](composition.md). Не нужно переписывать содержание соседней статьи здесь.
