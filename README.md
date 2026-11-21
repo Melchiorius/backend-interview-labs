@@ -55,6 +55,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Массивы, строки и буферы Java 21:** [типы массивов, ковариантность, копирование и `Arrays.asList`](knowledge/01-java-core/arrays.md), [String, UTF-16, Unicode и StringBuilder/StringBuffer](knowledge/01-java-core/strings.md) с [общим запускаемым примером на двух Java-программах](examples/core/arrays-strings/README.md) — A01–A24 и S01–S28 (52 наблюдения за два запуска).
 
+**Record и неизменяемость в Java 21:** [компоненты record, конструкторы, `equals` и copy invariant](knowledge/01-java-core/records.md), [владение изменяемым состоянием, defensive copy, `List.copyOf` и live view](knowledge/01-java-core/immutability.md) с [общим запускаемым примером Records + Immutable](examples/core/records-immutability/README.md) — R01–R16 и I01–I10 (26 наблюдений двух запусков).
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.
