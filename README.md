@@ -43,6 +43,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Объекты и равенство Java 21:** [java.lang.Object, identity и основные методы](knowledge/01-java-core/object.md); [equals/hashCode, контракты и коллекции](knowledge/01-java-core/equality.md) с [воспроизводимым Java-примером](examples/core/equality/README.md).
 
+**Интерфейсы и композиция Java 21:** [интерфейсные контракты и `default`-методы](knowledge/01-java-core/interfaces.md), [композиция, делегирование и выбор архитектуры](knowledge/01-java-core/composition.md) с [общим многофайловым примером](examples/core/interfaces-composition/README.md).
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.

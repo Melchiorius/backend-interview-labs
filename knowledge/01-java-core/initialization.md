@@ -832,7 +832,7 @@ P0/P1/P2 — приоритеты исследовательского план�
 
 - **CORE-CLASSES:** здесь не переписывается базовое определение конструктора, default constructor, перегрузка конструкторов и простая последовательность одного класса. Эти понятия изложены в [CORE-CLASSES](classes.md); здесь добавлена иерархическая последовательность.
 - **CORE-INHERITANCE:** общий механизм overriding не пересказывается. Используется только момент вызова override до инициализаторов подкласса; общая модель — в [CORE-INHERITANCE](inheritance.md).
-- **CORE-INTERFACES:** здесь нужна только граница инициализации superinterfaces с default methods. Разрешение конфликтов default methods остаётся за отдельной темой.
+- **[CORE-INTERFACES](interfaces.md):** здесь рассматривается только инициализация суперинтерфейсов с `default`-методами; правила разрешения конфликтов таких методов вынесены в самостоятельную статью.
 - **JVM-LOADING:** loading/linking описаны ровно настолько, чтобы не путать их с initialization. Delegation, modules, bytecode, metaspace, unloading и особенности HotSpot не являются целью статьи.
 - **CON-JMM:** дано только необходимое объяснение синхронизации и escape при конструировании. Полная модель happens-before, data races, safe publication и final-field semantics требует отдельного материала.
 - **Не заявляется:** runtime воспроизведение `ClassCircularityError`, стресс-тест межпоточного deadlock, полная проверка разных class loaders и визуальная проверка Obsidian/IntelliJ.
