@@ -103,13 +103,13 @@
 
 ## 5a. Точечные нормативные проверки ST-20 / ST-19 / ST-31 (после G1-review 04)
 
-**B1 / ST-20.** Официальные контракты Java SE 21: [Stream.reduce(BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(java.util.function.BinaryOperator)), [Stream.reduce(T, BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(T,java.util.function.BinaryOperator)), [Stream.reduce(U, BiFunction, BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(U,java.util.function.BiFunction,java.util.function.BinaryOperator)), [IntStream.reduce(IntBinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/IntStream.html#reduce(java.util.function.IntBinaryOperator)). Без identity результат выражается через \`Optional\` / \`OptionalInt\`, пустой Stream даёт пустой Optional. С явным identity он должен быть нейтральным; для трёхаргументной формы дополнительно важна совместимость accumulator и combiner. Редукция основана на ассоциативной операции. P26 (sum) и N14 (ошибка типов) **не являются прямым доказательством** этих перегрузок.
+**B1 / ST-20.** Официальные контракты Java SE 21: [Stream.reduce(BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(java.util.function.BinaryOperator)), [Stream.reduce(T, BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(T,java.util.function.BinaryOperator)), [Stream.reduce(U, BiFunction, BinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#reduce(U,java.util.function.BiFunction,java.util.function.BinaryOperator)), [IntStream.reduce(IntBinaryOperator)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/IntStream.html#reduce(java.util.function.IntBinaryOperator)). Без identity результат выражается через `Optional` / `OptionalInt`, пустой Stream даёт пустой Optional. С явным identity он должен быть нейтральным; для трёхаргументной формы дополнительно важна совместимость accumulator и combiner. Редукция основана на ассоциативной операции. P26 (sum) и N14 (ошибка типов) **не являются прямым доказательством** этих перегрузок.
 
-**B2 / ST-19.** [Stream.findFirst](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#findFirst()), [Stream.anyMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#anyMatch(java.util.function.Predicate)), [Stream.allMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#allMatch(java.util.function.Predicate)), [Stream.noneMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#noneMatch(java.util.function.Predicate)), [IntStream.findFirst](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/IntStream.html#findFirst()), [Optional.orElse](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html#orElse(T)): \`find*\` возвращают Optional-объект, \`*Match\` — **примитивный boolean**. Для пустого Stream: \`anyMatch = false\`, \`allMatch = true\`, \`noneMatch = true\` (vacuous truth). \`orElse\` применяется к Optional, не к boolean.
+**B2 / ST-19.** [Stream.findFirst](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#findFirst()), [Stream.anyMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#anyMatch(java.util.function.Predicate)), [Stream.allMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#allMatch(java.util.function.Predicate)), [Stream.noneMatch](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html#noneMatch(java.util.function.Predicate)), [IntStream.findFirst](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/IntStream.html#findFirst()), [Optional.orElse](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html#orElse(T)): `find*` возвращают Optional-объект, `*Match` — **примитивный boolean**. Для пустого Stream: `anyMatch = false`, `allMatch = true`, `noneMatch = true` (vacuous truth). `orElse` применяется к Optional, не к boolean.
 
-**Отдельный positive probe**, не часть сохранённого источника P01–P33. Полный файл \`StreamG1Clarifications.java\`:
+**Отдельный positive probe**, не часть сохранённого источника P01–P33. Полный файл `StreamG1Clarifications.java`:
 
-\`\`\`java
+```java
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
@@ -132,11 +132,11 @@ class StreamG1Clarifications {
         System.out.println("C11=" + Stream.<Integer>empty().findFirst().orElse(67));
     }
 }
-\`\`\`
+```
 
-**Фактически проверено отдельно ролью 01:** OpenJDK/javac **21.0.12.1**, \`javac --release 21 -d out StreamG1Clarifications.java\` — exit 0; \`java -cp out StreamG1Clarifications\` — exit 0, **11/11 строк** совпали с ожидаемыми (одна компиляция + один запуск, не 11 независимых тестов):
+**Фактически проверено отдельно ролью 01:** OpenJDK/javac **21.0.12.1**, `javac --release 21 -d out StreamG1Clarifications.java` — exit 0; `java -cp out StreamG1Clarifications` — exit 0, **11/11 строк** совпали с ожидаемыми (одна компиляция + один запуск, не 11 независимых тестов):
 
-\`\`\`text
+```text
 C01=Optional[6]
 C02=Optional.empty
 C03=6
@@ -148,19 +148,19 @@ C08=false
 C09=true
 C10=true
 C11=67
-\`\`\`
+```
 
-**N1 / ST-31.** Прямой отдельный отрицательный пример checked в \`Stream.map(Function)\`, **не** переименовывает, не заменяет и не увеличивает список N01–N17:
+**N1 / ST-31.** Прямой отдельный отрицательный пример checked в `Stream.map(Function)`, **не** переименовывает, не заменяет и не увеличивает список N01–N17:
 
-\`\`\`java
+```java
 import java.io.IOException;
 import java.util.stream.Stream;
 class CheckedFunctionProbe {
     void work() { Stream.of(1).map(x -> { throw new IOException("io"); }); }
 }
-\`\`\`
+```
 
-\`javac --release 21 -d out-negative CheckedFunctionProbe.java\` на OpenJDK 21.0.12.1: **exit 1**, категория \`unreported exception IOException; must be caught or declared to be thrown\`, не parser/EOF error. Причина — \`Function.apply\` не объявляет checked \`throws IOException\`; обработка возможна внутри lambda либо через другой SAM-контракт. **N15** из §7 — иное ограничение \`onClose(Runnable)\` и не используется как прямое доказательство для \`map\`.
+`javac --release 21 -d out-negative CheckedFunctionProbe.java` на OpenJDK 21.0.12.1: **exit 1**, категория `unreported exception IOException; must be caught or declared to be thrown`, не parser/EOF error. Причина — `Function.apply` не объявляет checked `throws IOException`; обработка возможна внутри lambda либо через другой SAM-контракт. **N15** из §7 — иное ограничение `onClose(Runnable)` и не используется как прямое доказательство для `map`.
 
 **Границы новых проверок:** выполнены только эти две точечные Java 21 компиляции и один запуск C01–C11. **Сохранённый** source §6 с P01–P33, исходники N01–N17 и их ранее проверенные результаты **не менялись и заново не запускались** в рамках данной дельты. GitHub CI не извлекает пробы из Markdown; Obsidian/IntelliJ GUI, другие JVM, benchmark/JMH, реальный IO/JDBC/Spring — not run.
 
