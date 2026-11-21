@@ -230,7 +230,7 @@ System.out.println(first == created.intern());  // true
 System.out.println(first.equals(created));      // true
 ```
 
-Литералы и строковые константные выражения используют интернированные экземпляры. `new String("Java")` создаёт отдельный объект; `intern()` возвращает каноническую строку. **Это не `Integer`-кэш**, а другой контракт. Конкатенация со значениями, вычисляемыми во время выполнения, не обязательно является константным выражением. Полную модель `String`, `intern()`, конкатенации и String Pool раскроет будущая `CORE-STRINGS`.
+Литералы и строковые константные выражения используют интернированные экземпляры. `new String("Java")` создаёт отдельный объект; `intern()` возвращает каноническую строку. **Это не `Integer`-кэш**, а другой контракт. Конкатенация со значениями, вычисляемыми во время выполнения, не обязательно является константным выражением. Подробно эти механизмы, контракт `String.intern()` и отличия от ссылочной идентичности разобраны в [CORE-STRINGS и CORE-BUILDERS](strings.md).
 
 ## Что спросить себя перед собеседованием
 
@@ -255,7 +255,7 @@ System.out.println(first.equals(created));      // true
 java examples/core/ConversionsDemo.java
 ```
 
-Другие связанные материалы: [CORE-TYPES](types.md), [CORE-PARAMS](parameters.md), [CORE-GENERICS](generics.md), [CORE-ERASURE](erasure.md). Будущие темы: `CORE-NUMBERS`, `CORE-STRINGS`.
+Другие связанные материалы: [CORE-TYPES](types.md), [CORE-PARAMS](parameters.md), [CORE-GENERICS](generics.md), [CORE-ERASURE](erasure.md), [массивы и runtime-проверка ковариантности](arrays.md), [строки и разрешение перегрузок `String.valueOf(null)`](strings.md) с [двухпрограммным runnable](../../examples/core/arrays-strings/README.md). Дальнейшая тема: `CORE-NUMBERS`.
 
 ## Первоисточники
 

@@ -113,3 +113,7 @@ CHECK PASSED
 ## Stream API: pipeline, collectors и reduce
 
 [CORE-STREAMS + CORE-STREAM-ADV — один воспроизводимый Java 21 пример](streams/README.md) объединяет два G1-сценария: StreamPipelineProbes P01–P33 и StreamG1Clarifications C01–C11. Один `bash examples/core/streams/verify.sh` компилирует оба исходника и сравнивает полный stdout (44 наблюдения двух запусков). Лень вычислений, `peek/count`, `toList`/коллекторы, `reduce` без/с identity, Optional и parallel без обещаний scheduler/JMH.
+
+## Массивы, строки и буферы
+
+[CORE-ARRAYS + CORE-STRINGS/BUILDERS — два Java 21 запуска](arrays-strings/README.md) связывает типы и ковариантность массивов, копирование и `Arrays.asList` с UTF-16/code points, строковыми перегрузками и мутабельными `StringBuilder`/`StringBuffer`. Один `bash examples/core/arrays-strings/verify.sh` компилирует два G1-класса и сравнивает 24 A-строки и 28 S-строк с двумя эталонами. Без отдельного Gradle/JUnit-модуля.

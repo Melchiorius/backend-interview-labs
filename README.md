@@ -53,6 +53,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Stream API Java 21:** [источники, промежуточные и терминальные операции, Optional](knowledge/01-java-core/streams.md), [редукции, Collector, parallel и закрытие Stream](knowledge/01-java-core/stream-advanced.md), а также [один воспроизводимый пример с двумя Java-программами](examples/core/streams/README.md) — 44 наблюдения P01–P33 и C01–C11 за два запуска.
 
+**Массивы, строки и буферы Java 21:** [типы массивов, ковариантность, копирование и `Arrays.asList`](knowledge/01-java-core/arrays.md), [String, UTF-16, Unicode и StringBuilder/StringBuffer](knowledge/01-java-core/strings.md) с [общим запускаемым примером на двух Java-программах](examples/core/arrays-strings/README.md) — A01–A24 и S01–S28 (52 наблюдения за два запуска).
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.
