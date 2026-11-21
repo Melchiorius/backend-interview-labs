@@ -1,71 +1,72 @@
-# CORE-GENERICS + CORE-ERASURE — граница проверки типов в Java 21
+# CORE-GENERICS + CORE-ERASURE — воспроизводимый пример Java 21
 
-**Один автономный runnable** связывает два уровня: *проверку generic-ограничений компилятором* и *фактические проверки типов во время выполнения*. Здесь используются те же `List` и небольшие generic-классы, чтобы на примерах показать PECS/wildcard capture, type erasure, raw heap pollution, checked `instanceof` и ковариантность массивов. Отдельного упражнения/Gradle-модуля нет.
+**Один запускаемый пример** объединяет статические ограничения generics с тем, где после стирания действительно срабатывают runtime-проверки. Файл [GenericsProbes.java](src/GenericsProbes.java) и **20 строк P01–P20** из [§5 принятого G1-плана](../../../docs/plans/CORE-GENERICS-ERASURE.md) сохранены без изменения программной логики и вывода. Это *одна компиляция и один запуск*, не 20 отдельных тестов. Небезопасный код присутствует намеренно для объяснения ошибок.
 
-**Исходники и проверки:** [GenericsErasureDemo.java](src/GenericsErasureDemo.java), [полный эталон expected.stdout](expected.stdout), [автономный verify.sh](verify.sh). Сценарий спроектирован по [принятому G1-плану GE-01–GE-30](../../../docs/plans/CORE-GENERICS-ERASURE.md), но **не является побайтной копией** исследовательского `GenericsProbes.java`: его 20 наблюдений/P21 и отдельные диагностические пробы сохранены в плане; основной пример здесь переработан ради читаемости и воспроизводимости без compiler-specific числа bridge-методов.
+**Файлы:** [GenericsProbes.java](src/GenericsProbes.java), [expected.stdout](expected.stdout), [verify.sh](verify.sh). **Связанные статьи:** [CORE-GENERICS — типизация, инвариантность и PECS](../../../knowledge/01-java-core/generics.md) и [CORE-ERASURE — стирание, unsafe generics и runtime-проверки](../../../knowledge/01-java-core/erasure.md). Предпосылки: [типы](../../../knowledge/01-java-core/types.md), [передача аргументов и массивы](../../../knowledge/01-java-core/parameters.md), [наследование](../../../knowledge/01-java-core/inheritance.md), [интерфейсы](../../../knowledge/01-java-core/interfaces.md). Эти ссылки действуют именно в **интегрированной авторской ветке PR #92**, где оба файла статей уже существуют.
 
-**Связанные теоретические статьи:** [CORE-GENERICS — границы, инвариантность, PECS и wildcard capture](../../../knowledge/01-java-core/generics.md) и [CORE-ERASURE — стирание, raw/unchecked, runtime casts и bridge](../../../knowledge/01-java-core/erasure.md). Этот runnable — одна дидактическая компоновка обоих механизмов; он **не заменяет** полные контрпримеры и нормативные пояснения статей. Предпосылки: [типы и значения](../../../knowledge/01-java-core/types.md), [наследование и overriding](../../../knowledge/01-java-core/inheritance.md), [массивы и передача ссылок](../../../knowledge/01-java-core/parameters.md).
+## Точные команды из корня репозитория
 
-Нормативные ориентиры (Java SE 21): [JLS §4.5.1 — wildcard](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.5.1), [§4.6 — erasure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6), [§4.7 — reifiable](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.7), [§4.12.2 — heap pollution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.2), [§5.1.10 — capture conversion](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.10) и [`Collections.copy` API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html#copy(java.util.List,java.util.List)).
-
-## Команды из корня репозитория
-
-Требуется JDK **21** с `javac` и `java` в `PATH`. В Bash (Linux/macOS/Git Bash на Windows):
+Нужны `java` и `javac` из **JDK 21**. Для Bash (Linux, macOS или Git Bash):
 
 ```sh
 mkdir -p examples/core/generics-erasure/build/classes
-javac --release 21 -Xlint:all -Werror -d examples/core/generics-erasure/build/classes examples/core/generics-erasure/src/GenericsErasureDemo.java
-java -cp examples/core/generics-erasure/build/classes GenericsErasureDemo
+javac --release 21 -Xlint:unchecked -Xlint:varargs -d examples/core/generics-erasure/build/classes examples/core/generics-erasure/src/GenericsProbes.java
+java -cp examples/core/generics-erasure/build/classes GenericsProbes
 bash examples/core/generics-erasure/verify.sh
 ```
 
-Скрипт `verify.sh` пересоздаёт **только** `examples/core/generics-erasure/build/`, компилирует с `--release 21` и строгим `-Xlint:all -Werror`, запускает программу и сравнивает **полный stdout** с `expected.stdout` через `diff -u`. При несовпадении завершается с ненулевым кодом. При успехе после полного stdout Java добавляет собственную строку `CHECK PASSED: stdout matches expected.stdout` — она **не входит** в эталон. В PowerShell можно создать папку `New-Item -ItemType Directory -Force examples/core/generics-erasure/build/classes` и выполнить те же `javac`/`java`, а для скрипта использовать Git Bash.
+Скрипт `verify.sh` пересоздаёт **только** `examples/core/generics-erasure/build/`, компилирует Java с включённой диагностикой двух важных категорий, запускает класс и сравнивает **весь stdout** с [эталоном](expected.stdout) через `diff -u`. При несоответствии или неуспешном запуске он возвращает ненулевой код. При успехе после 20 строк Java выводит дополнительную строку `CHECK PASSED: stdout matches expected.stdout`; это **строка скрипта**, не программы.
 
-## Полный stdout Java-программы
+### Почему компилятор выдаёт предупреждения
+
+На **OpenJDK/javac 21.0.12.1** при `-Xlint:unchecked -Xlint:varargs` исходный `GenericsProbes.java` компилируется успешно (exit 0) с **двумя ожидаемыми предупреждениями**: `[varargs]` для `Object[] alias = lists` в опасном методе с `@SafeVarargs` и `[unchecked]` для `raw.add(67)`. `@SafeVarargs` не делает тело метода безопасным; здесь оно намеренно нарушает generic-контракт. **Не применять `-Werror` к этому исследовательскому исходнику**: ожидаемая диагностика — часть опыта. Точные диагностические строки/пути/число предупреждений не являются требованием JLS; `verify.sh` не сравнивает `stderr` с нормативным эталоном.
+
+## Полный ожидаемый stdout Java-программы
 
 ```text
-== Compile-time generic constraints ==
-bounded NumberBox: 67
-bounded compare: -1
-PECS Collections.copy: [67, 68]
-wildcard extends read/null: 67/2
-wildcard super write/Object read: 67
-wildcard capture helper: [a, a]
-generic method inference: typed
-== Erasure and runtime boundaries ==
-same runtime List class: true
-instanceof List<?>: true
-Java 21 checked instanceof: true
-erased bound/return: Number/Object
-raw heap pollution: ClassCastException
-covariant array store: ArrayStoreException
-reifiable List<?>[] element: 67
-override through Parent<String>: child
-CHECK PASSED
+P01=67
+P02=-1
+P03=[67, 68]
+P04=67
+P05=67,2
+P06=67,Integer
+P07=[a, a]
+P08=true
+P09=true
+P10=Number
+P11=Object
+P12=ClassCastException
+P13=ClassCastException
+P14=ArrayStoreException
+P15=x,x
+P16=67
+P17=2,1,child
+P18=0,67
+P19=68
+P20=true,67
 ```
 
-Всего **18 строк одного запуска**, а не 18 независимых тестовых классов. Дополнительно исходник вызывает собственный `verify(...)` для проверки ключевых значений и выбрасывает `AssertionError` при нарушении ожиданий; флаг `-ea` не требуется.
+## Разбор механизмов
 
-## Что именно проверяется и почему
-
-| Наблюдение | Причина и граница |
+| Строки | Откуда берётся результат |
 |---|---|
-| `bounded NumberBox: 67`, `bounded compare: -1` | `NumberBox<T extends Number>` хранит значение типа `T`. В `compare(T extends Number & Comparable<T>)` доступны операции из обеих границ; `Integer.compareTo(68)` при 67 даёт отрицательный результат. Это **compile-time** гарантия доступных методов, не runtime-проверка параметра `T`. |
-| `PECS Collections.copy: [67, 68]` | Источник — `List<Integer>`, получатель — заранее заполненный `List<Number>`. `Collections.copy` разрешает source как producer (`? extends T`), destination как consumer (`? super T`); он **не добавляет элементы и не расширяет** destination, поэтому он заранее имеет размер 2. Дополнительный `copyFirst` показывает те же ограничения в собственной сигнатуре. |
-| `wildcard extends read/null: 67/2` | `List<? extends Number>` даёт чтение как `Number`, но не разрешает записать произвольный `Integer` или `Number`; **`add(null)` компилируется**. В примере объект — изменяемый `ArrayList<Integer>`, поэтому размер становится 2. Это не доказательство, что все producer-коллекции допускают изменения: `List.of` был бы immutable. |
-| `wildcard super write/Object read: 67` | В `List<? super Integer>` разрешена запись `Integer`; без дополнительных сведений статический тип результата `get` — **`Object`** (именно так объявлен `readBack`). Динамический объект здесь `Integer`, что не повышает гарантию типа сигнатуры. |
-| `wildcard capture helper: [a, a]` | Метод `repeatFirst(List<?>)` вызывает generic-helper `<T> repeatFirstCaptured(List<T>)`: при одном захваченном неизвестном `T` допустимо прочитать первый элемент и записать его на вторую позицию того же списка. Это не разрешение вставлять любой новый `T` и не обход invariant type checking. |
-| `generic method inference: typed` | `identity("typed")` выводит `T = String` по аргументу, возвращаемый результат статически используется как `String`. После erasure runtime-проверка типа при необходимости остаётся возможной. |
-| `same runtime List class: true` | Два реально созданных `ArrayList<String>` и `ArrayList<Integer>` имеют один runtime-класс `ArrayList`. Это **не** означает, что объекты имеют одинаковое содержимое или что вся информация о generic-сигнатурах исчезает из Reflection metadata. |
-| `instanceof List<?>: true` и `Java 21 checked instanceof: true` | `List<?>` — reifiable wildcard-параметризация. Кроме того, в Java 21 выражение `strings instanceof ArrayList<String>` компилируется, потому что статический `List<String>` допускает **checked cast compatible** narrowing до `ArrayList<String>`. Не обобщать это на `Object obj; obj instanceof List<String>`: он не компилируется. Во время выполнения JVM проверяет класс, **не** тип элементов. |
-| `erased bound/return: Number/Object` | Reflection API возвращает raw `Class` для return type: `NumberBox<T extends Number>.get()` после erasure имеет return `Number`, generic `identity(T)` — `Object`. Это не отменяет существование generic signature metadata в classfile и Java Reflection. |
-| `raw heap pollution: ClassCastException` | Метод `polluteThroughRaw` специально создаёт raw alias `List` для `List<String>` и добавляет `Integer(67)`. **Тип списка в Java не сменился:** нарушена гарантия `String`, которую компилятор предполагает при `polluted.get(0)`. Здесь при необходимости выполняется checkcast к `String`, он и вызывает **`ClassCastException` в строке чтения**, а не при `add`. Узкая `@SuppressWarnings({"rawtypes","unchecked"})` лишь подавляет ожидаемую диагностику внутри **намеренно некорректного** helper: это не исправление безопасности. |
-| `covariant array store: ArrayStoreException` | `Number[] covariant = new Integer[1]` допустим благодаря runtime-проверяемой ковариантности массивов. Но присвоение `3.14` (= `Double`) не разрешено реальным массивом `Integer[]`. Это другой механизм, чем heap pollution generic-коллекции. |
-| `reifiable List<?>[] element: 67` | Массив `List<?>[]` допустим как массив reifiable элементов; при чтении неизвестный тип элемента `List<?>` даёт `Object`. Это **не** разрешение `new List<String>[1]`. |
-| `override through Parent<String>: child` | Вызов `Parent<String>.get()` на реальном `Child` выбирает переопределение `Child.get()`. На javac 21 такое переопределение может требовать **bridge method** на уровне байткода; конкретное число reflection-методов, их порядок или точная схема синтеза **не включены** в фиксированный stdout и не объявляются требованием JLS. |
+| `P01–P02` | `Box<Integer>` возвращает 67; `compare` с двумя bounds `Number & Comparable<T>` сравнивает 67 и 68, результат отрицателен. |
+| `P03–P04` | `Collections.copy(List<? super T>, List<? extends T>)` переносит значения из `List<Integer>` в **заранее заполненный** `List<Number>`, не увеличивая размер destination. `copyOne` подтверждает направление чтения/записи. При этом `List<Integer>` не является `List<Number>`: инвариантность не отменяется. |
+| `P05–P06` | В `List<? extends Number>` читаем `Number` и можем добавить `null` (изменяемый `ArrayList`, а не `List.of`); `List<? super Integer>` разрешает добавить Integer, но обычное чтение имеет статический тип `Object`, хотя фактический объект — Integer. |
+| `P07` | `captureHelper(List<T>)` захватывает один неизвестный wildcard-тип и переносит элемент внутри *того же* списка. Это не разрешение добавлять произвольные значения в `List<?>`. |
+| `P08–P09` | `ArrayList<String>` и `ArrayList<Integer>` имеют одинаковый runtime-класс; `Object instanceof List<?>` компилируется (reifiable wildcard), но не проверяет тип элементов. |
+| `P10–P11` | `getReturnType()` показывает *erased* возвращаемый класс: `T extends Number` → `Number`; необязанный `T` → `Object`. Generic signature metadata при этом может оставаться доступным через Reflection. |
+| `P12` | Raw alias позволяет записать Integer в `List<String>`. Вызов `add` завершается, а `ClassCastException` возникает **при чтении как String**, где требуется runtime cast. |
+| `P13` | В `@SafeVarargs unsafeFirst` значение `List<Integer>` подменяет `List<String>` через `Object[] alias`; массив видит совместимый runtime-тип `List`, а следующая проверка String приводит к пойманному `ClassCastException`. Аннотация не исправляет небезопасное тело. |
+| `P14` | `Number[] values = new Integer[1]` допустимо благодаря ковариантности, но `values[0] = 3.14` отвергается **runtime array store check** (реальный тип — Integer[]). |
+| `P15–P16` | `List<?>` и `List<? extends Object>` читаются как Object; `List<?>[]` допустим как массив reifiable-типов. Это не делает допустимым `new List<String>[1]`. |
+| `P17` | `Parent<String>.get()` и `Child.get()` демонстрируют переопределение после erasure и наблюдаемый bridge. **`2,1,child` — результат конкретного javac/OpenJDK 21**, а не JLS-гарантия числа/порядка методов Reflection. Эталон воспроизводит принятую G1-среду; другой компилятор может иметь иной допустимый bridge layout. |
+| `P18–P20` | `Collections.emptyList()` пуст; `new ArrayList<>()` заполняется вручную; `Collections.copy` снова работает с уже созданной destination; `List<?>` допустим в `instanceof`, содержимое читается через Object. |
 
-## Что не является частью runnable
+## Что проверяется отдельно
 
-В исследовательском плане §6 — **22** независимых некомпилируемых фрагмента, §7 — **4** отдельные lint/unchecked/varargs-программы. Их нельзя включать в общий successful `javac` вместе с этой программой. Основной пример **не проверяет** точные тексты компиляторских diagnostics, все generic bounds, name clash, `new T()`, запрещённое создание generic arrays, safety `@SafeVarargs` или все варианты heap pollution. Их объясняют статьи и отдельные пробы по G1. Конкретные warnings `-Xlint:rawtypes` и `-Xlint:unchecked` можно увидеть, убрав временно `@SuppressWarnings` с *намеренно небезопасного* helper в личной копии исходника, не превращая такой вариант в обязательный CI-файл.
+В G1-плане §5 есть дополнительная **P21** Java 21: `List<String> typed; typed instanceof ArrayList<String>` допустимо по **checked cast compatibility**. Она не добавлена к основному P01–P20 stdout, поскольку задача — сохранить первоначальный транскрипт. Контрпример `Object obj; obj instanceof List<String>` требует запрещённого unchecked narrowing cast.
 
-**Границы проверки:** Java 21 `javac` и `java` проверяются фактически для полного примера. Это не JUnit suite, не benchmark и не доказательство общей производительности/безопасности generic API. Число/расположение bridge, данные classfile/JIT, другие JVM, графический Obsidian/IntelliJ, выполнение всех 22 negative и четырёх lint-проб, concurrency/JMM — за пределами данного `verify.sh`; отдельные фактические результаты фикcируются в PR. `COVERAGE.md` и `CURRICULUM.md` до публикации не меняются.
+**Не входят в этот runnable:** 22 отдельные ошибки компиляции N01–N22 из §6 и четыре lint-пробы W01–W04 из §7. Положительный source их не компилирует. Воспроизводимые ошибки не обязаны иметь один и тот же текст diagnostic на разных JDK.
+
+**Не проверено:** реальные клики Obsidian/IntelliJ, альтернативные JDK, `javap -v`/точная структура bridge, JVM/JIT/heap layout, все 22 N и 4 W, concurrency и performance. Корневой Gradle/JUnit запускается существующим GitHub CI, а не данным скриптом. `COVERAGE/CURRICULUM` и статьи роли 02 не изменяются.

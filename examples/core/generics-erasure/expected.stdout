@@ -1,18 +1,20 @@
-== Compile-time generic constraints ==
-bounded NumberBox: 67
-bounded compare: -1
-PECS Collections.copy: [67, 68]
-wildcard extends read/null: 67/2
-wildcard super write/Object read: 67
-wildcard capture helper: [a, a]
-generic method inference: typed
-== Erasure and runtime boundaries ==
-same runtime List class: true
-instanceof List<?>: true
-Java 21 checked instanceof: true
-erased bound/return: Number/Object
-raw heap pollution: ClassCastException
-covariant array store: ArrayStoreException
-reifiable List<?>[] element: 67
-override through Parent<String>: child
-CHECK PASSED
+P01=67
+P02=-1
+P03=[67, 68]
+P04=67
+P05=67,2
+P06=67,Integer
+P07=[a, a]
+P08=true
+P09=true
+P10=Number
+P11=Object
+P12=ClassCastException
+P13=ClassCastException
+P14=ArrayStoreException
+P15=x,x
+P16=67
+P17=2,1,child
+P18=0,67
+P19=68
+P20=true,67
