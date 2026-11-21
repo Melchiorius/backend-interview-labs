@@ -246,7 +246,7 @@ class WrongThrows {
 }
 ```
 
-Обратный пример `CheckedTask` компилируется не благодаря «обёртке лямбды», а потому что *functional method* разрешает данное исключение. Дальнейшие правила вызова метода всё равно требуют обработку/объявление checked exception. Нормы: [JLS §11.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2), [§15.27.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27.3).
+Обратный пример `CheckedTask` компилируется не благодаря «обёртке лямбды», а потому что *functional method* разрешает данное исключение. Дальнейшие правила вызова метода всё равно требуют обработку/объявление checked exception. Дополнительный разбор checked/unchecked и распространения исключений — в [CORE-EXCEPTIONS](exceptions.md). Нормы: [JLS §11.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2), [§15.27.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27.3).
 
 ## 7. Method references: четыре основных формы и target type
 
