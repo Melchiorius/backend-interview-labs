@@ -117,3 +117,7 @@ CHECK PASSED
 ## Массивы, строки и буферы
 
 [CORE-ARRAYS + CORE-STRINGS/BUILDERS — два Java 21 запуска](arrays-strings/README.md) связывает типы и ковариантность массивов, копирование и `Arrays.asList` с UTF-16/code points, строковыми перегрузками и мутабельными `StringBuilder`/`StringBuffer`. Один `bash examples/core/arrays-strings/verify.sh` компилирует два G1-класса и сравнивает 24 A-строки и 28 S-строк с двумя эталонами. Без отдельного Gradle/JUnit-модуля.
+
+## Records и наблюдаемая неизменяемость
+
+[CORE-RECORDS + CORE-IMMUTABLE — общий Java 21 runnable](records-immutability/README.md) сопоставляет generated equality/constructors record и намеренный антипример copy invariant с владением ссылками, `List.copyOf` snapshot, `Collections.unmodifiableList` live view и defensive copy-in/out. Один `bash examples/core/records-immutability/verify.sh` запускает две программы G1 и сравнивает R01–R16 / I01–I10 с эталонами, без отдельного Gradle/JUnit-модуля.
