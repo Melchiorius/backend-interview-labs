@@ -1,6 +1,6 @@
 # CORE-NESTED + CORE-FUNCTIONS — исследовательский план Java SE 21
 
-**Статус:** G1, роль 01; **не принят координатором 00**. **Основание:** [Issue #72](https://github.com/Melchiorius/backend-interview-labs/issues/72), родитель #33. **Исходный main:** `9fa271902ff6a3b9fb487f85e39d8682e8304113`, 20.11.2026. **Версия:** JLS / API Java SE 21. **Локальные проверки:** OpenJDK 21.0.12.1, `javac 21.0.12.1 --release 21`. HEAD и CI фиксировать по GitHub после коммита. Это **план ДО статьи**, не обновление `COVERAGE` и не публикация учебных материалов.
+**Статус:** G1 ACCEPTED координатором 00 в [Issue #72](https://github.com/Melchiorius/backend-interview-labs/issues/72#issuecomment-7050275354) после [независимого G1 PASS 04](https://github.com/Melchiorius/backend-interview-labs/pull/76#pullrequestreview-5999147952); [PR #76](https://github.com/Melchiorius/backend-interview-labs/pull/76) опубликован squash `a9cf928e5d95d511bbca0468e07827886a0b2832`. **Основание:** Issue #72, родитель #33; исторический BASE `9fa271902ff6a3b9fb487f85e39d8682e8304113`, проверенный G1 HEAD `6eefef4dc042dfe5bb506935684bf87362bc464d`. **Версия:** JLS/API Java SE 21; исследовательские пробы — OpenJDK 21.0.12.1, `javac --release 21`. Это **принятый G1-план, не Implemented/Verified учебные статьи**; G2 отдельно в Issues #78/#79.
 
 ## 1. Вопрос читателя и границы двух материалов
 
