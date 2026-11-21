@@ -51,6 +51,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Исключения и управление ресурсами Java 21:** [иерархия `Throwable`, checked/unchecked, распространение и `finally`](knowledge/01-java-core/exceptions.md), [try-with-resources, порядок закрытия и suppressed-исключения](knowledge/01-java-core/resources.md) с [единым 20-строчным запускаемым примером](examples/core/exceptions-resources/README.md).
 
+**Stream API Java 21:** [источники, промежуточные и терминальные операции, Optional](knowledge/01-java-core/streams.md), [редукции, Collector, parallel и закрытие Stream](knowledge/01-java-core/stream-advanced.md), а также [один воспроизводимый пример с двумя Java-программами](examples/core/streams/README.md) — 44 наблюдения P01–P33 и C01–C11 за два запуска.
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.

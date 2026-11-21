@@ -1,0 +1,44 @@
+P01=0
+P02=[2, 4, 6]
+P03=3
+P04=[a, b, c]
+P05=[1, 2, 3]
+P06=[4, 6]
+P07=7
+P08=true
+P09=3,peek=0
+P10=[a, null]
+P11=UnsupportedOperationException
+P12=2
+P13=NullPointerException
+P14=IllegalStateException
+P15={a=2, b=1}
+P16=NullPointerException
+P17=NullPointerException
+P18={even=[2, 4], odd=[1, 3]}
+P19={false=[1, 3], true=[2, 4]}
+P20=10
+P21=[1, 2, 3]
+P22=IllegalStateException
+P23=before=
+P24=after=AB
+P25=1234
+P26=500500
+P27=fallback
+P28=[1, 2]
+P29=[3, 4]
+P30=a,b
+P31=IllegalStateException
+P32=0
+P33=[1, 2, 3, 4]
+C01=Optional[6]
+C02=Optional.empty
+C03=6
+C04=6
+C05=OptionalInt[6]
+C06=Optional[1],OptionalInt[1]
+C07=true
+C08=false
+C09=true
+C10=true
+C11=67
