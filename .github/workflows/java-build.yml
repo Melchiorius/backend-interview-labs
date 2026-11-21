@@ -61,3 +61,6 @@ jobs:
 
       - name: Verify CORE-STREAMS + CORE-STREAM-ADV runnable
         run: bash examples/core/streams/verify.sh
+
+      - name: Verify CORE-ARRAYS + CORE-STRINGS/BUILDERS runnable
+        run: bash examples/core/arrays-strings/verify.sh
