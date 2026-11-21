@@ -404,7 +404,7 @@ class CloseWithErrors {
 | ST-23 · P1 | §2: Collector 4 функции, Characteristics, identity/associativity |
 | ST-24 · P1 | §8: Spliterator ORDERED/SIZED/SUBSIZED, late binding |
 | ST-25 · P1 | §9: onClose handlers, first exception и suppressed |
-| ST-26–ST-28 · P1 | [CORE-STREAMS](streams.md) §9: takeWhile/dropWhile, infinite sources, mapMulti |
+| ST-26 / ST-27 / ST-28 · P1 | [CORE-STREAMS](streams.md) §9: takeWhile/dropWhile, infinite sources, mapMulti |
 | ST-29–ST-30 · P1 | §§2,7: mutable reduction, внешний shared state, изменение источника |
 | ST-31 · P1 | [CORE-STREAMS](streams.md) §10: checked map(Function), deferred runtime failure |
 | ST-32 · P1 | §5: groupingByConcurrent и unordered |
