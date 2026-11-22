@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, docs/core-enums-control-146, docs/core-syntax-operators-154]
+    branches: [main, docs/core-enums-control-146, docs/core-syntax-operators-154, docs/core-assert-optional-162]
   workflow_dispatch:
 
 jobs:
@@ -76,3 +76,6 @@ jobs:
 
       - name: Verify CORE-SYNTAX + CORE-OPERATORS Java 21 runnable
         run: bash examples/core/syntax-operators/verify.sh
+
+      - name: Verify CORE-ASSERT + CORE-OPTIONAL Java 21 runnable
+        run: bash examples/core/assert-optional/verify.sh

@@ -133,3 +133,7 @@ CHECK PASSED
 ## Синтаксис и операторы Java 21
 
 [CORE-SYNTAX + CORE-OPERATORS — общий runnable](syntax-operators/README.md) дополняет [CORE-SYNTAX](../../knowledge/01-java-core/syntax.md) и [CORE-OPERATORS](../../knowledge/01-java-core/operators.md): shadowing/scope, реальный package/static-import, precedence/evaluation order, side effects, overflow и short-circuit. Четыре Java21 исходника, три JVM-процесса, 14+27+3 строки stdout; запуск: `bash examples/core/syntax-operators/verify.sh`. Без отдельного Gradle/JUnit-модуля.
+
+## Assertions и Optional (Java 21)
+
+[CORE-ASSERT + CORE-OPTIONAL — воспроизводимый runner](assert-optional/README.md) дополняет [CORE-ASSERT](../../knowledge/01-java-core/assertions.md) и [CORE-OPTIONAL](../../knowledge/01-java-core/optional.md). Один AssertProbe запускается в двух независимых JVM (default и `-ea`) с разными stdout-эталонами по 15 строк; отдельный OptionalProbe показывает eager/lazy fallback, map/flatMap и runtime exceptions (36 строк). Запуск: `bash examples/core/assert-optional/verify.sh`. 66 подписанных наблюдений трёх процессов, не 66 unit-тестов; без отдельного Gradle-модуля.
