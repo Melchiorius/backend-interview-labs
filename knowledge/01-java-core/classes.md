@@ -337,6 +337,8 @@ java examples/core/ClassesAndObjectsDemo.java
 
 **Модификаторы доступа и инкапсуляция:** [CORE-ACCESS](access.md). **Наследование и переопределение:** [CORE-INHERITANCE](inheritance.md). **Порядок инициализации:** [CORE-INIT](initialization.md). **Объект и идентичность:** [CORE-OBJECT](object.md). **Равенство и хеширование:** [CORE-EQUALITY](equality.md). **Интерфейсы и композиция:** [CORE-INTERFACES](interfaces.md), [CORE-COMPOSITION](composition.md). **Специальные классы данных и владение состоянием:** [CORE-RECORDS](records.md) и [CORE-IMMUTABLE](immutability.md), вместе с [проверяемым Java 21 runnable](../../examples/core/records-immutability/README.md). **Ещё не написаны** (поэтому пока без ссылок): `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
 
+**Идентичность во время выполнения:** [CORE-CLASSLOADER](classloaders.md) показывает, почему для типа недостаточно одного binary name: нужен ещё defining loader; отдельно разобраны child-first, делегация, TCCL и реальные исключения загрузки. [CORE-MODULES](modules.md) объясняет JPMS readability и exports/opens — другую, независимую ось.
+
 **Переход от статического определения класса к runtime introspection:** [CORE-REFLECTION](reflection.md) разбирает `Class`/`getDeclared*`/`Method.invoke`, права на private members и `InvocationTargetException`; [CORE-ANNOTATIONS](annotations.md) отдельно разбирает типизированные `@interface` и их runtime visibility. Reflection не заменяет обычные правила конструктора/видимости из этой статьи.
 
 ## Первоисточники
