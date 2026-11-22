@@ -121,3 +121,7 @@ CHECK PASSED
 ## Records и наблюдаемая неизменяемость
 
 [CORE-RECORDS + CORE-IMMUTABLE — общий Java 21 runnable](records-immutability/README.md) сопоставляет generated equality/constructors record и намеренный антипример copy invariant с владением ссылками, `List.copyOf` snapshot, `Collections.unmodifiableList` live view и defensive copy-in/out. Один `bash examples/core/records-immutability/verify.sh` запускает две программы G1 и сравнивает R01–R16 / I01–I10 с эталонами, без отдельного Gradle/JUnit-модуля.
+
+## Sealed-иерархии и pattern matching (Java 21)
+
+[CORE-SEALED + CORE-PATTERNS — общий runnable](sealed-patterns/README.md) дополняет статьи [CORE-SEALED](../../knowledge/01-java-core/sealed.md) и [CORE-PATTERNS](../../knowledge/01-java-core/patterns.md): разрешённые прямые и косвенные наследники, exhaustive `switch`, flow scope, `when`, null selectors/components и runtime `MatchException`. Две самостоятельные программы, 11+20 подписанных строк stdout, один `bash examples/core/sealed-patterns/verify.sh`; без Gradle/JUnit-модуля.
