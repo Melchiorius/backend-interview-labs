@@ -261,6 +261,8 @@ java examples/core/ParametersDemo.java
 
 [ValuesAndReferencesDemo.java](../../examples/core/ValuesAndReferencesDemo.java) остаётся более коротким примером для первого знакомства с копированием значения и ссылки. Отдельный Gradle-модуль для этих демонстраций не требуется.
 
+**Связь с вычислением выражений:** порядок аргументов слева направо иллюстрируется здесь при вызове методов; [CORE-OPERATORS](operators.md) отдельно объясняет этот порядок как гарантию JLS для операндов/аргументов, побочные эффекты и составное присваивание. За лексическую область имён и захват локальной переменной отвечает [CORE-SYNTAX](syntax.md).
+
 ## Первоисточники
 
 - [JLS 21 §4.12 — Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12)
