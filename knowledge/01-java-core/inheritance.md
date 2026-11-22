@@ -505,7 +505,7 @@ bash examples/core/inheritance/verify.sh
 - **Интерфейсы и композиция:** [CORE-INTERFACES](interfaces.md), [CORE-COMPOSITION](composition.md).
 - **Обобщённые типы и стирание:** [CORE-GENERICS](generics.md), [CORE-ERASURE](erasure.md).
 - **Исключения и управление ресурсами:** [CORE-EXCEPTIONS](exceptions.md), [CORE-RESOURCES](resources.md).
-- **Будущие темы, пока без локальных ссылок:** `CORE-SEALED`, `CORE-RECORDS`, `JVM-BYTECODE`, `JVM-JIT` и особенности фреймворков/прокси.
+- **Уже доступные углубления:** [CORE-SEALED — прямые разрешённые наследники и `non-sealed`](sealed.md), [CORE-RECORDS — финальные классы данных](records.md), [CORE-PATTERNS — исчерпывающий switch по sealed hierarchy](patterns.md). **Будущие темы, пока без фиктивных ссылок:** `JVM-BYTECODE`, `JVM-JIT` и особенности фреймворков/прокси.
 
 В этой статье не раскрывается подробно механизм стирания и bridge-методов при переопределении: он разобран в [CORE-ERASURE](erasure.md); не раскрываются подробно sealed/record ограничения (`record` как класс является `final`); не измеряется работа JIT. **JLS 21 не требует конкретной универсальной таблицы vtable или обязательной формы байткода для каждого вызова**: реализацию JVM не подменяем правилами языка. Контракты `Object.equals/hashCode/toString` и взаимодействие proxy/ORM с наследованием требуют отдельного обсуждения.
 
