@@ -125,3 +125,8 @@ CHECK PASSED
 ## Sealed-иерархии и pattern matching (Java 21)
 
 [CORE-SEALED + CORE-PATTERNS — общий runnable](sealed-patterns/README.md) дополняет статьи [CORE-SEALED](../../knowledge/01-java-core/sealed.md) и [CORE-PATTERNS](../../knowledge/01-java-core/patterns.md): разрешённые прямые и косвенные наследники, exhaustive `switch`, flow scope, `when`, null selectors/components и runtime `MatchException`. Две самостоятельные программы, 11+20 подписанных строк stdout, один `bash examples/core/sealed-patterns/verify.sh`; без Gradle/JUnit-модуля.
+
+
+## Перечисления и управление потоком Java 21
+
+[CORE-ENUMS + CORE-CONTROL — общий runnable](enums-control/README.md) дополняет статьи [CORE-ENUMS](../../knowledge/01-java-core/enums.md) и [CORE-CONTROL](../../knowledge/01-java-core/control-flow.md). Две самостоятельные программы воспроизводят полные positive-примеры G1: E01–E30 и C01–C21. Один запуск bash examples/core/enums-control/verify.sh компилирует оба исходника на Java 21, запускает два независимых JVM-процесса и сравнивает 30+21 строку stdout с отдельными эталонами; без Gradle/JUnit-модуля.
