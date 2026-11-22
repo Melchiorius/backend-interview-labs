@@ -59,6 +59,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Sealed types и pattern matching Java 21:** [разрешённые прямые подтипы, `permits`, `final/sealed/non-sealed`](knowledge/01-java-core/sealed.md) и [flow scoping, `switch`, `when`, record patterns и `MatchException`](knowledge/01-java-core/patterns.md). [Общий запускаемый пример Sealed + Patterns](examples/core/sealed-patterns/README.md) содержит два полноценных Java 21 исходника G1: S01–S11 (11 строк) и P01–P20 (20 строк) — 31 наблюдение двух процессов, не 31 JUnit-тест.
 
+**Enums и управление потоком Java 21:** [enum, конструкторы, `name/ordinal/toString`, идентичность констант и `EnumSet`/`EnumMap`](knowledge/01-java-core/enums.md), [условия, циклы, метки, `switch` и `yield`](knowledge/01-java-core/control-flow.md) и [общий запускаемый пример](examples/core/enums-control/README.md). Две программы дают 30+21 подписанную строку вывода двух отдельных JVM-процессов, а не 51 JUnit-тест.
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.
