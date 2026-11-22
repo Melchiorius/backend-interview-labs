@@ -39,8 +39,8 @@
 
 | ID | Нормативная ссылка A (Java SE 21) и применяемая гарантия |
 |---|---|
-| A1 | [JLS `5.6 numeric promotion](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.6), [`15.17](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.17), [`15.18](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.18): promotions, division and additive overflow |
-| A2 | [JLS `4.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.2.3), [`15.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.4), [`15.21.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.21.1), [Double API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html): IEEE754, NaN, infinity, ±0.0, strict floating |
+| A1 | [JLS §5.6 numeric promotion](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.6), [§15.17](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.17), [§15.18](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.18): promotions, division and additive overflow |
+| A2 | [JLS §4.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.2.3), [§15.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.4), [§15.21.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.21.1), [Double API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html): IEEE754, NaN, infinity, ±0.0, strict floating |
 | A3 | [Math API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Math.html), [StrictMath API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StrictMath.html): addExact/multiplyExact and Math.fma scope |
 | A4 | [BigDecimal API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html): `BigDecimal(String)` vs `(double)` vs `valueOf(double)`; scale/precision/unscaledValue, equals/compareTo, divide and stripTrailingZeros |
 | A5 | [MathContext API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/MathContext.html), [RoundingMode API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/RoundingMode.html): significant precision vs fixed scale, tie modes, UNNECESSARY |
@@ -97,9 +97,9 @@
 
 | ID | P | Адресная механика | A | C | Положительный/отрицательный trace |
 |---|---|---|---|---|---|
-| `DT-01` | P0 | Instant = точка UTC timeline; epochSeconds ≠ local representation | B1 | C4,C3 | DT01/DT36 |
+| `DT-01` | P0 | Instant = точка UTC timeline; epochSeconds ≠ local representation | B1 | C4 | DT01/DT36 |
 | `DT-02` | P0 | Clock.fixed replaces mutable ambient now in reproducible tests | B2 | C4 (широкий) | DT01–DT04, DT34 |
-| `DT-03` | P0 | LocalDate/LocalTime/LocalDateTime no zone/offset; not globally unique instant | B3 | C3,C4 | DT02–DT04,DT37 |
+| `DT-03` | P0 | LocalDate/LocalTime/LocalDateTime no zone/offset; not globally unique instant | B3 | C4 | DT02–DT04,DT37 |
 | `DT-04` | P0 | ZoneId regional rules vs ZoneOffset fixed displacement | B4 | C4 (широкий) | DT05/DT06/DT35 |
 | `DT-05` | P0 | ZonedDateTime associates local representation with rules-based ZoneId | B4 | C4 | DT05 and DT07 |
 | `DT-06` | P0 | OffsetDateTime binds offset, not future regional rule transitions | B3 | C4 | DT08 vs DT05 |
