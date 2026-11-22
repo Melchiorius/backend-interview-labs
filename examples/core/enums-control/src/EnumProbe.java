@@ -1,3 +1,5 @@
+// Theory: knowledge/01-java-core/enums.md
+// Theory: knowledge/01-java-core/control-flow.md
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
