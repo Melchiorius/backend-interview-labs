@@ -334,7 +334,7 @@ class Probe {
 }
 ```
 
-Это нормативное условие SAM, а не подробный разбор `sealed`/`permits`; последний остаётся за пределами статьи (IC-25).
+Это нормативное условие SAM, а не подробный разбор `sealed`/`permits`: ограничения прямых подтипов и запрет lambda-target для sealed interface разобраны отдельно в [CORE-SEALED](sealed.md). **IC-25 остаётся границей данной статьи**, не утверждением, что вся тема sealed раскрыта внутри CORE-INTERFACES.
 
 ```java
 @FunctionalInterface
