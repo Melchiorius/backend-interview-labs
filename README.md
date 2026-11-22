@@ -57,6 +57,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Record и неизменяемость в Java 21:** [компоненты record, конструкторы, `equals` и copy invariant](knowledge/01-java-core/records.md), [владение изменяемым состоянием, defensive copy, `List.copyOf` и live view](knowledge/01-java-core/immutability.md) с [общим запускаемым примером Records + Immutable](examples/core/records-immutability/README.md) — R01–R16 и I01–I10 (26 наблюдений двух запусков).
 
+**Sealed types и pattern matching Java 21:** [разрешённые прямые подтипы, `permits`, `final/sealed/non-sealed`](knowledge/01-java-core/sealed.md) и [flow scoping, `switch`, `when`, record patterns и `MatchException`](knowledge/01-java-core/patterns.md). Положительный runnable с двумя программами G1 (11+20 строк) согласован с ролью 03 и будет связан здесь после публикации исполняемых файлов.
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.
