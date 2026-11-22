@@ -141,3 +141,7 @@ CHECK PASSED
 ## Аннотации, Reflection и JPMS (Java 21)
 
 [CORE-ANNOTATIONS + CORE-REFLECTION — воспроизводимый runnable](annotations-reflection/README.md) связывает [Annotations](../../knowledge/01-java-core/annotations.md) и [Reflection](../../knowledge/01-java-core/reflection.md) с двумя полными Java21-программами и реальными named modules `m.target`/`m.client` в двух вариантах: `exports api` vs `exports api; opens api to m.client`. Один `bash examples/core/annotations-reflection/verify.sh` выполняет 3 компиляции и 4 JVM-процесса с 4 полными сравнениями stdout (**23+34+3+3=63 наблюдения**, не JUnit-тесты); без нового Gradle-модуля.
+
+## JPMS и ClassLoader (Java 21)
+
+[CORE-MODULES + CORE-CLASSLOADER — воспроизводимый runner](modules-classloader/README.md) дополняет [статью о модулях](../../knowledge/01-java-core/modules.md) и [статью о загрузчиках классов](../../knowledge/01-java-core/classloaders.md). Один скрипт `bash examples/core/modules-classloader/verify.sh` воспроизводит два самостоятельных named-module graphs (exports vs opens), `requires static` с отсутствующим/разрешённым модулем, два defining `ChildFirstTokenLoader`, `ClassCastException` и реальную временную runtime-копию без superclass: **4 javac, 6 JVM, 6 точных stdout fixtures, 49 строк** — не JUnit-тестов.

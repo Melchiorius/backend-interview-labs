@@ -148,6 +148,8 @@ java --module-path mods -m m.client/client.Inspect
 
 В G1 **оба варианта действительно скомпилированы и запущены** с `--module-path`: отдельный output 3+3 и сравнение с двумя эталонами, а не «module-info написан — значит работает». `exports api` разрешил публичный API клиента; `opens api to m.client` в конкретной графовой конфигурации разрешил deep reflection. У `api.Vault` был добавлен явный public constructor, потому что исходная версия порождала `[missing-explicit-ctor]` при `-Xlint:all` — этот warning был реально устранён. [JLS §7.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.7), [AccessibleObject Java21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/reflect/AccessibleObject.html).
 
+Для отдельного разбора реального графа из **трёх** named modules, `requires transitive/static`, qualified exports и runtime `Module.isExported` см. [CORE-MODULES](modules.md); для defining vs initiating loader, child-first identity и runtime CNFE/NCDFE — [CORE-CLASSLOADER](classloaders.md). Наш прежний двухмодульный RF runnable остаётся самостоятельным узким case и не засчитывается за новые JM/CL эксперименты.
+
 **Это не завершённый курс JPMS:** не тестировали `open module`, `--add-opens`, другие module graphs, автоматические модули, custom classloaders, dynamic readability, agents/security. Практический вывод — не «откройте все пакеты в production», а «по публичному API и deep reflective access действуют разные контракты».
 
 ## 5. Метод и конструктор: динамический вызов, типы и причинившее исключение (RF-09, RF-10, RF-11, RF-12; RF-21 P1)

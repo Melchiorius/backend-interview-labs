@@ -784,6 +784,8 @@ Same-thread recursion распознаётся процедурой инициа
 
 ### Разные class loaders — разные определения классов
 
+Подробный отдельный механизм — [CORE-CLASSLOADER](classloaders.md): loader namespaces, class identity, делегация, TCCL и runtime failures; [CORE-MODULES](modules.md) отдельно разъясняет readability и module graph, которые не следует отождествлять с загрузчиками.
+
 Идентичность runtime-класса зависит не только от binary name, но и от defining class loader. Два загрузчика могут определить классы с одинаковым именем как разные runtime-типы; у таких определений будет отдельное состояние инициализации и отдельные static fields. Это граница JVM-LOADING, а не повод подробно разбирать delegation, модули и class unloading. Нормативные отправные точки: [JLS 21 §12.2.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2.2), [JVMS 21 §5.3](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3).
 
 ## Частые ошибочные формулировки
