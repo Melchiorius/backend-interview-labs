@@ -1,0 +1,15 @@
+AS01=false
+AS02=0:0
+AS03=skipped
+AS04=0:0
+AS05=0
+AS06=1
+AS07=1
+AS08=NPE:required-message:2
+AS09=NPE:value
+AS10=IAE:negative-age
+AS11=ISE:not-ready
+AS12=skipped
+AS13=67
+AS14=ready
+AS15=false
