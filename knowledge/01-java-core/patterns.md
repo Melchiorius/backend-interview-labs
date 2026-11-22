@@ -391,7 +391,7 @@ class ExhaustiveRuntimeMismatch {
 | P19 | `true` | `instanceof String s && s.length()>3` |
 | P20 | `MatchException` | Yes(null) не совпал с nested Point |
 
-Все 20 строк и исходный код целиком приведены в [G1 §7.2](../../docs/plans/CORE-SEALED-PATTERNS.md). Они реально проверены G1/G4 на OpenJDK21.0.12.1 с `javac --release 21 -Xlint:all` без предупреждений и двумя полными процессными stdout после совместной сборки с `SealedProbe.java`. Это **20 строк одного Java-процесса и 11 строк второго — 31 наблюдение, не 31 независимый тест**. С ролью 03 согласован [один автономный runnable для двух статей](https://github.com/Melchiorius/backend-interview-labs/issues/139); прямая локальная ссылка появится только после публикации этих файлов в авторской ветке.
+Все 20 строк и исходный код целиком приведены в [G1 §7.2](../../docs/plans/CORE-SEALED-PATTERNS.md). Они реально проверены G1/G4 на OpenJDK21.0.12.1 с `javac --release 21 -Xlint:all` без предупреждений и двумя полными процессными stdout после совместной сборки с `SealedProbe.java`. Это **20 строк одного Java-процесса и 11 строк второго — 31 наблюдение, не 31 независимый тест**. Теперь оба исходника физически опубликованы в [общем runnable Sealed + Patterns](../../examples/core/sealed-patterns/README.md): [PatternsProbe.java](../../examples/core/sealed-patterns/src/PatternsProbe.java) содержит P01–P20, а [SealedProbe.java](../../examples/core/sealed-patterns/src/SealedProbe.java) — S01–S11. Скрипт `verify.sh` компилирует их с Java 21, запускает отдельно и сравнивает полные stdout с эталонами. **31 подписанная строка двух JVM-процессов не является 31 unit-тестом.**
 
 ## Карта PM-01–PM-28
 
