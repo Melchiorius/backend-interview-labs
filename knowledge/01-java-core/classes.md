@@ -284,7 +284,7 @@ Token token = Token.of("67");
 Фабрика может выполнять проверку, возвращать заранее подготовленный объект или выбирать реализацию. Но **наличие фабрики не обещает кэш или singleton**. Конструктор может быть вызван из других конструкторов и методов того же класса; прямое создание извне ограничено модификатором доступа.
 
 > [!note]- Создать объект без прямого вызова new
-> В Java есть способы получить экземпляр, не записав `new SomeClass()` в вызывающем коде: фабрики, reflection, десериализация и другие механизмы. Они не равнозначны друг другу по тому, что именно выполняется при создании. Подробнее о базовых методах и идентичности — [CORE-OBJECT](object.md); reflection и сериализация остаются будущими `CORE-REFLECTION` и `CORE-SERIAL`.
+> В Java есть способы получить экземпляр, не записав `new SomeClass()` в вызывающем коде: фабрики, reflection, десериализация и другие механизмы. Они не равнозначны друг другу по тому, что именно выполняется при создании. Подробнее о базовых методах и идентичности — [CORE-OBJECT](object.md); [CORE-REFLECTION](reflection.md) уже разбирает получение `Class`, вызовы отражённых конструкторов и ограничения доступа. Сериализация (`CORE-SERIAL`) остаётся отдельной будущей темой.
 
 ## Частые вопросы собеседования
 
@@ -336,6 +336,8 @@ java examples/core/ClassesAndObjectsDemo.java
 Уже реализованы: [CORE-TYPES](types.md), [CORE-CONVERSIONS](conversions.md), [CORE-PARAMS](parameters.md).
 
 **Модификаторы доступа и инкапсуляция:** [CORE-ACCESS](access.md). **Наследование и переопределение:** [CORE-INHERITANCE](inheritance.md). **Порядок инициализации:** [CORE-INIT](initialization.md). **Объект и идентичность:** [CORE-OBJECT](object.md). **Равенство и хеширование:** [CORE-EQUALITY](equality.md). **Интерфейсы и композиция:** [CORE-INTERFACES](interfaces.md), [CORE-COMPOSITION](composition.md). **Специальные классы данных и владение состоянием:** [CORE-RECORDS](records.md) и [CORE-IMMUTABLE](immutability.md), вместе с [проверяемым Java 21 runnable](../../examples/core/records-immutability/README.md). **Ещё не написаны** (поэтому пока без ссылок): `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
+
+**Переход от статического определения класса к runtime introspection:** [CORE-REFLECTION](reflection.md) разбирает `Class`/`getDeclared*`/`Method.invoke`, права на private members и `InvocationTargetException`; [CORE-ANNOTATIONS](annotations.md) отдельно разбирает типизированные `@interface` и их runtime visibility. Reflection не заменяет обычные правила конструктора/видимости из этой статьи.
 
 ## Первоисточники
 
