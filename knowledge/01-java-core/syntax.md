@@ -1,12 +1,12 @@
 # CORE-SYNTAX — как компилятор Java 21 понимает файлы, имена и области видимости
 
-**Область:** Java SE 21 **без preview**. Основание — [принятый G1-план CORE-SYNTAX + CORE-OPERATORS](../../docs/plans/CORE-SYNTAX-OPERATORS.md), Issue [#154](https://github.com/Melchiorius/backend-interview-labs/issues/154). Карта: **SY-01–SY-26: 16 P0 / 7 P1 / 3 P2**. Здесь объясняется, *где объявлено имя и какую сущность оно означает*. [CORE-OPERATORS](operators.md) посвящён тому, *как выражение вычисляется*. См. также [типы](types.md), [классы](classes.md), [доступ](access.md), [управление потоком](control-flow.md), [лямбды](functions.md).
+**Область:** Java SE 21 **без preview**. Основание — [принятый G1-план CORE-SYNTAX + CORE-OPERATORS](../../docs/plans/CORE-SYNTAX-OPERATORS.md), Issue [#154](https://github.com/Melchiorius/backend-interview-labs/issues/154). Карта: **SY-01–SY-26: 16 P0 / 7 P1 / 3 P2**. Здесь объясняется, *где объявлено имя и какую сущность оно означает*. [CORE-OPERATORS](operators.md) посвящён тому, *как выражение вычисляется*. [Общий runnable Java 21](../../examples/core/syntax-operators/README.md) содержит [SyntaxProbe](../../examples/core/syntax-operators/src/SyntaxProbe.java), [p/Helper](../../examples/core/syntax-operators/src/p/Helper.java) и [demo/PackageProbe](../../examples/core/syntax-operators/src/demo/PackageProbe.java), [SY stdout](../../examples/core/syntax-operators/syntax.expected.stdout) и [PK stdout](../../examples/core/syntax-operators/package.expected.stdout). См. также [типы](types.md), [классы](classes.md), [доступ](access.md), [управление потоком](control-flow.md), [лямбды](functions.md).
 
 Представим два файла: в одном объявлен вспомогательный тип `p.Helper`, во втором — `demo.PackageProbe`. Прежде чем JVM сможет запустить метод, компилятор должен разобрать каждый файл, установить принадлежность пакету, разрешить имена типов и членов, проверить видимость и типы. `import` помогает найти тип или статический член по короткому имени, но **не запускает код и не гарантирует загрузку класса**. Именно эти механизмы чаще всего путают при ответах «почему не компилируется».
 
 ## 1. От текста файла до единицы компиляции (SY-01, SY-02, SY-06, SY-14, SY-15; SY-20 P1)
 
-Java-файл представляет *обычную единицу компиляции* (`ordinary compilation unit`). Её логическая структура в Java 21 — необязательная декларация пакета, затем ноль или больше импортов и далее объявления верхнеуровневых типов. Запись `import` **после** объявления класса не является ещё одним оператором внутри программы: это нарушение грамматики. [JLS `7.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.3).
+Java-файл представляет *обычную единицу компиляции* (`ordinary compilation unit`). Её логическая структура в Java 21 — необязательная декларация пакета, затем ноль или больше импортов и далее объявления верхнеуровневых типов. Запись `import` **после** объявления класса не является ещё одним оператором внутри программы: это нарушение грамматики. [JLS §7.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.3).
 
 ~~~java
 // Файл Example.java, без package: unnamed package
@@ -19,17 +19,17 @@ public class Example {
 }
 ~~~
 
-Имя файла для публичного верхнеуровневого класса должно соответствовать `Example.java` при обычной файловой компиляции `javac`. Два разных `public` верхнеуровневых типа в одном файле также не пройдут этот контроль (G1 отрицательные случаи SY-N09/SY-N10). Несколько **непубличных** верхнеуровневых типов в одном файле возможны, но их доступность и организация файлов — отдельный вопрос; не следует объявлять любую такую форму ошибкой. Формальные ограничения и зависимость от системы хранения исходников изложены в [JLS `7.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.6).
+Имя файла для публичного верхнеуровневого класса должно соответствовать `Example.java` при обычной файловой компиляции `javac`. Два разных `public` верхнеуровневых типа в одном файле также не пройдут этот контроль (G1 отрицательные случаи SY-N09/SY-N10). Несколько **непубличных** верхнеуровневых типов в одном файле возможны, но их доступность и организация файлов — отдельный вопрос; не следует объявлять любую такую форму ошибкой. Формальные ограничения и зависимость от системы хранения исходников изложены в [JLS §7.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.6).
 
 Если `package` отсутствует, тип относится к *неименованному пакету*; если записано `package p;`, полное имя верхнеуровневого типа будет, например, `p.Helper`. Структура каталогов обычно соответствует компонентам имени пакета, но **пакет не тождественен class loader**: `package` — языковая декларация; процесс загрузки/разрешения JVM и JPMS здесь не исследован. Нельзя ожидать, что тип из неназванного пакета станет доступен из именованного пакета простым импортом.
 
 **Обычная точка входа Java 21** для запуска класса: `public static void main(String[] args)` (эквивалентная допустимая varargs-форма `String... args` также поддерживается). Метод не является обязательной частью каждого класса: библиотечные классы могут не иметь `main`. Отсутствие подходящего метода обнаруживается при *попытке запуска* класса, а не автоматически при компиляции произвольного библиотечного типа. `static` позволяет лаунчеру вызвать точку входа без создания экземпляра класса. Не смешивайте это с preview-синтаксисом unnamed classes и instance main из других режимов. [JDK 21 java launcher](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html).
 
-Лексический разбор начинается ещё раньше: Unicode escapes обрабатываются до токенизации, затем распознаются идентификаторы, ключевые слова, литералы и разделители. `var` в Java 21 — *restricted identifier*, а не универсальный ключевой тип во всех позициях. Не помещайте в комментарии случайные `\u000a` как «просто текст»: Unicode-перевод способен изменить поток символов ещё до выделения комментария. Об этом см. [JLS `3.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.3) и `SY-22` ниже.
+Лексический разбор начинается ещё раньше: Unicode escapes обрабатываются до токенизации, затем распознаются идентификаторы, ключевые слова, литералы и разделители. `var` в Java 21 — *restricted identifier*, а не универсальный ключевой тип во всех позициях. Не помещайте в комментарии случайные `\u000a` как «просто текст»: Unicode-перевод способен изменить поток символов ещё до выделения комментария. Об этом см. [JLS §3.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.3) и `SY-22` ниже.
 
 ## 2. Импорт — сокращение имени, не разрешение доступа и не загрузка (SY-03, SY-04, SY-05, SY-16; SY-18, SY-23 P1)
 
-Импорт типа `import java.util.List;` позволяет использовать простое `List` вместо квалифицированного `java.util.List`. Импорт **не** создаёт в классе поле и не «подключает объект». Указание `java.util.Map.of(...)` сразу через полное имя вообще не требует импорта. Типы `java.lang` доступны по простым именам не из-за скрытого `import` в исходном файле, а по отдельному языковому правилу. [JLS `7.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.5).
+Импорт типа `import java.util.List;` позволяет использовать простое `List` вместо квалифицированного `java.util.List`. Импорт **не** создаёт в классе поле и не «подключает объект». Указание `java.util.Map.of(...)` сразу через полное имя вообще не требует импорта. Типы `java.lang` доступны по простым именам не из-за скрытого `import` в исходном файле, а по отдельному языковому правилу. [JLS §7.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.5).
 
 ~~~java
 import java.util.List;
@@ -54,7 +54,7 @@ class ImportDemo {
 - `import java.util.List; import java.awt.List;` — коллизия двух явных single-type imports одного простого имени (SY-N13). Даже без создания объекта компилятор обязан отклонить конфликтующие декларации.
 - Два `import static` с одинаково применимыми членами разных типов могут сделать вызов неоднозначным (SY-N12); это не тот же механизм, что повторное объявление локальной переменной.
 
-`import java.util.*` **не** импортирует автоматически подпакеты `java.util.concurrent`. Наличие импортируемого имени тоже не отменяет контроль доступности: `package-private` тип другого пакета не становится `public` после `import`. В `7 ниже приведён именно двухфайловый, а не условный, контрпример.
+`import java.util.*` **не** импортирует автоматически подпакеты `java.util.concurrent`. Наличие импортируемого имени тоже не отменяет контроль доступности: `package-private` тип другого пакета не становится `public` после `import`. В §7 ниже приведён именно двухфайловый, а не условный, контрпример.
 
 ## 3. Области видимости и связывание имён (SY-07–SY-10; SY-17 P1)
 
@@ -85,10 +85,10 @@ class ScopeDemo {
 | Термин | О чём речь | Как различать |
 |---|---|---|
 | **Shadowing — затенение** | Декларация с подходящим именем в определённой области видимости мешает обратиться к другой декларации по простому имени | Локальный `balance` и поле `balance`: для поля можно написать `this.balance` |
-| **Hiding — сокрытие унаследованного члена** | Член подкласса скрывает определённый член суперкласса по правилам `8.3/`8.4.8.2 | Для `static` методов — *method hiding*, а не динамическое переопределение |
+| **Hiding — сокрытие унаследованного члена** | Член подкласса скрывает определённый член суперкласса по правилам JLS §8.3 и §8.4.8.2 | Для `static` методов — *method hiding*, а не динамическое переопределение |
 | **Obscuring — заслонение имени** | В синтаксическом контексте имя переменной может заслонить имя типа или пакета, заставляя иначе классифицировать запись | Это вопрос *классификации имени*, не просто две локальные переменные |
 
-Подробнее: [JLS `6.4.1–`6.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.4.1), [наследование](inheritance.md), [модификаторы доступа](access.md).
+Подробнее: [JLS §6.4.1–§6.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.4.1), [наследование](inheritance.md), [модификаторы доступа](access.md).
 
 ## 4. Определённость присваивания — отдельно от существования имени (SY-11)
 
@@ -105,7 +105,7 @@ class AssignmentFlow {
 }
 ~~~
 
-Контрпример SY-N04 — `int n; if (condition) n=67; return n;`: при `condition=false` путь до `return` не содержит присваивания. Компилятор отклоняет такой код до запуска. Поля класса имеют значения по умолчанию; переносить этот механизм на локальные переменные нельзя. Детали [JLS `16](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html).
+Контрпример SY-N04 — `int n; if (condition) n=67; return n;`: при `condition=false` путь до `return` не содержит присваивания. Компилятор отклоняет такой код до запуска. Поля класса имеют значения по умолчанию; переносить этот механизм на локальные переменные нельзя. Детали [JLS §16](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html).
 
 ## 5. `var`: вывод статического типа, а не динамическое «что угодно» (SY-12; SY-21 P1)
 
@@ -121,7 +121,7 @@ class LocalInference {
 }
 ~~~
 
-Отрицательные случаи G1 отделяют ограничения: `var n;` (SY-N05) — нет инициализатора; `var n=null;` (SY-N06) — нельзя вывести самостоятельный тип из null; `var n=67;` на уровне **поля** (SY-N07) — здесь запрещено; `var a=1,b=2;` одной декларацией (SY-N08) — нельзя. Удачный пример с `var` **не** доказывает эти отрицания без отдельного `javac`. Подробнее о типах и преобразованиях — [CORE-TYPES](types.md), [CORE-CONVERSIONS](conversions.md), [JLS `14.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.4.1).
+Отрицательные случаи G1 отделяют ограничения: `var n;` (SY-N05) — нет инициализатора; `var n=null;` (SY-N06) — нельзя вывести самостоятельный тип из null; `var n=67;` на уровне **поля** (SY-N07) — здесь запрещено; `var a=1,b=2;` одной декларацией (SY-N08) — нельзя. Удачный пример с `var` **не** доказывает эти отрицания без отдельного `javac`. Подробнее о типах и преобразованиях — [CORE-TYPES](types.md), [CORE-CONVERSIONS](conversions.md), [JLS §14.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.4.1).
 
 ## 6. Захват локальных переменных и `effectively final` (SY-13)
 
@@ -139,7 +139,7 @@ class CaptureDemo {
 }
 ~~~
 
-Если после создания лямбды вставить `seed=68;` или сделать другое переназначение `seed`, получится ошибка SY-N14: переменная уже не effectively final. Значение, на которое указывает изменяемая ссылка, и сама захватываемая ссылка — разные сущности. Более полная модель lambda scope и method references — [CORE-FUNCTIONS](functions.md), [JLS `15.27.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27.2).
+Если после создания лямбды вставить `seed=68;` или сделать другое переназначение `seed`, получится ошибка SY-N14: переменная уже не effectively final. Значение, на которое указывает изменяемая ссылка, и сама захватываемая ссылка — разные сущности. Более полная модель lambda scope и method references — [CORE-FUNCTIONS](functions.md), [JLS §15.27.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27.2).
 
 ## 7. Настоящая multi-file компиляция: `package` и `static import` (SY-02, SY-03, SY-19, SY-23)
 
@@ -183,7 +183,7 @@ java -cp out demo.PackageProbe
 
 Ожидаются **три** строки: `PK01=hello:67`, `PK02=67`, `PK03=2`. Первый вывод использует импорт статических метода и поля; второй — обычный импорт типа; третий — полностью квалифицированное имя без импорта. Компилятор видит оба файла в одной команде, а `-d out` кладёт `p.Helper` и `demo.PackageProbe` в соответствующую пакетную структуру. Эти исходники и три stdout-строки **локально проверены в G1**, но не следует считать любой текст, вставленный из статьи, автоматически включённым в CI.
 
-**Контрпример SY-N15 (тоже два файла):** `p/Hidden.java` с `package p; class Hidden { public static int value=67; }` и `q/UseHidden.java` с `package q; import p.Hidden; public class UseHidden { Hidden ref; }`. Ошибка именно в том, что `Hidden` — *непубличный верхнеуровневый тип другого пакета*; импорт не повышает доступность. Два файла участвуют в компиляции, поэтому это не проблема «отсутствующего класса». Независимый G1-рецензент получил `compiler.err.not.def.public.cant.access` при `javac --release 21 -XDrawDiagnostics`. Имена классов и пример завершёнными исходниками см. в [G1 `7.1](../../docs/plans/CORE-SYNTAX-OPERATORS.md).
+**Контрпример SY-N15 (тоже два файла):** `p/Hidden.java` с `package p; class Hidden { public static int value=67; }` и `q/UseHidden.java` с `package q; import p.Hidden; public class UseHidden { Hidden ref; }`. Ошибка именно в том, что `Hidden` — *непубличный верхнеуровневый тип другого пакета*; импорт не повышает доступность. Два файла участвуют в компиляции, поэтому это не проблема «отсутствующего класса». Независимый G1-рецензент получил `compiler.err.not.def.public.cant.access` при `javac --release 21 -XDrawDiagnostics`. Имена классов и пример завершёнными исходниками см. в [G1 §7.1](../../docs/plans/CORE-SYNTAX-OPERATORS.md).
 
 ## 8. Почему код не компилируется: диагностические категории (SY-04, SY-06, SY-09–SY-16; SY-18)
 
@@ -201,11 +201,11 @@ java -cp out demo.PackageProbe
 | SY-N16 | `import` после декларации типа: намеренное нарушение грамматики | «В файле отсутствует закрывающая скобка» |
 | SY-N17 | `import static` нестатического поля `Point.x` | «Импорты не разрешают поля вообще» |
 
-**Никакой отдельный отрицательный исходник не входит в обычный успешный runnable.** В G1 независимый рецензент подтвердил **16 single-file SY-negatives** и отдельно **один двухфайловый SY-N15** по тематическим диагностическим категориям `javac 21`. Спецификация требует ошибок по смыслу, но не фиксирует текст `compiler.err.*` для всех компиляторов и IDE. Чтобы повторить negative, нужен отдельный полный исходник с точным именем файла: [G1 `7](../../docs/plans/CORE-SYNTAX-OPERATORS.md).
+**Никакой отдельный отрицательный исходник не входит в обычный успешный runnable.** В G1 независимый рецензент подтвердил **16 single-file SY-negatives** и отдельно **один двухфайловый SY-N15** по тематическим диагностическим категориям `javac 21`. Спецификация требует ошибок по смыслу, но не фиксирует текст `compiler.err.*` для всех компиляторов и IDE. Чтобы повторить negative, нужен отдельный полный исходник с точным именем файла: [G1 §7](../../docs/plans/CORE-SYNTAX-OPERATORS.md).
 
 ## 9. Лексические тонкости и границы (SY-22 P1; SY-24–SY-26 P2)
 
-**Unicode escapes (SY-22 P1):** последовательности Unicode escape переводятся до того, как лексический анализатор выделяет комментарии или литералы; поэтому текст, внешне похожий на «закомментированный», может превратиться в новую строку. Не формируйте случайные невалидные учебные исходники из пробельных/управляющих escape: важен порядок этапов, зафиксированный [JLS `3.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.3). Здесь нет отдельного проверенного примера необычного Unicode parser-negative.
+**Unicode escapes (SY-22 P1):** последовательности Unicode escape переводятся до того, как лексический анализатор выделяет комментарии или литералы; поэтому текст, внешне похожий на «закомментированный», может превратиться в новую строку. Не формируйте случайные невалидные учебные исходники из пробельных/управляющих escape: важен порядок этапов, зафиксированный [JLS §3.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.3). Здесь нет отдельного проверенного примера необычного Unicode parser-negative.
 
 **Не исследовано / не реализовано как отдельная тема:**
 
@@ -217,7 +217,7 @@ java -cp out demo.PackageProbe
 
 ## 10. Принятая G1-трасса `SyntaxProbe` и самопроверка
 
-В [принятом G1 `6.1](../../docs/plans/CORE-SYNTAX-OPERATORS.md) есть полный `SyntaxProbe.java` и самостоятельный эталон — **14 строк вывода одного процесса**, отличного от `OperatorsProbe` и `PackageProbe`. Значения из локальной проверки G1:
+В [принятом G1 §6.1](../../docs/plans/CORE-SYNTAX-OPERATORS.md) есть полный `SyntaxProbe.java` и самостоятельный эталон — **14 строк вывода одного процесса**, отличного от `OperatorsProbe` и `PackageProbe`. Сейчас опубликованы [исходник](../../examples/core/syntax-operators/src/SyntaxProbe.java), [эталон](../../examples/core/syntax-operators/syntax.expected.stdout) и [проверочный скрипт](../../examples/core/syntax-operators/verify.sh) трёх отдельных JVM. Значения из локальной проверки G1:
 
 | Строка | Значение | Почему |
 |---|---|---|
@@ -234,7 +234,7 @@ java -cp out demo.PackageProbe
 | SY12 | `true` | `"hello" instanceof String` |
 | SY13 / SY14 | `7` / `5` | переменная вложенного блока и внешняя переменная |
 
-**Условия важны:** SY10=true только при запуске без аргументов; иначе ожидается другое значение. Это наблюдение не описывает все варианты `main` или launcher. Пробный `PackageProbe` даёт 3 строки третьего процесса, см. `7. Исследовательский G1 `6 прошёл на OpenJDK 21.0.12.1 с `javac --release 21 -Xlint:all`, три процесса и три `diff -u`; исходники из G1 сами по себе не часть CI репозитория. Связанный технический запуск в авторской ветке будет указан лишь после фактической публикации.
+**Условия важны:** SY10=true только при запуске без аргументов; иначе ожидается другое значение. Это наблюдение не описывает все варианты `main` или launcher. Пробный `PackageProbe` даёт 3 строки третьего процесса, см. §7. Исследовательский G1 §6 прошёл на OpenJDK 21.0.12.1 с `javac --release 21 -Xlint:all`, три процесса и три `diff -u`; исходники из G1 сами по себе не часть CI репозитория. На [Actions #45006826872](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45006826872) выполнен технический HEAD `9d377ccccfec54153e2ee62a49ee9198b45ba120`, на [Actions #45007263735](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45007263735) — интегрированный author HEAD `aa668e5ac39a4b5b320f13ffd135e38b7fbae8f1`; после этой редакционной правки необходим новый CI на новом HEAD.
 
 ## 11. Матрица полноты SY-01–SY-26
 
@@ -242,35 +242,35 @@ java -cp out demo.PackageProbe
 
 | ID | P | Раздел и проверяемый механизм |
 |---|---|---|
-| SY-01 | P0 | `1: compilation unit, `import` после типа недопустим SY-N16 |
-| SY-02 | P0 | `1, `7: named/unnamed package, PK01; не classloader |
-| SY-03 | P0 | `2, `7: type/static imports, SY03/PK01–PK03 и SY-N17 |
-| SY-04 | P0 | `2, `8: import ambiguity, SY-N11/N12/N13 |
-| SY-05 | P0 | `2: simple vs qualified, java.lang, SY09/PK03 |
-| SY-06 | P0 | `1, `8: public top-level и filename SY-N09/N10 |
-| SY-07 | P0 | `3: block scope, SY13/14 и SY-N03 |
-| SY-08 | P0 | `3: parameter/local shadow field, SY01/02 |
-| SY-09 | P0 | `3, `8: duplicate local SY-N01 отклонён |
-| SY-10 | P0 | `3: имя до declaration / после block, SY-N02/N03 |
-| SY-11 | P0 | `4: definite assignment, SY06/07 и SY-N04 |
-| SY-12 | P0 | `5: local `var`, SY08 vs SY-N05–N08 |
-| SY-13 | P0 | `6: effectively-final capture, SY05 и SY-N14 |
-| SY-14 | P0 | `1, `10: стандартный Java21 `main`; SY10 зависит от args |
-| SY-15 | P0 | `1, `8: lexer/keywords и grammar import-before-types SY-N16 |
-| SY-16 | P0 | `2, `8: instance field нельзя `import static`, SY-N17 |
-| SY-17 | P1 | `3: shadowing / hiding / obscuring разведены |
-| SY-18 | P1 | `2, `8: single/on-demand/static collisions, SY-N11–N13 |
-| SY-19 | P1 | `7: 2-file package-private SY-N15 vs public PK01 |
-| SY-20 | P1 | `1: top-level package-private и host filename |
-| SY-21 | P1 | `1, `5: `var` restricted identifier в Java 21 |
-| SY-22 | P1 | `9: Unicode escape до токенизации, без ложного теста |
-| SY-23 | P1 | `2, `7: import ≠ access; SY-N15 |
-| SY-24 | P2 | `9: JPMS/preview/launch variants НЕ ПРОВЕРЕНО |
-| SY-25 | P2 | `9: classloader/Reflection/IDE НЕ ПРОВЕРЕНО |
-| SY-26 | P2 | `9: flow scope pattern variables — ссылка, НЕ ЗАКРЫТО |
+| SY-01 | P0 | §1: compilation unit, `import` после типа недопустим SY-N16 |
+| SY-02 | P0 | §1, §7: named/unnamed package, PK01; не classloader |
+| SY-03 | P0 | §2, §7: type/static imports, SY03/PK01–PK03 и SY-N17 |
+| SY-04 | P0 | §2, §8: import ambiguity, SY-N11/N12/N13 |
+| SY-05 | P0 | §2: simple vs qualified, java.lang, SY09/PK03 |
+| SY-06 | P0 | §1, §8: public top-level и filename SY-N09/N10 |
+| SY-07 | P0 | §3: block scope, SY13/14 и SY-N03 |
+| SY-08 | P0 | §3: parameter/local shadow field, SY01/02 |
+| SY-09 | P0 | §3, §8: duplicate local SY-N01 отклонён |
+| SY-10 | P0 | §3: имя до declaration / после block, SY-N02/N03 |
+| SY-11 | P0 | §4: definite assignment, SY06/07 и SY-N04 |
+| SY-12 | P0 | §5: local `var`, SY08 vs SY-N05–N08 |
+| SY-13 | P0 | §6: effectively-final capture, SY05 и SY-N14 |
+| SY-14 | P0 | §1, §10: стандартный Java21 `main`; SY10 зависит от args |
+| SY-15 | P0 | §1, §8: lexer/keywords и grammar import-before-types SY-N16 |
+| SY-16 | P0 | §2, §8: instance field нельзя `import static`, SY-N17 |
+| SY-17 | P1 | §3: shadowing / hiding / obscuring разведены |
+| SY-18 | P1 | §2, §8: single/on-demand/static collisions, SY-N11–N13 |
+| SY-19 | P1 | §7: 2-file package-private SY-N15 vs public PK01 |
+| SY-20 | P1 | §1: top-level package-private и host filename |
+| SY-21 | P1 | §1, §5: `var` restricted identifier в Java 21 |
+| SY-22 | P1 | §9: Unicode escape до токенизации, без ложного теста |
+| SY-23 | P1 | §2, §7: import ≠ access; SY-N15 |
+| SY-24 | P2 | §9: JPMS/preview/launch variants НЕ ПРОВЕРЕНО |
+| SY-25 | P2 | §9: classloader/Reflection/IDE НЕ ПРОВЕРЕНО |
+| SY-26 | P2 | §9: flow scope pattern variables — ссылка, НЕ ЗАКРЫТО |
 
 ## Источники и пределы доказанного
 
-**Нормативные первоисточники Java SE 21:** [JLS `3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html), [`6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html), [`7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html), [`14](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html), [`16](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html); [JDK21 launcher](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html). Для независимых интервью-вопросов использованы источники C1/C2 из [G1 `2](../../docs/plans/CORE-SYNTAX-OPERATORS.md) как формулировки вопросов, **не** как авторитет о языке.
+**Нормативные первоисточники Java SE 21:** [JLS §3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html), [`6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html), [`7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html), [`14](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html), [`16](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html); [JDK21 launcher](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html). Для независимых интервью-вопросов использованы источники C1/C2 из [G1 §2](../../docs/plans/CORE-SYNTAX-OPERATORS.md) как формулировки вопросов, **не** как авторитет о языке.
 
-**Что подтверждено G1/04:** полные `SyntaxProbe` (14), `OperatorsProbe` (27), `PackageProbe` (3) были собраны на OpenJDK 21.0.12.1; их три эталона совпали с stdout, 33 отдельных compile-negative (16 SY single + 16 OP single + 1 SY-N15 two-file) проверены локально по релевантным diagnostic keys. **Это историческое G1 evidence, не CI этой статьи и не автоматическая компиляция её встроенных примеров.** Все новые inline code snippets не объявляются отдельно прогнанными. Obsidian/IntelliJ GUI, якоря Markdown, JPMS/runtime class loading, JMM/JIT/GC/JMH, альтернативные компиляторы/ОС и P2 — **NOT RUN**. Текущий статический аудит относительных ссылок при публикации не равен GUI-проверке. До решения 00 на G5 не изменяем `docs/COVERAGE.md`/`docs/CURRICULUM.md`.
+**Что подтверждено G1/04:** полные `SyntaxProbe` (14), `OperatorsProbe` (27), `PackageProbe` (3) были собраны на OpenJDK 21.0.12.1; их три эталона совпали с stdout, 33 отдельных compile-negative (16 SY single + 16 OP single + 1 SY-N15 two-file) проверены локально по релевантным diagnostic keys. **Это локальное G1 evidence; отдельно успешный [интегрированный CI #45007263735](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45007263735)** проверил четыре опубликованных Java source и 14+27+3 stdout, но не все inline snippets и не 33 compile-negative. Редакционные изменения требуют отдельного успешного CI на новом HEAD. Все новые inline code snippets не объявляются отдельно прогнанными. Obsidian/IntelliJ GUI, якоря Markdown, JPMS/runtime class loading, JMM/JIT/GC/JMH, альтернативные компиляторы/ОС и P2 — **NOT RUN**. Текущий статический аудит относительных ссылок при публикации не равен GUI-проверке. До решения 00 на G5 не изменяем `docs/COVERAGE.md`/`docs/CURRICULUM.md`.
