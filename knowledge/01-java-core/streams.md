@@ -408,6 +408,8 @@ class CheckedMapperHandled {
 | ST-32 · P1 | [CORE-STREAM-ADV](stream-advanced.md): concurrent grouping |
 | ST-33–ST-36 · P2 | [CORE-STREAM-ADV](stream-advanced.md): внешние IO, scheduler, custom Collector, API после 21 — только границы |
 
+**Связь с результатами поиска:** [CORE-OPTIONAL](optional.md) подробно объясняет `Optional.empty/of/ofNullable`, `get/orElseThrow`, `orElse` vs `orElseGet`, `map/flatMap/filter`, value-based equality и `Optional.stream()` как поток нуля или одного элемента. Здесь же остаётся основной материал о Stream pipeline, терминальных операциях и `findFirst`.
+
 ## Источники и границы воспроизводимости
 
 **Официальные нормы:** [Stream API 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html), [java.util.stream package](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/package-summary.html), [Collectors](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html), [IntStream](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/IntStream.html), [Optional](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html), [JLS §15.27](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27). Независимые интервью-источники и матрица — [G1-план](../../docs/plans/CORE-STREAMS-ADV.md), [реестр источников](../../docs/SOURCE_REGISTRY.md). **JLS не задаёт внутренний планировщик Stream**; библиотечные правила — в Java SE API.
