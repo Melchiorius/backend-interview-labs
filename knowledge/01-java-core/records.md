@@ -302,7 +302,7 @@ G1 §6 содержит **N01–N16 — шестнадцать изолиров�
 | R-19 | P1 | §7: `@Target` и propagation аннотаций |
 | R-20 | P1 | §7: varargs/non-reifiable, `@SafeVarargs` boundaries |
 | R-21 | P2 | **Граница**: сериализация record и canonical deserialization требуют CORE-SERIAL |
-| R-22 | P2 | **Граница**: record patterns/Java21 switch не раскрыты как CORE-PATTERNS |
+| R-22 | P2 | **Граница статьи о record:** [record patterns / Java21 switch](patterns.md) разбираются в отдельной CORE-PATTERNS, а не подменяются этим разделом |
 | R-23 | P2 | **Граница**: reflection `getRecordComponents`/class-file representation — CORE-REFLECTION |
 
 ## Нормативные источники и пределы проверки
