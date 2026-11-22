@@ -237,6 +237,10 @@ java examples/core/TypesAndVariablesDemo.java
 
 [Открыть исходник](../../examples/core/TypesAndVariablesDemo.java). Пример содержит самопроверки: копирование ссылки, значения полей и массивов по умолчанию, `var`, целочисленное переполнение, `char`/UTF-16 и `final`. Те же принципы передачи аргументов можно воспроизвести в [ValuesAndReferencesDemo.java](../../examples/core/ValuesAndReferencesDemo.java).
 
+## Связанные темы
+
+[CORE-SYNTAX](syntax.md) объясняет, где и как объявляется имя переменной, локальный `var`, область видимости и definite assignment. [CORE-OPERATORS](operators.md) показывает, как Java 21 вычисляет выражения с побочными эффектами и когда числовые преобразования влияют на результат; наличие здесь типов и переполнения `int` не заменяет полный разбор операторов.
+
 ## Первоисточники
 
 - [JLS 21 §3.10 — Literals](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.10)

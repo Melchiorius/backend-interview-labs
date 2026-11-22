@@ -61,6 +61,8 @@ JDK 21 требуется. Первая загрузка Gradle/библиоте
 
 **Enums и управление потоком Java 21:** [enum, конструкторы, `name/ordinal/toString`, идентичность констант и `EnumSet`/`EnumMap`](knowledge/01-java-core/enums.md), [условия, циклы, метки, `switch` и `yield`](knowledge/01-java-core/control-flow.md) и [общий запускаемый пример](examples/core/enums-control/README.md). Две программы дают 30+21 подписанную строку вывода двух отдельных JVM-процессов, а не 51 JUnit-тест.
 
+**Синтаксис и операторы Java 21:** [структура исходного файла, пакеты, импорты, области видимости и `var`](knowledge/01-java-core/syntax.md) и [приоритет, порядок вычисления, `++`/`+=`, переполнение, сдвиги, булевы и условные операторы](knowledge/01-java-core/operators.md). Самостоятельные статьи с матрицей 26+30 вопросов по принятому G1; четыре G1-исходника дают 14+27+3 наблюдения трёх Java-процессов при отдельном запуске, не 44 JUnit-теста. Опубликован [общий runnable Syntax + Operators](examples/core/syntax-operators/README.md): четыре Java 21 исходника, три stdout-эталона и проверка 14+27+3 строк трёх JVM-процессов, а не 44 JUnit-теста. Запуск: `bash examples/core/syntax-operators/verify.sh`.
+
 **Первый готовый материал по многопоточности:** [Semaphore — теория](knowledge/03-concurrency/semaphore.md) и [упражнение с JUnit/Mockito](exercises/concurrency/semaphore-limited-service/README.md). Эталон прошёл отдельные тесты GitHub Actions. Исходники и компактная диаграмма проверены пользователем в IntelliJ. Запуск общих `.run`-конфигураций и отображение в Obsidian остаются отдельными проверками. Отсутствие других статей не означает отсутствие тем в каталоге.
 
 Не размещайте в репозитории секреты, пароли или конфиденциальные рабочие данные.

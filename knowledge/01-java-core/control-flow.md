@@ -2,6 +2,8 @@
 
 **Главный вопрос:** какой оператор Java выполняется следующим, сколько раз вычисляется условие, что прекращают `break` и `continue`, и чем `switch statement` отличается от `switch expression`? Это связная теория **Java SE 21 без preview**, не список операторов и их полного precedence. Общее устройство [типов и переменных](types.md), [исключений](exceptions.md), [enum](enums.md) полезно знать заранее. Углублённый pattern matching, `when`, record deconstruction, exhaustiveness и dominance — самостоятельная [CORE-PATTERNS](patterns.md), здесь лишь минимально необходимая граница.
 
+Для точных правил приоритета, побочных эффектов и булевых `&`/`|` в выражениях см. [CORE-OPERATORS](operators.md); для структуры файлов, простых/квалифицированных имён и локальной области видимости — [CORE-SYNTAX](syntax.md). Здесь рассматривается, какой оператор управления потоком выполняется дальше, а не полный каталог арифметических операций.
+
 **Основание:** [принятый G1 CORE-ENUMS + CORE-CONTROL](../../docs/plans/CORE-ENUMS-CONTROL.md), Issue [#146](https://github.com/Melchiorius/backend-interview-labs/issues/146), матрица **C-01–C-29 = 19 P0 / 6 P1 / 4 P2**. Норма: JLS Java21 [§14 statements](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html), [§15.28 switch expressions](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.28), [§16 definite assignment](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html), [§14.22 reachability](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.22). Отдельные snippets не считаются проверенными проектной CI лишь потому, что их аналоги есть в исследовательском G1.
 
 ## 1. if/else и dangling else: важен синтаксис, а не отступ (C-01)

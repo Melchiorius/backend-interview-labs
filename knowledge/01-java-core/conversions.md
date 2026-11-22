@@ -255,6 +255,8 @@ System.out.println(first.equals(created));      // true
 java examples/core/ConversionsDemo.java
 ```
 
+Новые самостоятельные объяснения: [CORE-SYNTAX — области видимости и вывод локального типа](syntax.md) и [CORE-OPERATORS — вычисление выражений, `+=`, `?:` и numeric promotion](operators.md); эти темы не следует считать уже разобранными только по правилам conversion contexts. 
+
 Другие связанные материалы: [CORE-TYPES](types.md), [CORE-PARAMS](parameters.md), [CORE-GENERICS](generics.md), [CORE-ERASURE](erasure.md), [массивы и runtime-проверка ковариантности](arrays.md), [строки и разрешение перегрузок `String.valueOf(null)`](strings.md) с [двухпрограммным runnable](../../examples/core/arrays-strings/README.md). Дальнейшая тема: `CORE-NUMBERS`.
 
 ## Первоисточники
