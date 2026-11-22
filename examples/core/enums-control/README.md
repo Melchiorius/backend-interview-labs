@@ -11,11 +11,11 @@
 
 | Файл | Назначение |
 |---|---|
-| src/EnumProbe.java | Полная программа G1 E01–E30; 30 подписанных строк stdout. |
-| src/ControlProbe.java | Полная программа G1 C01–C21; 21 подписанная строка stdout. |
-| enum.expected.stdout | Точный независимый эталон первого JVM-процесса. |
-| control.expected.stdout | Точный независимый эталон второго JVM-процесса. |
-| verify.sh | Компиляция, два отдельных запуска JVM и два строгих сравнения diff -u. |
+| [src/EnumProbe.java](src/EnumProbe.java) | Полная программа G1 E01–E30; 30 подписанных строк stdout. |
+| [src/ControlProbe.java](src/ControlProbe.java) | Полная программа G1 C01–C21; 21 подписанная строка stdout. |
+| [enum.expected.stdout](enum.expected.stdout) | Точный независимый эталон первого JVM-процесса. |
+| [control.expected.stdout](control.expected.stdout) | Точный независимый эталон второго JVM-процесса. |
+| [verify.sh](verify.sh) | Компиляция, два отдельных запуска JVM и два строгих сравнения diff -u. |
 
 **30 + 21 = 51 наблюдение в выводе двух JVM-процессов, а не 51 JUnit-тест.** Пакет не требует Gradle, JUnit, Mockito или сетевого доступа; нужна установленная JDK 21.
 
@@ -41,7 +41,7 @@ CORE-ENUMS + CORE-CONTROL: PASS (30 + 21 stdout lines; 2 JVM processes)
 
 - E01–E04: порядок values(), name(), ordinal() и переопределённый toString() — разные контракты; ordinal() не является бизнес-идентификатором.
 - E05–E10: valueOf, явный business code 67, разрешённый переход состояния и поведение констант, реализующих интерфейс.
-- E11–E14: EnumSet/EnumMap обходят ключи в порядке объявления enum; EnumMap допускает null как значение и сохраняет различие между отсутствующим ключом и ключом с null.
+- E11–E14: итерация по элементам EnumSet и ключам EnumMap идёт в порядке объявления enum; EnumMap допускает null как значение и сохраняет различие между отсутствующим ключом и ключом с null.
 - E15–E19, E28–E29: EnumSet.add(null) и EnumMap.put(null, ...) бросают NullPointerException, тогда как contains(null)/remove(null) у EnumSet и containsKey(null) у EnumMap возвращают false; valueOf различает неизвестное имя и null.
 - E20: enum-константа может содержать изменяемое состояние. Сам факт enum singleton не делает это состояние immutable или потокобезопасным.
 - E21–E24: у константы с собственным телом getClass() отличается от getDeclaringClass(); Class.isSealed() показывает различие между обычным enum и enum с constant-specific body.
