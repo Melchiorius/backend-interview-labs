@@ -1,0 +1,15 @@
+AS01=true
+AS02=1:0
+AS03=AssertionError:expected-67
+AS04=2:1
+AS05=1
+AS06=1
+AS07=1
+AS08=NPE:required-message:2
+AS09=NPE:value
+AS10=IAE:negative-age
+AS11=ISE:not-ready
+AS12=AssertionError:true
+AS13=67
+AS14=ready
+AS15=true
