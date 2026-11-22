@@ -67,3 +67,6 @@ jobs:
 
       - name: Verify CORE-RECORDS + CORE-IMMUTABLE runnable
         run: bash examples/core/records-immutability/verify.sh
+
+      - name: Verify CORE-SEALED + CORE-PATTERNS Java 21 runnable
+        run: bash examples/core/sealed-patterns/verify.sh
