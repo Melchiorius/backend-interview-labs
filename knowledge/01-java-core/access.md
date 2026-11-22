@@ -402,7 +402,7 @@ bash examples/core/access/verify.sh
 - [CORE-TYPES](types.md) — объявленный тип ссылки и фактический объект.
 - [CORE-CONVERSIONS](conversions.md) — приведения типов, в том числе почему cast меняет статическую проверку выражения.
 - [CORE-PARAMS](parameters.md) — передача значения ссылки и разделяемый объект.
-- **Следующая тема:** [CORE-INHERITANCE](inheritance.md) — overriding, dispatch и hiding. **Интерфейсы:** [CORE-INTERFACES](interfaces.md). **Вложенные классы:** [CORE-NESTED](nested-classes.md). **Ещё не опубликованы:** `CORE-IMMUTABLE`, `CORE-MODULES`, `CORE-REFLECTION`, `CORE-SERIAL`, `SPR-DI` и совместимость бинарного API.
+- **Следующая тема:** [CORE-INHERITANCE](inheritance.md) — overriding, dispatch и hiding. **Интерфейсы:** [CORE-INTERFACES](interfaces.md). **Вложенные классы:** [CORE-NESTED](nested-classes.md). **Ещё не опубликованы:** `CORE-IMMUTABLE`, `CORE-MODULES`, `CORE-SERIAL`, `SPR-DI` и совместимость бинарного API.
 
 Последние темы важны для продвинутых случаев, но их не следует выдавать за покрытые этой статьёй. **JPMS:** в именованном модуле внешний код обычно должен читать модуль и иметь доступ к экспортированному пакету; один `public` не обещает доступ из любого модуля. `exports` для обычного использования и `opens` для рефлексии — разные вещи ([JLS 21 §7.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.7)). **Reflection:** условия глубокой рефлексии определяются Java API и модулями; `private` не является универсальной защитой от всех механизмов запуска. **Совместимость:** изменение доступа опубликованного члена может повлиять не только на исходную компиляцию, но и на бинарное связывание; отдельная тема — JLS §13/JVMS, здесь не обещается полное объяснение.
 
