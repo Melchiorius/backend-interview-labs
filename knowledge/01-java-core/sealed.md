@@ -132,7 +132,7 @@ final class TaskImpl implements Task {
 
 Сама концепция [SAM и lambda](interfaces.md) полезна, но не отменяет специальное ограничение sealed interface. В G1 N07 отдельно проверено отклонение такой lambda по категории compiler diagnostic.
 
-**Enum:** особые правила Java21 могут делать enum неявно final либо sealed, когда отдельные константы имеют class bodies; enum может законно реализовать подходящий sealed interface при соблюдении JLS. Но это лишь **контраст**, не отдельная законченная статья `CORE-ENUMS`. Его curriculum-статус пока не повышен.
+**Enum:** особые правила Java21 могут делать enum неявно final либо sealed, когда отдельные константы имеют class bodies; enum может законно реализовать подходящий sealed interface при соблюдении JLS. Это лишь **контраст внутри статьи о sealed**: конструкторы и методы enum, постоянство identity и специализированные коллекции подробно описаны отдельно в [CORE-ENUMS](enums.md). Реестр curriculum обновляется только после G5 публикации, не в этой авторской ветке.
 
 ## 6. Зачем sealed помогает исчерпывающему switch (S-01–S-05, S-11, S-16)
 
@@ -209,7 +209,7 @@ class SealedSwitch {
 | S-12 | P0 | §2/7: invalid permits, non-sealed without parent (N03/N04/N20) |
 | S-13 | P1 | §2: sealed abstract class и цепочка sealed→sealed→final |
 | S-14 | P1 | §§2–3: permits и canonical names, no local/anonymous |
-| S-15 | P1 | §5: enum только сравнение, CORE-ENUMS остаётся отдельным |
+| S-15 | P1 | §5: enum как контраст и [отдельная CORE-ENUMS](enums.md), без заявления о её реализации в этой статье |
 | S-16 | P1 | §§1/6/8: domain result vs unrestricted inheritance |
 | S-17 | P1 | §4: named module positive compile M01, не module runtime |
 | S-18 | P2 | §8: binary evolution / ICCE — NOT RUN |
@@ -222,4 +222,4 @@ class SealedSwitch {
 
 **G1 фактически проверял** `javac --release 21 -Xlint:all` и `java` на Debian OpenJDK 21.0.12.1 для двух полных исходников: S01–S11 (11 строк) и P01–P20 (20 строк). Отдельно N01–N24 дали тематические compile errors и M01 положительную компиляцию named module. Данные принадлежат принятому исследованию; **не утверждается**, что каждый отдельный snippet этой статьи независимо запускался автором 02 или включён в CI.
 
-**NOT RUN:** автоматическая компиляция всех inline Java-блоков, негативные N01–N24 в GitHub CI, JVM module-path, separate binary evolution, GUI Obsidian/IntelliJ, альтернативные JDK, полноценные Reflection/CORE-ENUMS, JIT/GC/JMH и иные P2-эксперименты.
+**NOT RUN:** автоматическая компиляция всех inline Java-блоков, негативные N01–N24 в GitHub CI, JVM module-path, separate binary evolution, GUI Obsidian/IntelliJ, альтернативные JDK, полноценные Reflection/углублённые enum internals в рамках CORE-SEALED, JIT/GC/JMH и иные P2-эксперименты.
