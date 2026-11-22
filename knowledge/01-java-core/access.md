@@ -406,6 +406,8 @@ bash examples/core/access/verify.sh
 
 Последние темы важны для продвинутых случаев, но их не следует выдавать за покрытые этой статьёй. **JPMS:** в именованном модуле внешний код обычно должен читать модуль и иметь доступ к экспортированному пакету; один `public` не обещает доступ из любого модуля. `exports` для обычного использования и `opens` для рефлексии — разные вещи ([JLS 21 §7.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.7)). **Reflection:** условия глубокой рефлексии определяются Java API и модулями; `private` не является универсальной защитой от всех механизмов запуска. **Совместимость:** изменение доступа опубликованного члена может повлиять не только на исходную компиляцию, но и на бинарное связывание; отдельная тема — JLS §13/JVMS, здесь не обещается полное объяснение.
 
+**Связанный runtime-механизм:** [CORE-REFLECTION](reflection.md) показывает, почему `getDeclaredMethod` может найти private метод, но `invoke` запрещён по access checks; отдельно разбираются nestmates, `canAccess`/`trySetAccessible` и реальный JPMS `exports` vs `opens`. [CORE-ANNOTATIONS](annotations.md) объясняет, как `@Target` и `@Retention` влияют на доступность *метаданных*, но не заменяют модификаторы доступа JLS.
+
 ## Первоисточники Java 21
 
 - [JLS §6.3 — scope](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.3), [§6.6 — access control](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.6).

@@ -337,6 +337,8 @@ java examples/core/ClassesAndObjectsDemo.java
 
 **Модификаторы доступа и инкапсуляция:** [CORE-ACCESS](access.md). **Наследование и переопределение:** [CORE-INHERITANCE](inheritance.md). **Порядок инициализации:** [CORE-INIT](initialization.md). **Объект и идентичность:** [CORE-OBJECT](object.md). **Равенство и хеширование:** [CORE-EQUALITY](equality.md). **Интерфейсы и композиция:** [CORE-INTERFACES](interfaces.md), [CORE-COMPOSITION](composition.md). **Специальные классы данных и владение состоянием:** [CORE-RECORDS](records.md) и [CORE-IMMUTABLE](immutability.md), вместе с [проверяемым Java 21 runnable](../../examples/core/records-immutability/README.md). **Ещё не написаны** (поэтому пока без ссылок): `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
 
+**Переход от статического определения класса к runtime introspection:** [CORE-REFLECTION](reflection.md) разбирает `Class`/`getDeclared*`/`Method.invoke`, права на private members и `InvocationTargetException`; [CORE-ANNOTATIONS](annotations.md) отдельно разбирает типизированные `@interface` и их runtime visibility. Reflection не заменяет обычные правила конструктора/видимости из этой статьи.
+
 ## Первоисточники
 
 - [JLS 21 §8 — Classes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html).
