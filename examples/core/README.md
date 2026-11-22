@@ -137,3 +137,7 @@ CHECK PASSED
 ## Assertions и Optional (Java 21)
 
 [CORE-ASSERT + CORE-OPTIONAL — воспроизводимый runner](assert-optional/README.md) дополняет [CORE-ASSERT](../../knowledge/01-java-core/assertions.md) и [CORE-OPTIONAL](../../knowledge/01-java-core/optional.md). Один AssertProbe запускается в двух независимых JVM (default и `-ea`) с разными stdout-эталонами по 15 строк; отдельный OptionalProbe показывает eager/lazy fallback, map/flatMap и runtime exceptions (36 строк). Запуск: `bash examples/core/assert-optional/verify.sh`. 66 подписанных наблюдений трёх процессов, не 66 unit-тестов; без отдельного Gradle-модуля.
+
+## Аннотации, Reflection и JPMS (Java 21)
+
+[CORE-ANNOTATIONS + CORE-REFLECTION — воспроизводимый runnable](annotations-reflection/README.md) связывает [Annotations](../../knowledge/01-java-core/annotations.md) и [Reflection](../../knowledge/01-java-core/reflection.md) с двумя полными Java21-программами и реальными named modules `m.target`/`m.client` в двух вариантах: `exports api` vs `exports api; opens api to m.client`. Один `bash examples/core/annotations-reflection/verify.sh` выполняет 3 компиляции и 4 JVM-процесса с 4 полными сравнениями stdout (**23+34+3+3=63 наблюдения**, не JUnit-тесты); без нового Gradle-модуля.
