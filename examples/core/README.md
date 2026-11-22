@@ -129,3 +129,7 @@ CHECK PASSED
 ## Перечисления и управление потоком Java 21
 
 [CORE-ENUMS + CORE-CONTROL — общий runnable](enums-control/README.md) дополняет статьи [CORE-ENUMS](../../knowledge/01-java-core/enums.md) и [CORE-CONTROL](../../knowledge/01-java-core/control-flow.md). Две самостоятельные программы воспроизводят полные positive-примеры G1: E01–E30 и C01–C21. Один запуск `bash examples/core/enums-control/verify.sh` компилирует оба исходника на Java 21, запускает два независимых JVM-процесса и сравнивает 30+21 строку stdout с отдельными эталонами; без Gradle/JUnit-модуля.
+
+## Синтаксис и операторы Java 21
+
+[CORE-SYNTAX + CORE-OPERATORS — общий runnable](syntax-operators/README.md) дополняет [CORE-SYNTAX](../../knowledge/01-java-core/syntax.md) и [CORE-OPERATORS](../../knowledge/01-java-core/operators.md): shadowing/scope, реальный package/static-import, precedence/evaluation order, side effects, overflow и short-circuit. Четыре Java21 исходника, три JVM-процесса, 14+27+3 строки stdout; запуск: `bash examples/core/syntax-operators/verify.sh`. Без отдельного Gradle/JUnit-модуля.
