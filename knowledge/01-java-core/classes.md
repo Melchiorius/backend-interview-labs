@@ -335,7 +335,7 @@ java examples/core/ClassesAndObjectsDemo.java
 
 Уже реализованы: [CORE-TYPES](types.md), [CORE-CONVERSIONS](conversions.md), [CORE-PARAMS](parameters.md).
 
-**Модификаторы доступа и инкапсуляция:** [CORE-ACCESS](access.md). **Наследование и переопределение:** [CORE-INHERITANCE](inheritance.md). **Порядок инициализации:** [CORE-INIT](initialization.md). **Объект и идентичность:** [CORE-OBJECT](object.md). **Равенство и хеширование:** [CORE-EQUALITY](equality.md). **Интерфейсы и композиция:** [CORE-INTERFACES](interfaces.md), [CORE-COMPOSITION](composition.md). **Ещё не написаны** (поэтому пока без ссылок): `CORE-IMMUTABLE`, `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
+**Модификаторы доступа и инкапсуляция:** [CORE-ACCESS](access.md). **Наследование и переопределение:** [CORE-INHERITANCE](inheritance.md). **Порядок инициализации:** [CORE-INIT](initialization.md). **Объект и идентичность:** [CORE-OBJECT](object.md). **Равенство и хеширование:** [CORE-EQUALITY](equality.md). **Интерфейсы и композиция:** [CORE-INTERFACES](interfaces.md), [CORE-COMPOSITION](composition.md). **Специальные классы данных и владение состоянием:** [CORE-RECORDS](records.md) и [CORE-IMMUTABLE](immutability.md), вместе с [проверяемым Java 21 runnable](../../examples/core/records-immutability/README.md). **Ещё не написаны** (поэтому пока без ссылок): `JVM-LOADING`, `CON-RACE` и `CON-JMM`.
 
 ## Первоисточники
 
