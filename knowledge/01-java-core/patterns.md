@@ -428,7 +428,7 @@ class ExhaustiveRuntimeMismatch {
 
 ## 12. Риск эволюции и непокрытые темы PM-24–PM-28
 
-Для enum и sealed типов у исчерпывающего switch есть общая идея: компилятор понимает допустимые варианты по статически доступной модели. Но **CORE-ENUMS остаётся отдельной незавершённой curriculum-темой**: наличие таблицы здесь не означает изучения enum API, synthetic members или их всех правил эволюции.
+Для enum и sealed типов у исчерпывающего switch есть общая идея: компилятор понимает допустимые варианты по статически доступной модели. Подробные конструкторы, identity, `EnumSet`/`EnumMap` и enum-методы описаны в отдельной [CORE-ENUMS](enums.md), а базовые [условия, циклы и `switch`/`yield` — в CORE-CONTROL](control-flow.md). Эта таблица о patterns **не заменяет** соответствующие самостоятельные статьи или изучение всех правил бинарной эволюции enum; статусы curriculum меняются только после G5.
 
 **PM-25 P2:** полноценный эксперимент со старым отдельно скомпилированным exhaustive switch, новой permitted ветвью и тем, что реально делает JVM после смены binary, **не выполнялся**. Нельзя использовать P20 с Yes(null) как доказательство binary compatibility failure: P20 — иной runtime mechanism.
 
@@ -444,4 +444,4 @@ class ExhaustiveRuntimeMismatch {
 
 **Границы доказанного и хронология:** в исследовании **G1 и его независимой проверке ролью 04** были проверены два исходника с **11+20** строками stdout, **24 изолированных compile-negative** по категориям javac и положительная компиляция **named-module M01** (без запуска через `java --module-path`). Отдельно [GitHub Actions #44968020486](https://github.com/Melchiorius/backend-interview-labs/actions/runs/44968020486) завершился **completed/SUCCESS на точном HEAD `07d0a83bf4dce1f6a59952109bbee6acb2766640`** авторского [PR #140](https://github.com/Melchiorius/backend-interview-labs/pull/140): Gradle/JUnit и положительный runnable `SealedProbe.java` / `PatternsProbe.java` с двумя процессами и полными сравнениями **11+20 строк stdout** прошли. Это историческое свидетельство относится именно к названному SHA: **после любых изменений необходим CI уже нового HEAD**. В этот CI не входят N01–N24, проверка M01/JVM module-path и автоматическая компиляция всех отдельных Java-фрагментов статьи. Проверка **G4 интегрированного PR #140 не проводилась**, а G3 по указанному старому SHA вернул CHANGES; ни G4, ни G5 нельзя считать завершёнными.
 
-**NOT RUN:** N01–N24 в GitHub CI, независимая компиляция всех Markdown snippets, real JPMS module-path, binary evolution after separate compilation, JMH/JIT/GC, расширенный CORE-ENUMS, другие JDK/OS, GUI и ссылочные якоря.
+**NOT RUN:** N01–N24 в GitHub CI, независимая компиляция всех Markdown snippets, real JPMS module-path, binary evolution after separate compilation, JMH/JIT/GC, расширенные внутренние механизмы enum, другие JDK/OS, GUI и ссылочные якоря.
