@@ -196,9 +196,13 @@ Selector вычисляется один раз; затем происходят
 ~~~java
 class GuardOrder {
     static int guards;
+    static boolean checkLength(String s) {
+        guards++;                  // побочный эффект внутри вызванного метода
+        return s.length() > 2;
+    }
     static String choose(Object o) {
         return switch (o) {
-            case String s when ++guards > 0 && s.length() > 2 -> "long";
+            case String s when checkLength(s) -> "long";
             case String s -> "short";
             default -> "other";
         };
@@ -210,7 +214,7 @@ class GuardOrder {
 }
 ~~~
 
-Здесь для 67 type pattern String ложный, поэтому guard **вообще не вычисляется** и счётчик остаётся 0. Для "abcd" тип совпал, `++guards` выполняется, затем оценивается длина. Это **ожидаемый trace по правилам языка**, а не доказательство, что любые side effects внутри guard хороши для читаемого кода. Практически guard лучше оставлять чистой проверкой условия.
+Здесь для 67 type pattern String ложный, поэтому guard **вообще не вычисляется** и счётчик остаётся 0. Для "abcd" тип совпал, вызывается `checkLength(s)`: он увеличивает счётчик, проверяет длину и возвращает true. **Прямое присваивание внешней переменной в guard-выражении** вида `when ++guards > 0` запрещено Java 21; именно поэтому побочный эффект помещён в метод и отдельно проверен на javac 21.0.12.1. Это **реальный trace восьмистрочного локального smoke**, а не рекомендация использовать побочные эффекты при выборе ветки. Практически guard лучше оставлять чистой проверкой условия.
 
 ## 7. Record patterns: разбор структуры без ручных accessors (PM-12, PM-13)
 
