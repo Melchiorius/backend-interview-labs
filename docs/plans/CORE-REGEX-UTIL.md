@@ -256,3 +256,144 @@ RG33=true
 ### 6.2 UtilProbe.java (полный Java21 source)
 
 ~~~java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.TreeSet;
+
+public class UtilProbe {
+    record Person(String name, int age) { public String toString() { return name + ":" + age; } }
+    public static void main(String[] args) {
+        System.out.println("UT01=" + Objects.equals(null, null));
+        int[] x = {67, 1}, y = {67, 1};
+        System.out.println("UT02=" + Objects.deepEquals(x, y));
+        System.out.println("UT03=" + Objects.equals(x, y));
+        System.out.println("UT04=" + Objects.hashCode(67) + ":" + Objects.hash(67));
+        System.out.println("UT05=" + Objects.toString(null, "fallback"));
+        try { Objects.requireNonNull(null, "required"); }
+        catch (NullPointerException ex) { System.out.println("UT06=NullPointerException:" + ex.getMessage()); }
+        int[] calls={0};
+        Objects.requireNonNull("ok", () -> { calls[0]++; return "lazy"; });
+        System.out.println("UT07=" + calls[0]);
+        try { Objects.requireNonNull(null, () -> { calls[0]++; return "lazy"; }); }
+        catch (NullPointerException ex) { System.out.println("UT08=" + calls[0] + ":" + ex.getMessage()); }
+        System.out.println("UT09=" + Objects.checkIndex(2, 3));
+        try { Objects.checkIndex(3,3); }
+        catch (IndexOutOfBoundsException ex) { System.out.println("UT10=IndexOutOfBoundsException"); }
+        System.out.println("UT11=" + Objects.checkFromToIndex(1,3,3));
+        try { Objects.checkFromIndexSize(1,3,3); }
+        catch (IndexOutOfBoundsException ex) { System.out.println("UT12=IndexOutOfBoundsException"); }
+        List<Person> people = new ArrayList<>(List.of(new Person("Bob",30),new Person("Ada",67),new Person("Ada",20)));
+        Comparator<Person> cmp = Comparator.comparing(Person::name).thenComparingInt(Person::age);
+        people.sort(cmp);
+        System.out.println("UT13=" + people);
+        people.sort(cmp.reversed());
+        System.out.println("UT14=" + people);
+        List<String> nullable = new ArrayList<>(Arrays.asList("B",null,"A"));
+        nullable.sort(Comparator.nullsFirst(Comparator.naturalOrder()));
+        System.out.println("UT15=" + nullable);
+        nullable.sort(Comparator.nullsLast(Comparator.naturalOrder()));
+        System.out.println("UT16=" + nullable);
+        nullable.sort(Comparator.nullsFirst(Comparator.<String>naturalOrder()).reversed());
+        System.out.println("UT17=" + nullable);
+        try { Comparator.comparing(Person::name).compare(new Person(null,1),new Person("Ada",2)); }
+        catch (NullPointerException ex) { System.out.println("UT18=NullPointerException"); }
+        TreeSet<String> caseInsensitive = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        caseInsensitive.add("A"); caseInsensitive.add("a");
+        System.out.println("UT19=" + caseInsensitive.size());
+        TreeSet<String> odd = new TreeSet<>(Comparator.nullsFirst((Comparator<String>) null));
+        odd.add("A"); odd.add("B"); odd.add(null);
+        System.out.println("UT20=" + odd.size());
+        System.out.println("UT21=" + Arrays.equals(x,y));
+        Object[] nestedA = {new int[]{1,67}}, nestedB = {new int[]{1,67}};
+        System.out.println("UT22=" + Arrays.deepEquals(nestedA,nestedB));
+        System.out.println("UT23=" + Arrays.equals(nestedA,nestedB));
+        System.out.println("UT24=" + Arrays.mismatch(new int[]{67,1},new int[]{67,2}));
+        System.out.println("UT25=" + Integer.signum(Arrays.compare(new int[]{67,1},new int[]{67,2})));
+        int[] sorted = {99,10,67}; Arrays.sort(sorted);
+        System.out.println("UT26=" + Arrays.toString(sorted));
+        System.out.println("UT27=" + Arrays.binarySearch(sorted,67));
+        System.out.println("UT28=" + Arrays.binarySearch(sorted,68));
+        String[] words = {"A", "B"}; List<String> view = Arrays.asList(words);
+        words[0]="Z"; System.out.println("UT29=" + view);
+        view.set(1,"Y"); System.out.println("UT30=" + Arrays.toString(words));
+        try { view.add("C"); }
+        catch (UnsupportedOperationException ex) { System.out.println("UT31=UnsupportedOperationException"); }
+        System.out.println("UT32=" + Arrays.asList(new int[]{1,67}).size());
+        try { List.of("A",null); }
+        catch (NullPointerException ex) { System.out.println("UT33=NullPointerException"); }
+        try { List.of("A").set(0,"B"); }
+        catch (UnsupportedOperationException ex) { System.out.println("UT34=UnsupportedOperationException"); }
+        List<String> source = new ArrayList<>(List.of("A"));
+        List<String> unmodView = Collections.unmodifiableList(source);
+        List<String> snapshot = List.copyOf(source);
+        source.set(0,"B");
+        System.out.println("UT35=" + unmodView + ":" + snapshot);
+        StringBuilder element = new StringBuilder("A");
+        List<StringBuilder> copied = List.copyOf(List.of(element));
+        element.append("67");
+        System.out.println("UT36=" + copied.get(0));
+        System.out.println("UT37=" + new HashSet<>(Arrays.asList("A","A")).size());
+        String[] ordered = {"bbb","a","cc"};
+        Arrays.sort(ordered, Comparator.comparingInt(String::length).thenComparing(Comparator.naturalOrder()));
+        System.out.println("UT38=" + Arrays.toString(ordered));
+    }
+}
+~~~
+
+**Фактический stdout UtilProbe (38 строк, UTF-8/LF):**
+~~~text
+UT01=true
+UT02=true
+UT03=false
+UT04=67:98
+UT05=fallback
+UT06=NullPointerException:required
+UT07=0
+UT08=1:lazy
+UT09=2
+UT10=IndexOutOfBoundsException
+UT11=1
+UT12=IndexOutOfBoundsException
+UT13=[Ada:20, Ada:67, Bob:30]
+UT14=[Bob:30, Ada:67, Ada:20]
+UT15=[null, A, B]
+UT16=[A, B, null]
+UT17=[B, A, null]
+UT18=NullPointerException
+UT19=1
+UT20=2
+UT21=true
+UT22=true
+UT23=false
+UT24=1
+UT25=-1
+UT26=[10, 67, 99]
+UT27=1
+UT28=-3
+UT29=[Z, B]
+UT30=[Z, Y]
+UT31=UnsupportedOperationException
+UT32=1
+UT33=NullPointerException
+UT34=UnsupportedOperationException
+UT35=[B]:[A]
+UT36=A67
+UT37=1
+UT38=[a, cc, bbb]
+~~~
+
+**SHA-256(UtilProbe.java):** `526b953a76154c137a8eddf1d2dbd965e68a789320d263bf007e52719687a6ae`. **SHA-256(util.stdout):** `57cff41cdf848efe2a0092c3fe938efd91e1a3f537adc1213327609253eddbb7`.
+
+**Пояснение:** `UT04` различает hashCode и varargs hash; `UT13–18` — ключи, null и reversal; `UT19/20` — comparator equivalence и потенциальная потеря отдельных элементов в TreeSet; `UT22/23` — deep vs shallow arrays. `UT27/28` дают контрактные значения лишь после `UT26 Arrays.sort`, а не для произвольно неотсортированного массива. `UT29/30/35/36` показывают view aliasing и ограничение shallow snapshot; не распространять эту демонстрацию на полное покрытие Collections.
+
+## 7. Семантически проверенные Java21 compiler-negative (14 отдельных source)
+
+Все **14/14** полнофайловых компиляционно-отрицательных тестов действительно выполнены **независимыми** командами `javac --release 21 -XDrawDiagnostics -d negative/build negative/FILE.java`; каждый получил exit=1 и собственный содержательный diagnostic `compiler.err.*`. Файлы не собраны в один общий batch и не зависят друг от друга. Сам исходник `Pattern.compile("[")` и замена `"$9"` компилируются **успешно**, падают только в runtime, поэтому здесь НЕ присутствуют.
+
+| Файл | Полный независимый исходник | Реальная диагностическая категория | Причина |
+|---|---|---|---|
