@@ -397,3 +397,72 @@ UT38=[a, cc, bbb]
 
 | Файл | Полный независимый исходник | Реальная диагностическая категория | Причина |
 |---|---|---|---|
+| `RG_N01_IllegalEscape.java` | `class RG_N01_IllegalEscape { String p = "\d+"; }` | `compiler.err.illegal.esc.char` | незаконный Java string escape `\d` |
+| `RG_N02_InvalidEscape.java` | `class RG_N02_InvalidEscape { String p = "\q"; }` | `compiler.err.illegal.esc.char` | незаконный Java string escape `\q` |
+| `RG_N03_StringMatchesPattern.java` | `import java.util.regex.*; class RG_N03_StringMatchesPattern { boolean f(){ return "67".matches(Pattern.compile("\\d+")); } }` | `compiler.err.cant.apply.symbol` | String.matches принимает String, не Pattern |
+| `RG_N04_PatternGroup.java` | `import java.util.regex.*; class RG_N04_PatternGroup { String f(){ return Pattern.compile("(a)").group(1); } }` | `compiler.err.cant.resolve.location.args` | group(int) — метод Matcher, не Pattern |
+| `RG_N05_MatcherTwoGroups.java` | `import java.util.regex.*; class RG_N05_MatcherTwoGroups { String f(){ return Pattern.compile("(a)").matcher("a").group(1,2); } }` | `compiler.err.cant.apply.symbols` | Matcher.group не имеет перегрузки для двух int |
+| `RG_N06_RegexStringAsInt.java` | `import java.util.regex.*; class RG_N06_RegexStringAsInt { int f(){ return Pattern.compile("a").matcher("a").group(); } }` | `compiler.err.prob.found.req` | group() возвращает String, не int |
+| `UT_N01_DeepPrimitive.java` | `import java.util.*; class UT_N01_DeepPrimitive { boolean f(){ return Arrays.deepEquals(new int[]{1},new int[]{1}); } }` | `compiler.err.cant.apply.symbol` | Arrays.deepEquals требует Object[], не int[] |
+| `UT_N02_BinarySearchWrongKey.java` | `import java.util.*; class UT_N02_BinarySearchWrongKey { int f(){ return Arrays.binarySearch(new int[]{1,67},"67"); } }` | `compiler.err.cant.apply.symbols` | binarySearch(int[],int), не String |
+| `UT_N03_CheckIndexString.java` | `import java.util.*; class UT_N03_CheckIndexString { int f(){ return Objects.checkIndex(1,"3"); } }` | `compiler.err.cant.apply.symbols` | индекс и length — int/long, не String |
+| `UT_N04_BadComparatorLambda.java` | `import java.util.*; class UT_N04_BadComparatorLambda { Comparator<String> c = (a,b) -> a.length() < b.length(); }` | `compiler.err.prob.found.req` | compare возвращает int, не boolean |
+| `UT_N05_ListPrimitiveVarargs.java` | `import java.util.*; class UT_N05_ListPrimitiveVarargs { void f(){ Arrays.asList(new int[]{1,67}).add(67); } }` | `compiler.err.cant.apply.symbols` | List<int[]> не принимает int вместо int[] |
+| `UT_N06_ComparatorNullsFirstString.java` | `import java.util.*; class UT_N06_ComparatorNullsFirstString { Comparator<String> c = Comparator.nullsFirst("A"); }` | `compiler.err.cant.apply.symbol` | nullsFirst ожидает Comparator, не String |
+| `UT_N07_ArraysSortList.java` | `import java.util.*; class UT_N07_ArraysSortList { void f(){ Arrays.sort(List.of(2,1)); } }` | `compiler.err.cant.apply.symbols` | Arrays.sort принимает array, не List |
+| `UT_N08_RequireNonNullWrongSupplier.java` | `import java.util.*; class UT_N08_RequireNonNullWrongSupplier { Object f(){ return Objects.requireNonNull("X", () -> 67); } }` | `compiler.err.cant.apply.symbols` | Supplier сообщения обязан возвращать String |
+
+**Проверено на OpenJDK21.0.12.1:** ровно **6 REGEX + 8 UTIL = 14 compiler-negatives**, 14 отдельных `javac --release 21 -XDrawDiagnostics` (каждый exit 1 + соответствующий ключ `compiler.err.*`), без «отсутствующих зависимостей» и без случайного EOF. Коды категорий — наблюдение этой версии javac, не переносить строку diagnostic как вечный Java language contract. Runtime failure `RG07/RG22/RG23/UT06/UT08/UT10/UT12/UT18/UT31/UT33/UT34` не объявлены compiler-negative. Для `Arrays.binarySearch` **неотсортированный** ввод не гарантирует полезный ответ, но компиляция законна.
+
+### Source integrity и воспроизведение
+
+Файлы из `6.1`/`6.2` при копировании должны сохраняться в UTF-8 с LF и одним заключительным LF. Точные SHA256 локальных source:
+- `RegexProbe.java`: `a07ec4cae572f134626defdc1fe07a8b3aae0bfbb8781a972297237c2c09dabb`
+- `UtilProbe.java`: `526b953a76154c137a8eddf1d2dbd965e68a789320d263bf007e52719687a6ae`
+
+SHA256 реально полученных stdout:
+- `regex.stdout`: `aee7f4eb5f2e17050773b3ec4a07033bbc866040a6bffcaef7d142ff0b693f12`
+- `util.stdout`: `57cff41cdf848efe2a0092c3fe938efd91e1a3f537adc1213327609253eddbb7`
+
+~~~sh
+javac --release 21 -Xlint:all RegexProbe.java UtilProbe.java
+java RegexProbe > regex.stdout
+java UtilProbe > util.stdout
+diff -u regex.expected.stdout regex.stdout
+diff -u util.expected.stdout util.stdout
+sha256sum RegexProbe.java UtilProbe.java regex.stdout util.stdout
+# Negative отдельно:
+javac --release 21 -XDrawDiagnostics -d negative/build negative/RG_N01_IllegalEscape.java
+~~~
+
+Позитивные compile/JVM и `diff -u` **фактически запущены**, source/outputs сверены побайтными SHA; другие JDK/OS или компиляция **из GitHub Markdown CI** не запускались.
+
+## 8. Дальнейшая работа после G1 и честное NOT RUN
+
+**02 Knowledge Author (после назначения 00):** две самостоятельные связные статьи. REGEX: Java source literal → Pattern regex grammar → Matcher modes/state/groups/regions → quantifiers/flags → replacement grammar → runtime failure/ReDoS угрозы. UTIL: Objects null/array equality/bounds → Comparator composition/key-null/equality → Arrays overloads/sorted search/compare/mismatch → backed views vs snapshot/aliasing. К каждому P0 раскрыть механизм с реальным trace/контрпримером, а не ссылкой на имя метода; A — нормативное доказательство, C — только широкая interview provenance или GAP. К опубликованным CORE-STRINGS/ARRAYS/EQUALITY/IMMUTABLE дать краткие backlinks без переписывания их целиком.
+
+**03 Examples & Exercises Engineer:** если G2 назначен 00 и runnable признаны полезными, две автономные программы из `6` с собственными stdout fixtures/verify. JDK21 `--release 21 -Xlint:all`, отрицательные **14 отдельных** исходников с проверкой **тематических diagnostic keys**, а не просто nonzero. Не смешивать runtime `PatternSyntaxException` и `UOE` с ошибками Java-компилятора. Проверить избранные кейсы через Gradle/JUnit после технической публикации, не утверждать, что они уже в CI.
+
+**05 Knowledge Editor:** естественный литературный русский, точность двойного escaping, `Matcher.quoteReplacement` ≠ `Pattern.quote`, safe limits и стабильная навигация. Обязательно отличать unmodifiable от immutable/deep immutable и comparator equivalence от equals. Будущие статьи нельзя линковать, пока их реально нет.
+
+**04 Independent Reviewer:** проверить всю матрицу **31 RG + 29 UT P0**, версии R1–R5/U1–U4 Java SE21, реальные C1–C5 (дополнительные C4/C5 отдельно от официального реестра) и честный GAP. Проверить исполнимость полных Java21 source/33+38 stdout, 14 отдельных compiler-negative, отсутствие ложных claims о regex timeout, Unicode indices, aliasing, Objects/Comparator/Arrays, а также runtime vs compile. Вердикт **G1 PASS / G1 CHANGES строго на HEAD**. При CHANGES исправление + новый HEAD + повторный review; при PASS **04 адресно передаёт 00** для formal G1 ACCEPTED/BLOCKED/guarded merge. Не назначать G2 досрочно.
+
+**NOT RUN:** GitHub Actions не исполняет исходники внутри fenced Markdown; другие Java vendor/OS, P1/P2, real ReDoS benchmark/timeout/mitigation experiments, concurrency race Pattern/Matcher, exhaustive Unicode normalization and CLDR, JMH/GC/JIT, parallel sorting scalability, full Collections/SERIAL/I18N, large-array stress, Obsidian GUI и anchors, все внешние HTTP link status. Не выводить гарантию эффективности regex из одного маленького примера и не переносить runtime sorted-set поведение на все Comparator consumers.
+
+**Navigation check:** все Markdown links на фактические файлы в `docs/plans/CORE-REGEX-UTIL.md` разрешаются относительно `docs/plans/` и сверяются с **full, untruncated GitHub main tree**. Это проверяет наличие файлов, но не HTTP/anchors/GUI. Будущие `regex.md` и `utilities.md` упомянуты лишь inline code.
+
+## 9. G1 gates и передача эстафеты
+
+| Результат | Статус |
+|---|---|
+| Java21 нормы R/U, реальные C/GAP и **60 P0 / 13 P1 / 9 P2** | `G1 PROPOSED / NOT ACCEPTED` |
+| RegexProbe.java, UtilProbe.java, 33/38 stdout и local SHA256 | `VERIFIED locally, НЕ GitHub CI test` |
+| 14 отдельные semantic javac-negatives | `VERIFIED locally, НЕ GitHub CI test` |
+| CORE-REGEX / CORE-UTIL articles, examples, README, Gradle, CI, status registries | `NOT Implemented / NO G1 changes` |
+| CORE-I18N / CORE-SERIAL | `ВНЕ G1 scope, remain future tasks` |
+| Exact HEAD Actions | проверить после открытия PR; отдельная CI не исполняет fenced Java |
+
+### Передача эстафеты
+Кому: **04 — Independent Reviewer**.
+Что сделать: независимое G1 review PR по **точному HEAD** — 60 P0, 13 P1, 9 P2, JLS/Javadoc Java21, C provenance and GAP, 2 полных source и 71 stdout, 14 компиляционно-отрицательных, link target audit и NOT RUN; PASS/CHANGES с основаниями, при новом HEAD повторить review. После G1 PASS самостоятельно передать **00** на G1 ACCEPTED/BLOCKED и guarded merge; до этого не выдавать G2.
+Передать: оператор пересылает **прямую ссылку на адресный опубликованный GitHub PR-комментарий** в чат роли 04, а не только ссылку на PR.
