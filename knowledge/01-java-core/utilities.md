@@ -4,7 +4,9 @@
 
 Материал относится к **Java SE 21 без preview**. Ранее опубликованы [CORE-EQUALITY](equality.md), [CORE-ARRAYS](arrays.md), [CORE-IMMUTABLE](immutability.md), [CORE-FUNCTIONS](functions.md) и [CORE-EXCEPTIONS](exceptions.md); здесь их контракты сопоставляются на связных примерах. Это не замена полных будущих тем `COL-SORTED`, `CORE-I18N` или `CORE-SERIAL`.
 
-**Нормативные источники A:** [Objects API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html), [Comparator API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html), [Arrays API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html), [List API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html), [Collections API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html), [TreeSet API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html), [JLS 21 `15](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html). Принятый план [CORE-REGEX-UTIL G1](../../docs/plans/CORE-REGEX-UTIL.md), `4–`7, содержит полную историческую `UtilProbe.java` (38 строк stdout) и восемь отдельных компиляционно-отрицательных исходников. **Матрица статьи:** UT-01–UT-29 = 29 P0, UT-30–UT-36 = 7 P1, UT-37–UT-41 = 5 P2. Это вопросы, а не количество JUnit-тестов.
+**Нормативные источники A:** [Objects API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html), [Comparator API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html), [Arrays API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html), [List API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html), [Collections API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html), [TreeSet API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html), [JLS 21 §15](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html). Принятый план [CORE-REGEX-UTIL G1](../../docs/plans/CORE-REGEX-UTIL.md), §4–§7, содержит полную историческую `UtilProbe.java` (38 строк stdout) и восемь отдельных компиляционно-отрицательных исходников. **Матрица статьи:** UT-01–UT-29 = 29 P0, UT-30–UT-36 = 7 P1, UT-37–UT-41 = 5 P2. Это вопросы, а не количество JUnit-тестов.
+
+**Самостоятельная практика G2:** [UtilProbe.java](../../examples/core/regex-util/src/UtilProbe.java), [38-строчный stdout-эталон](../../examples/core/regex-util/util.expected.stdout) и [README / `verify.sh`](../../examples/core/regex-util/README.md). Дополнительный [RegexProbe.java](../../examples/core/regex-util/src/RegexProbe.java) даёт 33 строки; **всего 71 stdout-строка из двух JVM, не 71 JUnit-тест**. Исполнимые тела из принятого G1 §6 и обе fixtures совпадают с планом после удаления единственного комментария `// Theory:` в каждом исходнике. [Technical Actions #45162628699](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45162628699) завершился `completed/SUCCESS` на отдельном technical HEAD `802a964becbd0933418ec20d61f35e83f0b77749`: 1 clean `javac --release 21 -encoding UTF-8 -Xlint:all`, 2 JVM, 2 полных `diff -u`, count+SHA-256. **Новому integrated author HEAD нужен собственный completed/SUCCESS CI; technical CI его не подменяет.** 14 compiler-negative G1 §7 проверены 03 локально по смысловым диагностическим категориям и **не входят в positive CI**; иные среды/Unicode/все inline snippets/P2 остаются NOT RUN.
 
 ## 1. Objects: null, вложенные массивы и хеши (UT-01–UT-03)
 
@@ -226,50 +228,50 @@ Unmodifiable не означает deeply immutable. Это принцип вл�
 | `Arrays.asList(new String[]{"A"}).add("B")` | Корректно компилируется; `UnsupportedOperationException` в runtime |
 | `Arrays.binarySearch` на неотсортированном массиве | Корректно компилируется; API не определяет результат |
 
-В [G1 `7](../../docs/plans/CORE-REGEX-UTIL.md) находятся **8 изолированных UT_N01–UT_N08** с проверенными содержательными категориями `compiler.err.*`. Исследовательская роль и отдельно роль 03 запускали их на OpenJDK21.0.12.1, **но не стандартный project CI**, и роль 02 здесь не заявляет отдельного прогона. Диагностические ключи — наблюдения конкретного javac, не вечная строка спецификации.
+В [G1 §7](../../docs/plans/CORE-REGEX-UTIL.md) находятся **8 изолированных UT_N01–UT_N08** с проверенными содержательными категориями `compiler.err.*`. Исследовательская роль и отдельно роль 03 запускали их на OpenJDK21.0.12.1, **но не стандартный project CI**, и роль 02 здесь не заявляет отдельного прогона. Диагностические ключи — наблюдения конкретного javac, не вечная строка спецификации.
 
 ## 11. Адресная матрица 29 P0 / 7 P1 / 5 P2
 
-**UT01–UT38 stdout** — помеченные наблюдения исторически выполненного [G1 `6.2](../../docs/plans/CORE-REGEX-UTIL.md), не 38 JUnit-тестов. `` ниже обозначает **раздел учебной статьи**, а не номер теста.
+**UT01–UT38 stdout** — помеченные наблюдения исторически выполненного [G1 §6.2](../../docs/plans/CORE-REGEX-UTIL.md), не 38 JUnit-тестов. Знак § ниже обозначает **раздел учебной статьи**, а не номер теста.
 
 | ID | Где дан механизм / граница |
 |---|---|
-| UT-01 | `1: Objects.equals/deepEquals, null и массив |
-| UT-02 | `1: hashCode vs hash(varargs) |
-| UT-03 | `1: Objects.toString fallback |
-| UT-04 | `2: requireNonNull сообщение |
-| UT-05 | `2: Supplier<String> ленив |
-| UT-06 | `2: checkIndex |
-| UT-07 | `2: checkFromToIndex vs checkFromIndexSize |
-| UT-08 | `3: comparing/thenComparingInt |
-| UT-09 | `3: reversed всей композиции |
-| UT-10 | `3: nullsFirst/nullsLast |
-| UT-11 | `3: reverse и null-order |
-| UT-12 | `3: null key в extractor |
-| UT-13 | `4: comparator не согласован с equals |
-| UT-14 | `3–4: Comparator.nullsFirst(null) |
-| UT-15 | `5: Arrays.equals примитивных |
-| UT-16 | `1,5: Arrays.deepEquals вложенных |
-| UT-17 | `5: mismatch и индекс |
-| UT-18 | `5: compare лексикографический |
-| UT-19 | `6: sort примитивов |
-| UT-20 | `6: binarySearch, insertion point |
-| UT-21 | `7: backed Arrays.asList aliasing |
-| UT-22 | `7: fixed-size/UOE |
-| UT-23 | `7,10: int[] varargs → List<int[]> |
-| UT-24 | `8: List.of null/unmodifiable |
-| UT-25 | `8: unmodifiable live vs copyOf snapshot |
-| UT-26 | `8: shallow copyOf и mutable item |
-| UT-27 | `4: HashSet vs TreeSet |
-| UT-28 | `6: sort(T[],Comparator) |
-| UT-29 | `6: object stable sort API vs primitive |
-| UT-30 | `9 P1: parallelSort/parallelPrefix NOT RUN |
-| UT-31 | `9 P1: fill/setAll aliasing |
-| UT-32 | `9 P1: requireNonNullElse/ElseGet |
-| UT-33 | `9 P1: check* long overloads |
-| UT-34 | `9 P1: comparingDouble, NaN/signed zero/locale |
-| UT-35 | `9 P1: comparator violations и conditional IAE |
-| UT-36 | `9 P1 + [CORE-ARRAYS](arrays.md): shallow copyOf |
+| UT-01 | § 1: Objects.equals/deepEquals, null и массив |
+| UT-02 | § 1: hashCode vs hash(varargs) |
+| UT-03 | § 1: Objects.toString fallback |
+| UT-04 | § 2: requireNonNull сообщение |
+| UT-05 | § 2: Supplier<String> ленив |
+| UT-06 | § 2: checkIndex |
+| UT-07 | § 2: checkFromToIndex vs checkFromIndexSize |
+| UT-08 | § 3: comparing/thenComparingInt |
+| UT-09 | § 3: reversed всей композиции |
+| UT-10 | § 3: nullsFirst/nullsLast |
+| UT-11 | § 3: reverse и null-order |
+| UT-12 | § 3: null key в extractor |
+| UT-13 | § 4: comparator не согласован с equals |
+| UT-14 | § 3–4: Comparator.nullsFirst(null) |
+| UT-15 | § 5: Arrays.equals примитивных |
+| UT-16 | § 1,5: Arrays.deepEquals вложенных |
+| UT-17 | § 5: mismatch и индекс |
+| UT-18 | § 5: compare лексикографический |
+| UT-19 | § 6: sort примитивов |
+| UT-20 | § 6: binarySearch, insertion point |
+| UT-21 | § 7: backed Arrays.asList aliasing |
+| UT-22 | § 7: fixed-size/UOE |
+| UT-23 | § 7,10: int[] varargs → List<int[]> |
+| UT-24 | § 8: List.of null/unmodifiable |
+| UT-25 | § 8: unmodifiable live vs copyOf snapshot |
+| UT-26 | § 8: shallow copyOf и mutable item |
+| UT-27 | § 4: HashSet vs TreeSet |
+| UT-28 | § 6: sort(T[],Comparator) |
+| UT-29 | § 6: object stable sort API vs primitive |
+| UT-30 | § 9 P1: parallelSort/parallelPrefix NOT RUN |
+| UT-31 | § 9 P1: fill/setAll aliasing |
+| UT-32 | § 9 P1: requireNonNullElse/ElseGet |
+| UT-33 | § 9 P1: check* long overloads |
+| UT-34 | § 9 P1: comparingDouble, NaN/signed zero/locale |
+| UT-35 | § 9 P1: comparator violations и conditional IAE |
+| UT-36 | § 9 P1 + [CORE-ARRAYS](arrays.md): shallow copyOf |
 | UT-37 | P2: parallel sorting JMM/performance **NOT RUN** |
 | UT-38 | P2: JDK сортировочные алгоритмы/vendor optimizations **NOT RUN** |
 | UT-39 | P2: полный `COL-SORTED` **NOT RUN** |
@@ -284,4 +286,4 @@ Unmodifiable не означает deeply immutable. Это принцип вл�
 
 **Положительная историческая G1-проверка:** Debian OpenJDK 21.0.12.1, полный `UtilProbe.java` и stdout UT01–UT38 (38 строк), SHA-256 `57cff41cdf848efe2a0092c3fe938efd91e1a3f537adc1213327609253eddbb7`. Совместно с RegexProbe — 33+38=**71 stdout-строка из двух JVM, не JUnit-тесты**. Роль 03 независимо подтвердила полные source SHA, выводы и три fresh-temp повтора [в Issue #196](https://github.com/Melchiorius/backend-interview-labs/issues/196#issuecomment-7098732530), а также 14 отдельных javac-negatives (6 RG+8 UT). **Это локальный G1 evidence, не committed G2 CI**.
 
-**NOT RUN этой теоретической публикацией:** новые project runners/CI до фактической интеграции 03, отдельная компиляция всех inline-фрагментов статьи, 8 UT-negatives в штатном CI, другие JDK/OS/vendors, timing/performance и stress, parallel sorting/JMM, гипотетические comparator failures, DB/SERIAL/I18N и locale-sensitive Collator, альтернативные сортировочные алгоритмы, P2, Obsidian/IntelliJ GUI, HTTP/anchors. Реестры [COVERAGE](../../docs/COVERAGE.md) и [CURRICULUM](../../docs/CURRICULUM.md) меняет G6 после G5, а не автор G2.
+**NOT RUN этой статьёй:** отдельная компиляция всех inline-фрагментов статьи, 8 UT-negatives в штатном CI, другие JDK/OS/vendors, timing/performance и stress, parallel sorting/JMM, гипотетические comparator failures, DB/SERIAL/I18N и locale-sensitive Collator, альтернативные сортировочные алгоритмы, P2, Obsidian/IntelliJ GUI, HTTP/anchors. Реестры [COVERAGE](../../docs/COVERAGE.md) и [CURRICULUM](../../docs/CURRICULUM.md) меняет G6 после G5, а не автор G2.
