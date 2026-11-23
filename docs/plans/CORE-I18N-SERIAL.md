@@ -449,3 +449,54 @@ S20=local-session
 | `S_N05_FilterAsString.java` | `import java.io.*; class S_N05_FilterAsString { ObjectInputFilter f = "maxdepth=5"; }` | `compiler.err.prob.found.req` | filter interface is not a String |
 | `S_N06_StreamByteArray.java` | `import java.io.*; class S_N06_StreamByteArray { ObjectInputStream in = new ObjectInputStream(new ByteArrayOutputStream()); }` | `compiler.err.cant.apply.symbols` | ObjectInputStream requires InputStream, not OutputStream |
 
+**Итог: 6 I18N + 6 SERIAL = 12/12 настоящих independent javac-negative.** Команды выполнялись по одной: `javac --release 21 -XDrawDiagnostics -d negative/classes negative/FILE.java`; у каждого файла **exit=1** и именно соответствующая тематическая `compiler.err.*` категория. Вложенные классы и библиотеки JDK21 доступны; failures не обусловлены случайно отсутствующим source/dependency.
+
+**Не смешивать три уровня:**
+- **Compile-negative:** плохой Java-тип/метод из таблицы выше; недопустимый Java syntax/typing отвергается javac.
+- **Runtime failure:** `ParseException`/`MissingResourceException`/`NotSerializableException`/`InvalidClassException`/`InvalidObjectException` корректно компилируются и возникают при выполнении. `InvalidClassException` из `S10` обусловлен **filter rejection**, НЕ version mismatch; второй механизм описан нормативно, но двухверсийного опыта НЕ было.
+- **Threat/security:** десериализация недоверенного графа может быть опасной даже если код компилируется и filter отвечает ALLOWED/UNDECIDED. **Никаких вредоносных данных не подавалось.**
+
+**Контрпример к фразе «некорректный @Serial всегда ошибка компиляции»:** ещё две неправильные декларации были отдельно действительно скомпилированы при `javac --release 21 -Xlint:serial -XDrawDiagnostics`, но **exit 0**:
+- `@Serial private static final String serialVersionUID = "67";` → предупреждение `compiler.warn.long.SVUID`.
+- `@Serial private int readObject(ObjectInputStream in) { return 1; }` → `compiler.warn.serial.method.unexpected.return.type` и предупреждение об отсутствующем UID.
+Обе ошибки деклараций **не включены** в 12 compiler-negatives. Диагностические ключи — наблюдение версии javac21, не публичный контракт диагностики для всех JDK.
+
+### Контроль целостности source/fixtures
+
+Реальные SHA-256 после UTF-8/LF, каждый файл с ровно одним завершающим newline:
+- `I18nProbe.java` — `f44886184d994bcc86842e51d8204619fc152ecb63aa6da435b9053d3706300d`.
+- `i18n.stdout` — `620ac75eb8c4baf0366e17ebd89384fd51b1b505007bceabf9b4c7cf9213b332`.
+- `SerializationProbe.java` — `294a30fccdb899c1471d8fb38bd7ec74cf3aad32b493927dd47459d234d978a3`.
+- `serial.stdout` — `fa00d160ce87c1c241f42948140086edd43636e3b30949e27de97affb6535608`.
+
+**Подтверждённые локальные тесты:** два standalone `javac --release 21 -Xlint:all` без предупреждений/stderr; два JVM-run (29+20 строк), 2/2 повторных `diff -u exit 0`; 12 isolated semantic javac-negatives. Это **не** означает, что текущая проектная GitHub CI автоматически исполняет Java source внутри Markdown.
+
+## 8. Следующие роли и неизученные границы
+
+**02 — Knowledge Author, только после formal 00 G1 ACCEPTED:** создать две связные статьи. I18N: Locale/tag/default → NumberFormat/symbols → ParsePosition и округление vs BigDecimal → localized DateTimeFormatter vs timeline → ResourceBundle, Charset and provider drift. SERIAL: marker/UID → graph handles/cycles → transient/static → custom readObject+invariant → special record/enum → filter/security → native bytes vs DTO/wire contracts. Каждый P0 раскрыть через нормативную гарантию A, механизм и конкретный след/контрпример; C — лишь реально подтверждённая широкая формулировка либо GAP. Не переписывать CORE-NUMBERS/DATETIME/RECORDS/IO целиком.
+
+**03 — Examples Engineer, только после отдельного поручения 00:** если runnable полезны, вынести два самостоятельных verified JDK21 source, отдельные stdout fixtures и verify script; сохранить pinned locale provider/UTF-8 stdout и явно указать drift locale data на иных JDK. SerializationProbe использует **только свои локально конструируемые** trusted objects/bytes. Никогда не вводить публичную десериализацию или gadget examples. Компиляционно-отрицательные 12 файлов — отдельные `javac` команды, не общий batch, сохранять semantic diagnostic keys. Проектные Gradle/JUnit/CI только при фактической отдельной работе, не считать G1 готовым runnable publication.
+
+**05 — Knowledge Editor:** естественный русский, сохранение причинно-следственной глубины, не смешивать Locale/Charset/Unicode/timezone; избегать формул «любой locale output одинаков во всех JDK» и «фильтр делает чтение объектов безопасным». Фиксировать недоверенный input как запретный для native OIS, не показывать эксплуатирующие payloads. После G2 проверить Obsidian target links.
+
+**04 — Independent Reviewer:** независимое G1-review на exact HEAD. Проверить 27+27 P0 /14 P1/9 P2, норму Java SE21, C/GAP provenance, pin CLDR/provider и stdout encoding, actual 29/20 output + 4 source/fixture SHA-256, 12 compiler-negative, предупреждения @Serial, доверенность всех local OIS/графов и корректность filters/record constructor. Вынести **PASS либо CHANGES** с точной строкой/нормой; при изменении HEAD повторить review. После PASS самостоятельно передать **00** для formal G1 ACCEPTED/BLOCKED и guarded merge. Роль 01 не делает merge, не назначает G2, не повышает Coverage.
+
+**NOT RUN:** дополнительные Java vendors/OS/JDK releases/CLDR data versions, точный Debian CLDR revision, cross-provider HOST/COMPAT, property ResourceBundle encoding edge cases, Collator stress and all P1/P2, concurrency NumberFormat/Locale.setDefault, production monetary policy, unsafe external serialized bytes, gadget chains, public network/file deserializer, comprehensive filter hardening, ObjectInputFilter global policy/JEP415 integration, class UID two-version mismatch, Externalizable runtime roundtrip, JSON/Avro/Protobuf integration, huge graph DoS/performance/JMH, GUI Obsidian/Markdown anchors and external HTTP reachability. **Недоверенную десериализацию намеренно не выполняли.**
+
+**Navigation preflight:** все relative Markdown file-target links файла `docs/plans/CORE-I18N-SERIAL.md` должны существовать в **полном non-truncated recursive Git tree** актуального BASE/main. Это проверка file paths, НЕ hyperlink HTTP/anchor/GUI. Будущие `internationalization.md`/`serialization.md` представлены как inline names, без фиктивных file links. Итоговые counts фиксируются в PR.
+
+## 9. G1 gates и передача эстафеты
+
+| Объект | Статус |
+|---|---|
+| Java21 normative A, реальные C/GAP, 54 P0 / 14 P1 / 9 P2 | G1 PROPOSED / NOT ACCEPTED |
+| I18nProbe/SerializationProbe full source, 29/20 stdout | VERIFIED LOCALLY, не project CI |
+| 12 отдельных javac compiler-negative | VERIFIED LOCALLY, не project CI |
+| 2 ошибочные @Serial декларации | Javac exit 0 + warnings; НЕ negatives |
+| Будущие G2 статьи/exercises, COVERAGE/CURRICULUM/README/Gradle/CI | NOT CHANGED / NOT Implemented |
+| GitHub Actions G1 exact HEAD | проверять после PR; не объявлять до факта |
+
+### Передача эстафеты
+Кому: **04 — Independent Reviewer**.
+Что сделать: независимый G1-review research-only PR по **точному HEAD SHA**: Java21 A/C/GAP, матрица 54/14/9, версия CLDR/encoding, safe native serialization и filters, 2 full Java21 source+49 stdout, 12 истинных compile-negative vs @Serial warnings, links/NOT RUN. Выдать G1 PASS/CHANGES на exact HEAD, при любом новом SHA требуется повторное review. После PASS **04 самостоятельно передаёт 00** для G1 ACCEPTED/BLOCKED/guarded merge. До этого никаких G2.
+Передать: оператор пересылает **прямую ссылку на опубликованный адресный PR-комментарий 01→04**, не общий URL PR/Issue.
