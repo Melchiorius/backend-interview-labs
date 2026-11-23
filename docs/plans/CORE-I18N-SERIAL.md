@@ -178,3 +178,131 @@ sha256sum I18nProbe.java i18n.stdout SerializationProbe.java serial.stdout
 ### 6.1 I18nProbe.java — полный проверенный источник
 
 ~~~java
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.ParsePosition;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.ListResourceBundle;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+public class I18nProbe {
+    public static class Messages_en extends ListResourceBundle {
+        @Override protected Object[][] getContents() { return new Object[][]{{"welcome", "Welcome"}}; }
+    }
+    public static class Messages_de extends ListResourceBundle {
+        @Override protected Object[][] getContents() { return new Object[][]{{"welcome", "Willkommen"}}; }
+    }
+    private static String cps(String text) {
+        return text.codePoints().mapToObj(cp -> String.format(Locale.ROOT, "U+%04X", cp))
+                .reduce((a,b) -> a+","+b).orElse("");
+    }
+    public static void main(String[] args) throws Exception {
+        Locale us = Locale.US;
+        Locale de = Locale.GERMANY;
+        Locale tr = Locale.forLanguageTag("tr-TR");
+        Locale script = Locale.forLanguageTag("sr-Latn-RS");
+        System.out.println("L01=" + script.toLanguageTag());
+        System.out.println("L02=" + script.getLanguage()+":"+script.getScript()+":"+script.getCountry());
+        System.out.println("L03=" + us.toLanguageTag()+":"+de.toLanguageTag());
+        NumberFormat numUS = NumberFormat.getNumberInstance(us);
+        NumberFormat numDE = NumberFormat.getNumberInstance(de);
+        numUS.setMinimumFractionDigits(2);
+        numDE.setMinimumFractionDigits(2);
+        System.out.println("L04=" + numUS.format(12345.67));
+        System.out.println("L05=" + numDE.format(12345.67));
+        DecimalFormatSymbols symbolsDE = DecimalFormatSymbols.getInstance(de);
+        System.out.println("L06=" + cps(String.valueOf(symbolsDE.getDecimalSeparator())));
+        System.out.println("L07=" + cps(String.valueOf(symbolsDE.getGroupingSeparator())));
+        DecimalFormat exact = new DecimalFormat("0.00", DecimalFormatSymbols.getInstance(us));
+        exact.setParseBigDecimal(true);
+        BigDecimal parsed = (BigDecimal) exact.parse("67.25");
+        System.out.println("L08=" + parsed.getClass().getSimpleName()+":"+parsed.toPlainString());
+        ParsePosition pos = new ParsePosition(0);
+        String rawNumber = "12,345.67junk";
+        Number partial = numUS.parse(rawNumber, pos);
+        System.out.println("L09=" + partial+":"+pos.getIndex()+":"+rawNumber.length());
+        try { numUS.parse("not-a-number"); }
+        catch (ParseException e) { System.out.println("L10=ParseException"); }
+        DecimalFormat even = new DecimalFormat("0", DecimalFormatSymbols.getInstance(us));
+        even.setRoundingMode(RoundingMode.HALF_EVEN);
+        DecimalFormat up = new DecimalFormat("0", DecimalFormatSymbols.getInstance(us));
+        up.setRoundingMode(RoundingMode.HALF_UP);
+        System.out.println("L11=" + even.format(new BigDecimal("2.5")));
+        System.out.println("L12=" + up.format(new BigDecimal("2.5")));
+        System.out.println("L13=" + numUS.getMaximumFractionDigits());
+        LocalDate date = LocalDate.of(2024, 3, 30);
+        DateTimeFormatter longDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG);
+        System.out.println("L14=" + longDate.withLocale(us).format(date));
+        System.out.println("L15=" + longDate.withLocale(de).format(date));
+        System.out.println("L16=" + date);
+        Instant instant = Instant.parse("2024-03-30T12:34:56Z");
+        System.out.println("L17=" + DateTimeFormatter.ISO_INSTANT.withLocale(de).format(instant));
+        System.out.println("L18=" + instant.atOffset(ZoneOffset.UTC).toInstant().equals(instant));
+        System.out.println("L19=" + "TITLE".toLowerCase(Locale.ROOT));
+        System.out.println("L20=" + "TITLE".toLowerCase(tr));
+        System.out.println("L21=" + cps("TITLE".toLowerCase(tr)));
+        System.out.println("L22=" + "é".getBytes(StandardCharsets.UTF_8).length);
+        System.out.println("L23=" + "é".getBytes(StandardCharsets.UTF_16BE).length);
+        System.out.println("L24=" + ResourceBundle.getBundle("I18nProbe$Messages", Locale.ENGLISH).getString("welcome"));
+        System.out.println("L25=" + ResourceBundle.getBundle("I18nProbe$Messages", Locale.GERMAN).getString("welcome"));
+        try { ResourceBundle.getBundle("I18nProbe$Messages", Locale.ENGLISH).getString("missing"); }
+        catch (java.util.MissingResourceException e) { System.out.println("L26=MissingResourceException"); }
+        System.out.println("L27=" + Locale.forLanguageTag("en-US-u-nu-latn").toLanguageTag());
+        System.out.println("L28=" + NumberFormat.getIntegerInstance(us).format(67.8));
+        System.out.println("L29=" + numDE.parse("12.345,67").doubleValue());
+    }
+}
+~~~
+
+**Наблюдённый stdout I18nProbe: 29 строк (UTF-8, CLDR provider, этот JDK):**
+
+~~~text
+L01=sr-Latn-RS
+L02=sr:Latn:RS
+L03=en-US:de-DE
+L04=12,345.67
+L05=12.345,67
+L06=U+002C
+L07=U+002E
+L08=BigDecimal:67.25
+L09=12345.67:9:13
+L10=ParseException
+L11=2
+L12=3
+L13=3
+L14=March 30, 2024
+L15=30. März 2024
+L16=2024-03-30
+L17=2024-03-30T12:34:56Z
+L18=true
+L19=title
+L20=tıtle
+L21=U+0074,U+0131,U+0074,U+006C,U+0065
+L22=2
+L23=2
+L24=Welcome
+L25=Willkommen
+L26=MissingResourceException
+L27=en-US-u-nu-latn
+L28=68
+L29=12345.67
+~~~
+
+**SHA-256 исходного I18nProbe.java**: `f44886184d994bcc86842e51d8204619fc152ecb63aa6da435b9053d3706300d`.
+**SHA-256 i18n.stdout**: `620ac75eb8c4baf0366e17ebd89384fd51b1b505007bceabf9b4c7cf9213b332`.
+
+**Причинная проверка:** `L04/L05` демонстрируют локализованный вывод одного `12345.67`; `L09` — частичное чтение `9 из 13` code units, даже без исключения; `L08` — явно установленный `setParseBigDecimal`, не автоматическая гарантия произвольной factory; `L11/L12` — разный tie mode, а не выбор бизнес-правила; `L14/L15` — localized style, `L17` — ISO_INSTANT остаётся на той же UTC линии; `L19/L20/L21` — точные Turkish casing code points. `L22/L23` — UTF-8/UTF-16BE byte lengths, а не методы Locale. Ресурсы `Messages_en/Messages_de` — **локальные вложенные ListResourceBundle**, никаких внешних файлов не требуется; `L26` — runtime MissingResourceException.
+
+### 6.2 SerializationProbe.java — полный безопасный source; только доверенные локально сформированные bytes
+
+~~~java
