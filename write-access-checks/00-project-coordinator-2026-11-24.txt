@@ -1,0 +1,4 @@
+Backend Interview Labs — 00 Project Coordinator
+Write-access verification only; 2026-11-24.
+Target branch: chore/editor-write-access-check-20261123.
+No publication decision, instructional changes, or main updates.
