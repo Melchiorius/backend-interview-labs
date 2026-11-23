@@ -145,3 +145,7 @@ CHECK PASSED
 ## JPMS и ClassLoader (Java 21)
 
 [CORE-MODULES + CORE-CLASSLOADER — воспроизводимый runner](modules-classloader/README.md) дополняет [статью о модулях](../../knowledge/01-java-core/modules.md) и [статью о загрузчиках классов](../../knowledge/01-java-core/classloaders.md). Один скрипт `bash examples/core/modules-classloader/verify.sh` воспроизводит два самостоятельных named-module graphs (exports vs opens), `requires static` с отсутствующим/разрешённым модулем, два defining `ChildFirstTokenLoader`, `ClassCastException` и реальную временную runtime-копию без superclass: **4 javac, 6 JVM, 6 точных stdout fixtures, 49 строк** — не JUnit-тестов.
+
+## Числа и дата/время (Java 21)
+
+[CORE-NUMBERS + CORE-DATETIME — два самостоятельных Java21 runnable](numbers-datetime/README.md) дополняет [теорию чисел](../../knowledge/01-java-core/numbers.md) и [`java.time`](../../knowledge/01-java-core/datetime.md). Скрипт `bash examples/core/numbers-datetime/verify.sh` выполняет одну чистую компиляцию, две независимые JVM и два полных `diff -u` со сверкой **33+38=71 подписанной строки stdout** и G1 SHA-256; DST-трасса зависит от версии tzdb. Без нового Gradle/JUnit-модуля.
