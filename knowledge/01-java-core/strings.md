@@ -443,3 +443,5 @@ class BuilderOperations {
 **NOT RUN (до отдельного evidence):** автоматическое извлечение и компиляция всех Java snippets из Markdown; negative N01–N24 в CI; GUI Obsidian/IntelliJ; JDK/JVM/OS помимо заявленного; реальные кодировки/файловый IO/locale integration; grapheme segmentation/ZWJ и сложная Unicode-нормализация; Concurrent Builder/Buffer stress; JMH, HotSpot internals, GC и JIT. Никаких выводов о реальной производительности Builder и thread-safety произвольного составного алгоритма здесь не делается.
 
 **Что читать дальше:** [массивы](arrays.md), [конверсии](conversions.md), [равенство](equality.md), [обобщённые типы](generics.md), [лямбды](functions.md) и [потоки](streams.md). Для **текстового представления чисел** и `new BigDecimal("0.1")` vs `new BigDecimal(0.1)` — [CORE-NUMBERS](numbers.md); для **ISO parsing, DateTimeFormatter и явной ZoneId** — [CORE-DATETIME](datetime.md).
+
+**Дополнительный материал по regex:** [CORE-REGEX](regex.md) подробно объясняет отличие Java-экранирования от грамматики `Pattern`, состояния `Matcher`, `find`/`matches`, групп, замен и Unicode; это продолжение изложенных здесь `split` и `replaceAll`.
