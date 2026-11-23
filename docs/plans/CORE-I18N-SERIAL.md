@@ -436,3 +436,16 @@ S20=local-session
 
 | Файл | Полный самодостаточный Java source | Фактический ключ диагностической ошибки | Причина |
 |---|---|---|---|
+| `L_N01_LocaleString.java` | `import java.util.*; class L_N01_LocaleString { Locale locale = "en-US"; }` | `compiler.err.prob.found.req` | String is not Locale |
+| `L_N02_RoundingString.java` | `import java.text.*; class L_N02_RoundingString { void f(){ NumberFormat.getNumberInstance().setRoundingMode("HALF_UP"); } }` | `compiler.err.cant.apply.symbol` | RoundingMode enum instead of String |
+| `L_N03_FormatStyleString.java` | `import java.time.format.*; class L_N03_FormatStyleString { DateTimeFormatter x = DateTimeFormatter.ofLocalizedDate("LONG"); }` | `compiler.err.cant.apply.symbol` | FormatStyle enum instead of String |
+| `L_N04_LocalDateFormatLocale.java` | `import java.time.*; import java.util.*; class L_N04_LocalDateFormatLocale { String f(){ return LocalDate.of(2024,3,30).format(Locale.US); } }` | `compiler.err.cant.apply.symbol` | LocalDate.format requires DateTimeFormatter |
+| `L_N05_ResourceBundleIntKey.java` | `import java.util.*; class L_N05_ResourceBundleIntKey { String f(){ return ResourceBundle.getBundle("x").getString(67); } }` | `compiler.err.cant.apply.symbol` | ResourceBundle.getString requires String key |
+| `L_N06_CharsetLocale.java` | `import java.nio.charset.*; import java.util.*; class L_N06_CharsetLocale { Charset c = Charset.forName(Locale.US); }` | `compiler.err.cant.apply.symbols` | Charset.forName expects name String |
+| `S_N01_ExternalizableMissing.java` | `import java.io.*; class S_N01_ExternalizableMissing implements Externalizable { }` | `compiler.err.does.not.override.abstract` | Externalizable requires abstract methods |
+| `S_N02_MarkerOverride.java` | `import java.io.*; class S_N02_MarkerOverride implements Serializable { @Override public void writeObject(ObjectOutputStream o) {} }` | `compiler.err.method.does.not.override.superclass` | Serializable is marker and has no overridable writeObject |
+| `S_N03_WriteObjectReturnsBytes.java` | `import java.io.*; class S_N03_WriteObjectReturnsBytes { byte[] f(ObjectOutputStream out)throws Exception { return out.writeObject("x"); } }` | `compiler.err.prob.found.req` | writeObject returns void, not byte[] |
+| `S_N04_ReadObjectIsString.java` | `import java.io.*; class S_N04_ReadObjectIsString { String f(ObjectInputStream in)throws Exception { return in.readObject(); } }` | `compiler.err.prob.found.req` | readObject returns Object, not String |
+| `S_N05_FilterAsString.java` | `import java.io.*; class S_N05_FilterAsString { ObjectInputFilter f = "maxdepth=5"; }` | `compiler.err.prob.found.req` | filter interface is not a String |
+| `S_N06_StreamByteArray.java` | `import java.io.*; class S_N06_StreamByteArray { ObjectInputStream in = new ObjectInputStream(new ByteArrayOutputStream()); }` | `compiler.err.cant.apply.symbols` | ObjectInputStream requires InputStream, not OutputStream |
+
