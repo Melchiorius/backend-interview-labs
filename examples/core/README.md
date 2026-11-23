@@ -149,3 +149,7 @@ CHECK PASSED
 ## Числа и дата/время (Java 21)
 
 [CORE-NUMBERS + CORE-DATETIME — два самостоятельных Java21 runnable](numbers-datetime/README.md) дополняет [теорию чисел](../../knowledge/01-java-core/numbers.md) и [`java.time`](../../knowledge/01-java-core/datetime.md). Скрипт `bash examples/core/numbers-datetime/verify.sh` выполняет одну чистую компиляцию, две независимые JVM и два полных `diff -u` со сверкой **33+38=71 подписанной строки stdout** и G1 SHA-256; DST-трасса зависит от версии tzdb. Без нового Gradle/JUnit-модуля.
+
+## Регулярные выражения и утилиты Java 21
+
+[CORE-REGEX + CORE-UTIL — два самостоятельных runnable](regex-util/README.md) связывает [теорию регулярных выражений](../../knowledge/01-java-core/regex.md) и [утилиты JDK](../../knowledge/01-java-core/utilities.md) с двумя полными Java21 программами: `RegexProbe` (33 RG) и `UtilProbe` (38 UT). Команда `bash examples/core/regex-util/verify.sh` выполняет **одну чистую компиляцию и две отдельные JVM**, сравнивает оба полных stdout и их G1 SHA-256 (**71 наблюдение, не 71 JUnit-тест**). Отдельные 14 compiler-negative описаны в [G1 §7](../../docs/plans/CORE-REGEX-UTIL.md) и не подменяются runtime exception-примерами.
