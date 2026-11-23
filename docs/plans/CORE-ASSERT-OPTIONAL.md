@@ -1,6 +1,9 @@
 # CORE-ASSERT + CORE-OPTIONAL — предварительное исследование G1, Java SE 21
 
 **G1 PROPOSED / NOT ACCEPTED.** Исследователь: 01 — Research & Coverage. Основание: [Issue #159](https://github.com/Melchiorius/backend-interview-labs/issues/159), [адресное поручение 00 #7077526980](https://github.com/Melchiorius/backend-interview-labs/issues/159#issuecomment-7077526980), программа #33.
+
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #161](https://github.com/Melchiorius/backend-interview-labs/pull/161#issuecomment-7077742621) на проверенном G1 HEAD `e6d9e68d4e4e308adcb8aa295de99425e4d528ab`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #164](https://github.com/Melchiorius/backend-interview-labs/pull/164), merge commit `a05ac57f70d906d3679ff36be72470fc7edff06c`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
 **BASE/main:** `b096790bdde1af99b91ee7bbac84721f69993d3f` — опубликованный G5 [PR #156](https://github.com/Melchiorius/backend-interview-labs/pull/156); параллельный документарный G6 [#158](https://github.com/Melchiorius/backend-interview-labs/issues/158) ведёт 06, в scope G1 не входит. **HEAD исследовательского PR** фиксируется отдельно в GitHub PR и при адресном handoff 04. **Версии:** JLS 21, API Java SE 21, стабильные языковые возможности, без preview. Фактический локальный инструмент — OpenJDK 21.0.12.1, Debian Linux 13, `javac --release 21`.
 
 ## 1. Почему два curricular ID, педагогическая архитектура

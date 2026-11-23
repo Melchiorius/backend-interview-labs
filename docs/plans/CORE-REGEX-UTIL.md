@@ -2,6 +2,9 @@
 
 **G1 PROPOSED / NOT ACCEPTED.** Роль **01 — Research & Coverage**. [Issue #191](https://github.com/Melchiorius/backend-interview-labs/issues/191), [адресное поручение 00 #7097955818](https://github.com/Melchiorius/backend-interview-labs/issues/191#issuecomment-7097955818), [программа #33](https://github.com/Melchiorius/backend-interview-labs/issues/33). **Исходный BASE поручения:** `3340404a24f4c1175414a873e567ea93a6049c7f` после G5 [PR #188](https://github.com/Melchiorius/backend-interview-labs/pull/188). **Текущий BASE/main при создании ветки:** `cdabdd3561db435cedae02cd92c8f4d63e18e825` после параллельного G6 [PR #192](https://github.com/Melchiorius/backend-interview-labs/pull/192), закрывающего status-only [Issue #190](https://github.com/Melchiorius/backend-interview-labs/issues/190). Этот G1 **не меняет** G6 и не приписывает себе работу 06. Exact HEAD/CI — в PR и адресном review-комментарии.
 
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #193](https://github.com/Melchiorius/backend-interview-labs/pull/193#issuecomment-7098510453) на проверенном G1 HEAD `8db8942c09217e8c0edefb440b12ecfb52f4a166`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #197](https://github.com/Melchiorius/backend-interview-labs/pull/197), merge commit `a60add1898112f444eb1ebac6d1386a05ca7abca`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
+
 **Среда локальных проверок:** OpenJDK `javac/java 21.0.12.1+1-1-deb13u1`, Debian GNU/Linux 13; нормы и примеры **Java SE 21 без preview**. Полные Java source и stdout появляются **в `6 ниже**; G1 markdown НЕ исполняется проектным CI автоматически.
 
 ## 1. Две независимые темы и перекрытия

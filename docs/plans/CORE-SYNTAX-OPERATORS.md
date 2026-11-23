@@ -1,6 +1,9 @@
 # CORE-SYNTAX + CORE-OPERATORS — G1 research (Java SE 21)
 
 **Статус: G1 PROPOSED / NOT ACCEPTED**. **Ответственный:** 01 — Research & Coverage. **Поручение:** [Issue #151](https://github.com/Melchiorius/backend-interview-labs/issues/151), [G0→G1 comment #7076049056](https://github.com/Melchiorius/backend-interview-labs/issues/151#issuecomment-7076049056), родитель #33.
+
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #153](https://github.com/Melchiorius/backend-interview-labs/pull/153#issuecomment-7076795129) на проверенном G1 HEAD `32222e5f38570cddb8cebe1e5e373a537e73fd29`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #156](https://github.com/Melchiorius/backend-interview-labs/pull/156), merge commit `b096790bdde1af99b91ee7bbac84721f69993d3f`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
 **BASE/main на старте ветки:** `62d9398040282cec1178c7fccbabef57d895f402`, G5 [PR #148](https://github.com/Melchiorius/backend-interview-labs/pull/148) уже опубликован, G6 документарных реестров — [Issue #150](https://github.com/Melchiorius/backend-interview-labs/issues/150), отдельная параллельная работа 06. **Exact HEAD этой ветки** — в GitHub PR и адресной передаче 04, после публикации документа. Норма: **JLS/JDK Java SE 21, без preview**. Среда *локально выполненных* Java-проб: OpenJDK `javac/java 21.0.12.1`, Linux Debian 13, `--release 21`, без Gradle/CI. Только исследовательский Markdown, не G2.
 
 ## 1. Область ответственности, архитектура и что должен суметь объяснить читатель
