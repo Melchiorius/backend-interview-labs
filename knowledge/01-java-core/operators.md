@@ -82,6 +82,8 @@ class AssignmentDemo {
 
 ## 4. Числовые типы, расширение и переполнение (OP-05, OP-07; OP-26 P1)
 
+**Углубление о числовой модели:** [CORE-NUMBERS](numbers.md) отдельно объясняет fixed-width overflow vs `Math.addExact`, promotion, binary IEEE754, BigDecimal constructors, scale/precision/rounding. Эта статья остаётся о семантике самих операторов.
+
 В бинарной арифметике операнды меньших целочисленных типов обычно подвергаются **binary numeric promotion**: например, `byte + byte` и `short + int` вычисляются как минимум в `int`. Последующее присваивание результата обратно в `short` уже отдельный conversion context. [JLS §5.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.6).
 
 ~~~java
