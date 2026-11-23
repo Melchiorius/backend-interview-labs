@@ -213,3 +213,5 @@ System.out.println(one.divide(three,
 **NOT RUN этим G2-текстом:** все embedded snippets как самостоятельные compilation units, компиляционно-отрицательные случаи в штатном CI, все альтернативные JDK/vendors/OS и hardware, реальная политика денежных единиц/округления/налогов/FX, JDBC/DB DECIMAL, `BigDecimal` performance/benchmark, strictfp compiler warning, NaN payload/subnormal error bounds, floating JIT/StrictMath benchmarking, vector/cryptographic constant time, CORE-I18N/NumberFormat, GUI Obsidian, внешние HTTP/anchors. Не приписывать P2 статус Implemented.
 
 [CORE-DATETIME](datetime.md) — отдельная задача о *временной шкале и правилах часового пояса*. Она тоже показывает границы представления данных, но числовое округление и DST — разные механизмы. Статусы [CURRICULUM](../../docs/CURRICULUM.md) / [COVERAGE](../../docs/COVERAGE.md) переводит G6 после G5, не сам автор G2.
+
+**Локализованное представление чисел:** [CORE-I18N](internationalization.md) показывает `NumberFormat`, `DecimalFormat`, `ParsePosition`, частичный разбор, округление и CLDR-зависимые разделители. Это граница UI, а не замена `BigDecimal` и правил арифметики из этой статьи.
