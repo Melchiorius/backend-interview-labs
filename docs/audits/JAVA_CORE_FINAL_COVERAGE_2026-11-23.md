@@ -96,3 +96,84 @@
 
 **Точечная внешняя нормативная сверка:** [Java SE21 Serialization Specification](https://docs.oracle.com/en/java/javase/21/docs/specs/serialization/serial-arch.html) действительно устанавливает вызов canonical constructor для serializable record и особые правила UID; [NumberFormat Javadoc 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/text/NumberFormat.html) допускает неполное потребление строки при parse(ParsePosition). [JLS21](https://docs.oracle.com/javase/specs/jls/se21/html/) определяет границы compile-time и runtime. Это лишь риск-ориентированная выборка нормативных контрактов, **не** полная независимая перепроверка всех P0 каждой из 41 статьи.
 
+
+## 5. Принятые G1 и gate provenance: версия плана ≠ надпись в старом header
+
+Аудит охватывает **24 основные G1 research files** из `docs/plans/CORE-*.md` (плюс отдельно не-G1 `CORE-INHERITANCE_POST_DRAFT_AUDIT.md`). Три ранние единицы `CORE-TYPES`, `CORE-CONVERSIONS`, `CORE-PARAMS` оформлены до ужесточения G1-процедуры; для них используется историческое [постревью 19.11](../JAVA_CORE_POST_REVIEW_2026-11-19.md) и текущий P0-recheck `3, **не выдумывается самостоятельный поздний формальный G1 review**. `CORE-CLASSES` ранний самостоятельный research plan; `CORE-ACCESS` и последующие темы имеют исторические G4/G5/CI свидетельства в `COVERAGE`.
+
+**20 волн позднейшей публикации, с адресными источниками принятия:**
+
+| Волна | Где в published COVERAGE исторические G1/G4/G5 | Исторический PR |
+|---|---|---|
+| CORE-ACCESS | [COVERAGE#L56](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L56) | [G5 PR #29](https://github.com/Melchiorius/backend-interview-labs/pull/29); plan/review/CI SHA в этом разделе реестра |
+| CORE-INHERITANCE | [COVERAGE#L64](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L64) | [G5 PR #43](https://github.com/Melchiorius/backend-interview-labs/pull/43); plan/review/CI SHA в этом разделе реестра |
+| CORE-INIT | [COVERAGE#L74](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L74) | [G5 PR #54](https://github.com/Melchiorius/backend-interview-labs/pull/54); plan/review/CI SHA в этом разделе реестра |
+| CORE-OBJECT/EQUALITY | [COVERAGE#L83](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L83) | [G5 PR #67](https://github.com/Melchiorius/backend-interview-labs/pull/67); plan/review/CI SHA в этом разделе реестра |
+| CORE-INTERFACES/COMPOSITION | [COVERAGE#L92](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L92) | [G5 PR #75](https://github.com/Melchiorius/backend-interview-labs/pull/75); plan/review/CI SHA в этом разделе реестра |
+| CORE-NESTED/FUNCTIONS | [COVERAGE#L100](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L100) | [G5 PR #87](https://github.com/Melchiorius/backend-interview-labs/pull/87); plan/review/CI SHA в этом разделе реестра |
+| CORE-GENERICS/ERASURE | [COVERAGE#L108](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L108) | [G5 PR #92](https://github.com/Melchiorius/backend-interview-labs/pull/92); plan/review/CI SHA в этом разделе реестра |
+| CORE-EXCEPTIONS/RESOURCES | [COVERAGE#L116](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L116) | [G5 PR #105](https://github.com/Melchiorius/backend-interview-labs/pull/105); plan/review/CI SHA в этом разделе реестра |
+| CORE-STREAMS/STREAM-ADV | [COVERAGE#L124](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L124) | [G5 PR #116](https://github.com/Melchiorius/backend-interview-labs/pull/116); plan/review/CI SHA в этом разделе реестра |
+| CORE-ARRAYS/STRINGS/BUILDERS | [COVERAGE#L132](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L132) | [G5 PR #124](https://github.com/Melchiorius/backend-interview-labs/pull/124); plan/review/CI SHA в этом разделе реестра |
+| CORE-RECORDS/IMMUTABLE | [COVERAGE#L141](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L141) | [G5 PR #132](https://github.com/Melchiorius/backend-interview-labs/pull/132); plan/review/CI SHA в этом разделе реестра |
+| CORE-SEALED/PATTERNS | [COVERAGE#L150](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L150) | [G5 PR #140](https://github.com/Melchiorius/backend-interview-labs/pull/140); plan/review/CI SHA в этом разделе реестра |
+| CORE-ENUMS/CONTROL | [COVERAGE#L159](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L159) | [G5 PR #148](https://github.com/Melchiorius/backend-interview-labs/pull/148); plan/review/CI SHA в этом разделе реестра |
+| CORE-SYNTAX/OPERATORS | [COVERAGE#L168](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L168) | [G5 PR #156](https://github.com/Melchiorius/backend-interview-labs/pull/156); plan/review/CI SHA в этом разделе реестра |
+| CORE-ASSERT/OPTIONAL | [COVERAGE#L177](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L177) | [G5 PR #164](https://github.com/Melchiorius/backend-interview-labs/pull/164); plan/review/CI SHA в этом разделе реестра |
+| CORE-ANNOTATIONS/REFLECTION | [COVERAGE#L186](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L186) | [G5 PR #172](https://github.com/Melchiorius/backend-interview-labs/pull/172); plan/review/CI SHA в этом разделе реестра |
+| CORE-MODULES/CLASSLOADER | [COVERAGE#L194](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L194) | [G5 PR #179](https://github.com/Melchiorius/backend-interview-labs/pull/179); plan/review/CI SHA в этом разделе реестра |
+| CORE-NUMBERS/DATETIME | [COVERAGE#L201](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L201) | [G5 PR #188](https://github.com/Melchiorius/backend-interview-labs/pull/188); plan/review/CI SHA в этом разделе реестра |
+| CORE-REGEX/UTIL | [COVERAGE#L209](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L209) | [G5 PR #197](https://github.com/Melchiorius/backend-interview-labs/pull/197); plan/review/CI SHA в этом разделе реестра |
+| CORE-I18N/SERIAL | [COVERAGE#L216](https://github.com/Melchiorius/backend-interview-labs/blob/049736b99c1fa437fc660a3accf7b2bf76b65d91/docs/COVERAGE.md#L216) | [G5 PR #205](https://github.com/Melchiorius/backend-interview-labs/pull/205); plan/review/CI SHA в этом разделе реестра |
+
+**Особый документальный долг, НЕ скрытый:** следующие **11 G1-документов** всё ещё содержат в первых строках *историческое на момент создания* `G1 PROPOSED / NOT ACCEPTED`, хотя последующие решения 00 и merged G5 опубликованы и отражены в COVERAGE:
+- [CORE-ARRAYS-STRINGS](../plans/CORE-ARRAYS-STRINGS.md)
+- [CORE-RECORDS-IMMUTABLE](../plans/CORE-RECORDS-IMMUTABLE.md)
+- [CORE-SEALED-PATTERNS](../plans/CORE-SEALED-PATTERNS.md)
+- [CORE-ENUMS-CONTROL](../plans/CORE-ENUMS-CONTROL.md)
+- [CORE-SYNTAX-OPERATORS](../plans/CORE-SYNTAX-OPERATORS.md)
+- [CORE-ASSERT-OPTIONAL](../plans/CORE-ASSERT-OPTIONAL.md)
+- [CORE-ANNOTATIONS-REFLECTION](../plans/CORE-ANNOTATIONS-REFLECTION.md)
+- [CORE-MODULES-CLASSLOADER](../plans/CORE-MODULES-CLASSLOADER.md)
+- [CORE-NUMBERS-DATETIME](../plans/CORE-NUMBERS-DATETIME.md)
+- [CORE-REGEX-UTIL](../plans/CORE-REGEX-UTIL.md)
+- [CORE-I18N-SERIAL](../plans/CORE-I18N-SERIAL.md)
+
+Эта рассинхронизация статуса **P1 editorial provenance**, а не доказательство отсутствия темы/содержательного P0. Возможная адресная задача **05 — Knowledge Editor** после решения 00: добавить в исторические планы отдельную строку `Historical G1 status at creation; later ACCEPTED in [decision PR/Issue exact HEAD]`, **не стирать историю и не изменять матрицы задним числом**. Независимая 04 обязана проверить реальный gate по ссылке/SHA, не принимать «G1 accepted» лишь по формуле в этом отчёте. Область ранних four (TYPES/CONVERSIONS/PARAMS/CLASSES) в `COVERAGE` не имеет идентичной современным волнам G4 audit-глубины, поэтому итоговая проверка 04 особенно важна.
+
+## 6. Регистр рисков, blockers и deferred (не подменять статус количеством файлов)
+
+| Тип | Evidence / локация | Фактический вердикт 01 | Owner, минимальная remediation если станет необходимой |
+|---|---|---|---|
+| **P0 — предметный blocker** | 42 адресных статьи, `3 первоначальные 12 P0, нормативные выборки G1/article + фактическая CI | **0 подтверждённых P0 blockers найдено в проверенном объёме**; полный отрицательный вывод обо всех возможных claims **не доказан**, независимое 04 ещё не выполнено | Если 04 обнаружит конкретное противоречие, **NO-GO**: открыть узкую issue с `path:line` и ошибочным Java21 контрактом; 02 правит теорию, 03 исправляет runner при необходимости, 05 редактирует, 04 повторяет exact SHA, 00 решает |
+| **GATE — формальный blocker закрытия #33** | Отсутствует независимый вердикт 04 по этому audit HEAD, пока 01 не передал | **До PASS 04 #33 не закрывать**. Это процессная граница, не обнаруженный содержательный P0 | 04 G1-independent closure audit PASS/CHANGES на frozen report; затем 04→00, final GO/NO-GO только 00 |
+| **P1 — исторический статус G1** | 11 plan headers `PROPOSED/NOT ACCEPTED` при позднейшем G1 ACCEPTED/G5 | **Редакторская задолженность**, не P0 и не запрет GO при наличии реального decision evidence | 05, отдельный narrow docs-only PR после поручения 00; не править plans в этом audit |
+| **P1 — breadth of compile-negative proof** | Ранние закомментированные negative и многие G1 isolated negatives не вошли в ordinary CI; `3, `4, [G1 I18N/SERIAL](../plans/CORE-I18N-SERIAL.md) | **Не заявлять как CI verified**; локальные JDK21 результаты в accepted G1 отделены от main CI. При корректном теоретическом объяснении это само по себе не P0 blocker | 03 при необходимости targeted compile-fail harness, 04 проверяет validity/expected diagnostic |
+| **P1 — C GAP и интервальная достоверность** | G1 для Locale/CLDR, bounded filter, obscure JLS/API не имеет отдельных подтверждённых банков интервью C | Нормативные контракты **A есть**, отсутствие буквального C-вопроса не превращает правильное объяснение в отсутствие темы | 01 по новому поручению может расширить sources; не считать coverage closed на основании C counts |
+| **P2 — locale/data/version drift** | [CORE-I18N](../../knowledge/01-java-core/internationalization.md), [CORE-DATETIME](../../knowledge/01-java-core/datetime.md), pinned Temurin/CLDR/UTF-8 outputs | **Другие JDK/provider/CLDR/tzdb/OS NOT RUN**, не экстраполировать строки из одной среды | 03/04 при будущей расширенной переносимости; не требовать как условие закрытия всего Java Core |
+| **P2/SEC — native untrusted serialization** | [CORE-SERIAL](../../knowledge/01-java-core/serialization.md), local [runner](../../examples/core/i18n-serialization/verify.sh) | **Только trusted ByteArray streams**; отсутствие malicious gadget означает осознанное безопасное ограничение, не сертификат безопасности и **не blocker** для теоретической темы при верном предупреждении | Отдельная security практическая программа 00, не создавать unsafe public deserializer |
+| **P1/P2 — соседние curricular ID** | [CURRICULUM](../CURRICULUM.md) по COL/JVM/CON/IO/SPR/DB/DIST | **ВНЕ Java Core**, не объявлены Implemented закрытием этой программы. Если статья обещает глубину JVM/JMM/ConcurrentHashMap полностью — это claim error и повод для узкой правки | 00 планирует соседние разделы отдельно, не маскирует ими P0 Java Core |
+| **NOT VERIFIED — UI/HTTP/benchmarks** | Markdown anchors, Obsidian/IDE, внешние URL, JIT/JMH, async/concurrent race, DoS/performance | Не выполнялось в рамках аудита; не выдавать за зелёную CI | необязательное отдельное QA по запросу; только если создаёт конкретную ошибку P0 — адресная remediation |
+
+### Высокорисковые выборки для независимой 04 (не заменять её решением 01)
+
+- **JLS/типизация:** constant narrowing vs invocation, generic erasure/heap pollution, interface default conflicts, static vs dynamic dispatch, overload/`null`, definite assignment.
+- **Runtime contracts:** `equals/hashCode` и mutable HashMap key; stream side effects/`toMap` duplicates; suppressed exceptions TWR; arrays covariance; Unicode UTF-16; `String.valueOf(null)`, matcher group state.
+- **Modern Java21:** sealed/record pattern exhaustiveness и `MatchException`, record canonical invariants, reflect `exports` vs `opens`, JPMS `requires static/transitive` и loader identity.
+- **Numbers/datetime/locale:** `BigDecimal` scale equality and double constructor; DST gap/overlap vs clock; `ParsePosition` full-consumption check and CLDR provider drift; no assumption of stable locale output across vendors.
+- **Serialization safety:** record deserialization canonical constructor; regular-class UID mismatch vs *different* `InvalidClassException:filter`; trusted-only stream; `ObjectInputFilter.Status.UNDECIDED` != automatically denied; `@Serial` warnings vs true javac failures. These distinctions must survive article edits/CI changes.
+
+## 7. Матрица решения для 00 после независимого 04
+
+| Condition | Рекомендация 01 | Формальное действие |
+|---|---|---|
+| 42/42 ID, 41 статьи реально существуют; 12 старых P0-групп имеют адресное объяснение; no confirmed severe P0 blocker; 04 **PASS exact audit HEAD** | **READY-FOR-CLOSURE / conditional GO** | 04 адресно передаёт 00, 00 проверяет точный HEAD/main и решает GO, при GO закрывает [#33](https://github.com/Melchiorius/backend-interview-labs/issues/33) со ссылкой на матрицу и limitations |
+| Найдено ошибочное нормативное P0 или отсутствует механизм P0; 04 выдаёт CHANGES/NO-GO | **BLOCKED** | Не закрывать #33, открыть точную remediation issue с `path:line`, owner 02/03/05 и gate 04→00; не выдавать CI success за исправление теории |
+| P1/P2 GAP, историческая `PROPOSED` в принятом G1, platform/performance tests NOT RUN без доказанного P0 ущерба | **DEFERRED без автоматического NO-GO** | Отдельная очередь улучшений без фиктивного completed и без переноса на другие разделы |
+
+**Итог 01 (не решение 00):** по изученному опубликованному `main=049736b99c1fa437fc660a3accf7b2bf76b65d91` — **условный GO** после независимого PASS роли 04, с перечисленными ограничениями; **никаких обнаруженных подтверждённых P0 blocker**. Важно: это рекомендации после risk-oriented readback + адресной 42-row mapping, а **не доказательство теоремы, что во всех 41 статьях нет ни одной ошибки**. Роль 01 не закрывает родительский Issue, не делает merge и не выносит независимый вердикт за 04.
+
+### Передача эстафеты
+Кому: **04 — Independent Reviewer**.
+Что сделать: независимо перепроверить **этот audit-only PR по точному HEAD**, frozen source main `049736b99c1fa437fc660a3accf7b2bf76b65d91`, все 42 адресных строки, включая CORE-BUILDERS, исходные 12 групп P0, historical gate provenance/11 stale headers, CI run #45234740296 on published main, critical Java21 A claims and NOT RUN boundaries. Вынести **FINAL AUDIT PASS / CHANGES** с конкретными severity, `path:line`, evidence и связью с independent HEAD. При PASS — **04 самостоятельно передаёт 00** для GO/NO-GO по Issue #33.
+Передать: оператор пересылает **прямой permalink на опубликованный адресный GitHub PR-комментарий** роли 04, который оформляет 01; не общий Issue/PR URL.
