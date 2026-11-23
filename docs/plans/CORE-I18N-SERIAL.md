@@ -2,6 +2,9 @@
 
 **G1 PROPOSED / NOT ACCEPTED.** Роль 01 — Research & Coverage. Основание: [Issue #200](https://github.com/Melchiorius/backend-interview-labs/issues/200), [адресное 00→01 #7101031603](https://github.com/Melchiorius/backend-interview-labs/issues/200#issuecomment-7101031603), [Java Core #33](https://github.com/Melchiorius/backend-interview-labs/issues/33). **Исходный BASE поручения:** `a60add1898112f444eb1ebac6d1386a05ca7abca` после G5 [PR #197](https://github.com/Melchiorius/backend-interview-labs/pull/197). **Фактический BASE этой ветки:** `1ff21114742c13d5a4cf9817f388b1ea646e2a17` после статусного G6 [PR #201](https://github.com/Melchiorius/backend-interview-labs/pull/201). Exact HEAD/CI фиксируются в PR. Роль 01 не делает G2, G6, merge.
 
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #202](https://github.com/Melchiorius/backend-interview-labs/pull/202#issuecomment-7101743338) на проверенном G1 HEAD `ad77fa24f7b1fe1b9bca3f0c1af0971376de45e1`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #205](https://github.com/Melchiorius/backend-interview-labs/pull/205), merge commit `a47ff935e1d4eab7957088569e4cacd978c69fda`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
+
 ## 1. Цель и границы
 Последние **2 незавершённых из 42 Java Core curricular ID** — CORE-I18N и CORE-SERIAL (40 ID реализованы через 39 статей по G5 #197). Исследование предлагает **две самостоятельные G2 статьи**, будущие `knowledge/01-java-core/internationalization.md` и `knowledge/01-java-core/serialization.md`; файлов ещё **нет**, поэтому Markdown-ссылок на них нет.
 

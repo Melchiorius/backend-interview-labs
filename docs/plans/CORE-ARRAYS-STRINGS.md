@@ -2,6 +2,9 @@
 
 **Статус:** **G1 PROPOSED / NOT ACCEPTED**; до написания статей. **Роль:** 01 — Research & Coverage. [Issue #119](https://github.com/Melchiorius/backend-interview-labs/issues/119), [адресное поручение 00](https://github.com/Melchiorius/backend-interview-labs/issues/119#issuecomment-7068612421), родитель #33. **Фактический BASE:** `4137f0e8453165882acfaff262d6df18db9f1b93` (после G6 Stream PR #120); на момент выдачи Issue был `48656a8db6ca87128619cee98a0174060baaec5f`. **Норма:** JLS / Java SE API **21**, без preview. **Авторская локальная среда:** OpenJDK `21.0.12.1` / `javac 21.0.12.1` (Debian), `--release 21`. Точный HEAD и CI появятся в описании PR; этот документ не повышает COVERAGE и не является готовой статьёй.
 
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #121](https://github.com/Melchiorius/backend-interview-labs/pull/121#issuecomment-7068864661) на проверенном G1 HEAD `c1d2d20679050263864a2fd2ab4485f62fde2112`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #124](https://github.com/Melchiorius/backend-interview-labs/pull/124), merge commit `97566d1cba493c6eadd2b065d94c4b993eca63e8`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
+
 ## 1. Задача читателя и архитектура будущих материалов
 
 Кандидат должен **предсказать тип, вывод и вид отказа** для коварных массивов (covariance, generic arrays, shallow copy, varargs, views), различать String/char/Unicode code points и выбирать StringBuilder/StringBuffer по контракту — не механически называть API. Граница изучения — Java 21, а не особенности OpenJDK Heap/Compact Strings/JIT/количества аллокаций.

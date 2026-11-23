@@ -2,6 +2,9 @@
 
 **Статус:** `G1 PROPOSED / NOT ACCEPTED`. **Роль:** 01 — Research & Coverage. Основание — [Issue #135](https://github.com/Melchiorius/backend-interview-labs/issues/135) и [поручение 00 #7071316617](https://github.com/Melchiorius/backend-interview-labs/issues/135#issuecomment-7071316617); программа #33. **BASE/main при создании ветки:** `b6eaba9b35e22bb5aaa62e12e5ae426443466ba1` после G6 Records/Immutable (Issue #134); точный PR HEAD фиксируется в GitHub PR/адресном комментарии. **Норма:** Java SE/JLS 21 без preview. **Локальная проба:** OpenJDK `javac 21.0.12.1` и `java 21.0.12.1`, Linux; `javac --release 21`. Содержимое документа — рабочая карта ДО статей, **не публикация G2**.
 
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #137](https://github.com/Melchiorius/backend-interview-labs/pull/137#issuecomment-7071516463) на проверенном G1 HEAD `1c4ecd7a23db0d3203047bc934e29a0782294039`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #140](https://github.com/Melchiorius/backend-interview-labs/pull/140), merge commit `69d61c427e7efcab89a55652830050ef16041c8e`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
+
 ## 1. Обещание читателю, границы и архитектура
 
 После двух связанных тем кандидат должен объяснить, какие именно **прямые** подтипы допускает `sealed`, как работают `permits` и `final|sealed|non-sealed`, почему «закрытая» иерархия не тождественна неизменяемости или невозможности всех косвенных наследников, а также предсказывать, **компилируется ли** `instanceof`/`switch` с pattern labels, что печатает программа и где возникает `NullPointerException` либо `MatchException`.

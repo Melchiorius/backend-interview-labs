@@ -2,6 +2,9 @@
 
 **Статус:** `G1 PROPOSED / NOT ACCEPTED`. **Автор:** 01 — Research & Coverage. [Issue #143](https://github.com/Melchiorius/backend-interview-labs/issues/143), [поручение 00](https://github.com/Melchiorius/backend-interview-labs/issues/143#issuecomment-7072135005), программа #33. **BASE/main на момент ветки:** `346f2bd3818c1b66dd7c8822cba6424dfc911dfc`, после документарного G6 Issue #142 и G5 PR #140; точный HEAD будет зафиксирован в PR и адресном комментарии 04. **Нормативная версия:** JLS/API **Java SE 21**, без preview. **Фактическая пробная среда:** OpenJDK `javac 21.0.12.1` / `java 21.0.12.1`, Linux, `--release 21`.
 
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #145](https://github.com/Melchiorius/backend-interview-labs/pull/145#issuecomment-7072342456) на проверенном G1 HEAD `85dedb6e31579f5d940d515604dc34cffbbd1b8a`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #148](https://github.com/Melchiorius/backend-interview-labs/pull/148), merge commit `62d9398040282cec1178c7fccbabef57d895f402`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
+
 ## 1. Проблема и педагогическое решение
 
 **CORE-ENUMS** отвечает на вопрос «что такое закрытый тип с именованными экземплярами, полями/поведением, идентичностью и специализированными коллекциями?». **CORE-CONTROL** — «как именно Java выбирает ветви, повторяет действия, прекращает/пропускает итерацию и вычисляет результат switch?». Связь — **enum state machine + enum switch**, но нельзя делать одно неразделимое изложение: читателю нужны и условия/циклы без enum, и API enum вне switch.

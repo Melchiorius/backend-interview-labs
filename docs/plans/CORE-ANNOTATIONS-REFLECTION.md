@@ -1,6 +1,9 @@
 # CORE-ANNOTATIONS + CORE-REFLECTION — G1 исследование Java SE 21
 
 **Статус:** G1 PROPOSED / NOT ACCEPTED. **Роль:** 01 — Research & Coverage. **Основание:** [Issue #167](https://github.com/Melchiorius/backend-interview-labs/issues/167), [поручение 00 #7078386872](https://github.com/Melchiorius/backend-interview-labs/issues/167#issuecomment-7078386872), родитель #33.
+
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #169](https://github.com/Melchiorius/backend-interview-labs/pull/169#issuecomment-7078606500) на проверенном G1 HEAD `6a08a490a701aafc85f85d07066d84807bd3be43`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #172](https://github.com/Melchiorius/backend-interview-labs/pull/172), merge commit `aa183b3b1bdba3c5eed8163e4b10aee82a043092`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
 **BASE/main при создании исследования:** `a05ac57f70d906d3679ff36be72470fc7edff06c` (G5 [PR #164](https://github.com/Melchiorius/backend-interview-labs/pull/164) опубликован). Отдельный G6 Issue #166/PR #168 — работа роли 06, возможно изменение base при открытии PR; фактический review HEAD/BASE уточняется в GitHub, а не угадывается. **Версия нормативных источников:** JLS/Javadoc Java SE 21 без preview. **Фактические локальные проверки:** OpenJDK `javac/java 21.0.12.1`, Debian Linux 13, `--release 21`.
 
 ## 1. Две темы, педагогическая архитектура и границы

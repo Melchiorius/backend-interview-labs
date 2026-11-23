@@ -1,6 +1,9 @@
 # CORE-RECORDS + CORE-IMMUTABLE — предварительный G1-план (Java SE 21)
 
 **Статус: G1 PROPOSED / NOT ACCEPTED.** Роль 01 — Research & Coverage; [Issue #127](https://github.com/Melchiorius/backend-interview-labs/issues/127), программа [#33](https://github.com/Melchiorius/backend-interview-labs/issues/33).
+
+**Позднейшая пометка о статусе (2026-11-23; не часть исходного G1):** сохранённое выше `G1 PROPOSED / NOT ACCEPTED` описывает этап подготовки этого плана. Позднее роль 00 формально приняла G1: [решение по PR #129](https://github.com/Melchiorius/backend-interview-labs/pull/129#issuecomment-7070349060) на проверенном G1 HEAD `d21e850d31591cc802e8f7737ba66df5535084c8`. Соответствующие учебные материалы G2 впоследствии опубликованы через [G5 PR #132](https://github.com/Melchiorius/backend-interview-labs/pull/132), merge commit `3e328df475016ffe6f32f1190ddf2d47e556e14b`. Это разные этапы и SHA: исторический BASE, матрицы P0/P1/P2 и результаты исследований ниже не изменены.
+
 **BASE/main на момент исследования:** `7218877f94cddfcfd30bf9c149192fbce3b4cb23` (после G6 PR #128); это не SHA будущего G2 и не замена актуального HEAD исследовательского PR.
 **Версия нормы:** JLS Java SE **21**, API JDK **21**, без preview. **Проверки ниже:** OpenJDK `javac 21.0.12.1` и `java 21.0.12.1`, Linux, `--release 21`. G1 не публикует учебные статьи и не изменяет `COVERAGE`/`CURRICULUM`.
 
