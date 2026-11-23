@@ -367,6 +367,8 @@ class KeyMutation {
 | I-18 | P2 | **Граница:** DTO, JavaBeans/ORM/JPA и framework-specific contracts — отдельно |
 | I-19 | P2 | **Граница:** allocation/JIT/GC/JMH performance — не измерено |
 
+**Связанная новая статья:** [CORE-DATETIME](datetime.md) показывает неизменяемость `Instant`, `LocalDate` и `ZonedDateTime`: `plusDays` возвращает новое значение, а не меняет исходный объект. Это применение принципа value objects, но не новый эксперимент по потокобезопасности или JMM.
+
 ## Нормы, пример G1 и пределы проверки
 
 **Первоисточники:** [List.copyOf](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)), [Collections.unmodifiableList](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List)), [List.of](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#of()), [Arrays.clone/copyOf](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html), [JLS §4.12.4 final](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4), [JLS §17.5 final fields](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.5), [java.lang.Record](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html). В [SOURCE_REGISTRY](../../docs/SOURCE_REGISTRY.md) неофициальные интервью-источники используются для формулирования вопросов, **не** как доказательство Java API.

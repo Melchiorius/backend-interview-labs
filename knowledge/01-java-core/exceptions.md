@@ -339,6 +339,8 @@ class ThrowNull {
 
 [CORE-ASSERT](assertions.md) отдельно показывает, почему `assert` при выключенных проверках пропускает условие и сообщение, почему `AssertionError` не заменяет `IllegalArgumentException` / `IllegalStateException` / `NullPointerException` при обязательной валидации. [CORE-OPTIONAL](optional.md) различает допустимое отсутствие результата и runtime NPE/NSEE при нарушениях конкретных контрактов `Optional`. Эта статья сохраняет собственную область checked/unchecked и распространения исключений.
 
+**Прикладные runtime-исключения:** [CORE-NUMBERS](numbers.md) различает `Math.addExact` и точное `BigDecimal.divide` (оба могут бросать `ArithmeticException` во время исполнения) от `javac`-ошибок типов. [CORE-DATETIME](datetime.md) разбирает `DateTimeParseException`, `DateTimeException` для DST-gap и `UnsupportedTemporalTypeException`. Эти конкретные API-примеры не меняют базовую иерархию `Throwable` этой статьи.
+
 ## Источники и воспроизводимость
 
 **Нормативные источники:** [JLS 21 Chapter 11](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html), [§14.18–14.20](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html), [§8.4.8.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.3); [Throwable API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html), [Exception API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Exception.html). Классификация независимых интервью-источников — [SOURCE_REGISTRY](../../docs/SOURCE_REGISTRY.md): формулировки вопросов не доказывают гарантии Java.

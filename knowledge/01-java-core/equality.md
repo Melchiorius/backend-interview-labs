@@ -396,7 +396,7 @@ System.out.println(treeSet.size()); // 1
 
 Это **не** поломка `BigDecimal`: его природный порядок документирован как несогласованный с `equals`. `HashSet` видит два неравных по `equals` значения, `TreeSet` — один класс эквивалентности по `compareTo==0`. Если бизнес-модель считает масштаб частью значения, следует явно обосновать тип коллекции или правило нормализации, а не просто заменить любую карту на TreeMap.
 
-Нормативно: [BigDecimal.equals / compareTo](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html), [Comparable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html), [TreeSet](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html).
+Нормативно: [BigDecimal.equals / compareTo](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html), [Comparable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html), [TreeSet](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html). **Отдельная [CORE-NUMBERS](numbers.md)** продолжает этот контрпример до scale/precision/unscaled, `BigDecimal(String)` vs `(double)` vs `valueOf`, деления и округления; правило равенства коллекции не задаёт правила денежной шкалы.
 
 ## 10. Массивы: Object.equals, Arrays.equals, Arrays.deepEquals
 
