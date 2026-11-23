@@ -306,3 +306,133 @@ L29=12345.67
 ### 6.2 SerializationProbe.java — полный безопасный source; только доверенные локально сформированные bytes
 
 ~~~java
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InvalidClassException;
+import java.io.InvalidObjectException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputFilter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
+import java.io.Serial;
+import java.io.Serializable;
+
+public class SerializationProbe {
+    static class Node implements Serializable {
+        @Serial private static final long serialVersionUID = 67L;
+        static String category = "before";
+        final String name;
+        transient String session;
+        Node next;
+        Node(String name, String session) { this.name = name; this.session = session; }
+        @Serial private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+            stream.defaultReadObject();
+            if (name == null || name.isBlank()) throw new InvalidObjectException("invalid name");
+        }
+    }
+    record Receipt(String label, int value) implements Serializable {
+        static int canonicalCalls;
+        Receipt { canonicalCalls++; if (label == null) throw new IllegalArgumentException("label"); }
+    }
+    enum Kind { ACTIVE }
+    static byte[] write(Object... objects) throws IOException {
+        try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(bytes)) {
+            for (Object object : objects) out.writeObject(object);
+            out.flush();
+            return bytes.toByteArray();
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        Node root = new Node("root", "local-session");
+        Node child = new Node("child", "another-session");
+        root.next = child;
+        child.next = root;
+        byte[] bytes = write(root, root);
+        System.out.println("S01=" + (bytes.length > 0));
+        System.out.println("S02=" + ObjectStreamClass.lookup(Node.class).getSerialVersionUID());
+        Node.category = "after";
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+            in.setObjectInputFilter(info -> info.depth() > 10 || info.references() > 30 || info.streamBytes() > 4096
+                    ? ObjectInputFilter.Status.REJECTED : ObjectInputFilter.Status.UNDECIDED);
+            Node restored = (Node) in.readObject();
+            Node second = (Node) in.readObject();
+            System.out.println("S03=" + restored.name);
+            System.out.println("S04=" + (restored.session == null));
+            System.out.println("S05=" + Node.category);
+            System.out.println("S06=" + restored.next.name);
+            System.out.println("S07=" + (restored.next.next == restored));
+            System.out.println("S08=" + (restored == second));
+            System.out.println("S09=" + (restored != root));
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+            in.setObjectInputFilter(info -> info.serialClass() == Node.class
+                    ? ObjectInputFilter.Status.REJECTED : ObjectInputFilter.Status.UNDECIDED);
+            try { in.readObject(); }
+            catch (InvalidClassException ex) { System.out.println("S10=InvalidClassException:filter"); }
+        }
+        try { write(new Object()); }
+        catch (NotSerializableException ex) { System.out.println("S11=NotSerializableException"); }
+        byte[] invalid = write(new Node("", "temporary"));
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(invalid))) {
+            try { in.readObject(); }
+            catch (InvalidObjectException ex) { System.out.println("S12=InvalidObjectException:validation"); }
+        }
+        Receipt receipt = new Receipt("invoice", 67);
+        System.out.println("S13=" + Receipt.canonicalCalls);
+        byte[] rec = write(receipt);
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(rec))) {
+            Receipt restored = (Receipt) in.readObject();
+            System.out.println("S14=" + Receipt.canonicalCalls);
+            System.out.println("S15=" + restored.label() + ":" + restored.value());
+            System.out.println("S16=" + (restored != receipt));
+        }
+        byte[] en = write(Kind.ACTIVE);
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(en))) {
+            System.out.println("S17=" + (in.readObject() == Kind.ACTIVE));
+        }
+        System.out.println("S18=" + Serializable.class.isAssignableFrom(Node.class));
+        System.out.println("S19=" + ObjectStreamClass.lookup(Receipt.class).getSerialVersionUID());
+        System.out.println("S20=" + root.session);
+    }
+}
+~~~
+
+**Фактический stdout SerializationProbe: 20 строк, только локальные trusted bytes:**
+
+~~~text
+S01=true
+S02=67
+S03=root
+S04=true
+S05=after
+S06=child
+S07=true
+S08=true
+S09=true
+S10=InvalidClassException:filter
+S11=NotSerializableException
+S12=InvalidObjectException:validation
+S13=1
+S14=2
+S15=invoice:67
+S16=true
+S17=true
+S18=true
+S19=0
+S20=local-session
+~~~
+
+**SHA-256 SerializationProbe.java:** `294a30fccdb899c1471d8fb38bd7ec74cf3aad32b493927dd47459d234d978a3`.
+**SHA-256 serial.stdout:** `fa00d160ce87c1c241f42948140086edd43636e3b30949e27de97affb6535608`.
+
+**Трактовка:** `S02/S19` — разница UID обычного класса/record в этой среде. `S04` только `transient` restored value, `S05` static class field не входит в поток, `S07/S08` циклы и ссылки через stream handles; `S10` — **показательное отклонение даже доверенных локальных байтов**, не тест промышленных фильтров. `S11/S12` различают NotSerializableException и InvalidObjectException: оба runtime. `S13→S14` — canonical record constructor вызван вновь, а ordinary `Node` constructor при чтении не утверждается без собственного trace. Фильтр для первого прочтения с `UNDECIDED` и лимитами — НЕ allowlist и не обеспечение безопасности; класс входит в граф без полной валидации. **Никогда не переносить эту лабораторную запись ObjectInputStream на внешний/недоверенный ввод.**
+
+## 7. Настоящие Java21 compiler-negatives: 12 изолированных файлов
+
+В стенде выполнены **12 отдельных независимых команд** `javac --release 21 -XDrawDiagnostics -d negative/classes negative/FILE.java`, у каждой **exit 1 и релевантный compiler.err.* key**. Каждая строка таблицы ниже — **полный самостоятельный .java source**, не фрагмент с отсутствующими классами. Runtime `ParseException/NotSerializableException/InvalidClassException/InvalidObjectException/MissingResourceException` **не** compiler-negatives.
+
+| Файл | Полный самодостаточный Java source | Фактический ключ диагностической ошибки | Причина |
+|---|---|---|---|
