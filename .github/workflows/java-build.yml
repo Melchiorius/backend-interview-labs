@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, docs/core-enums-control-146, docs/core-syntax-operators-154, docs/core-assert-optional-162, docs/core-annotations-reflection-170, docs/core-modules-classloader-177, docs/core-numbers-datetime-186]
+    branches: [main, docs/core-enums-control-146, docs/core-syntax-operators-154, docs/core-assert-optional-162, docs/core-annotations-reflection-170, docs/core-modules-classloader-177, docs/core-numbers-datetime-186, docs/core-regex-utilities-195]
   workflow_dispatch:
 
 jobs:
@@ -88,3 +88,6 @@ jobs:
 
       - name: Verify CORE-NUMBERS + CORE-DATETIME Java 21 runnable
         run: bash examples/core/numbers-datetime/verify.sh
+
+      - name: Verify CORE-REGEX + CORE-UTIL Java 21 runnable
+        run: bash examples/core/regex-util/verify.sh
