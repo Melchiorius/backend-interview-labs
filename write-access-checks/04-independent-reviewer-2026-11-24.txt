@@ -1,0 +1,5 @@
+Backend Interview Labs — write access check
+Role: 04 — Independent Reviewer
+Date: 2026-11-24
+Purpose: verify GitHub repository write permission on the existing test branch only.
+No changes to main, knowledge, exercises, or project gates.
