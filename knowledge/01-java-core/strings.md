@@ -445,3 +445,5 @@ class BuilderOperations {
 **Что читать дальше:** [массивы](arrays.md), [конверсии](conversions.md), [равенство](equality.md), [обобщённые типы](generics.md), [лямбды](functions.md) и [потоки](streams.md). Для **текстового представления чисел** и `new BigDecimal("0.1")` vs `new BigDecimal(0.1)` — [CORE-NUMBERS](numbers.md); для **ISO parsing, DateTimeFormatter и явной ZoneId** — [CORE-DATETIME](datetime.md).
 
 **Дополнительный материал по regex:** [CORE-REGEX](regex.md) подробно объясняет отличие Java-экранирования от грамматики `Pattern`, состояния `Matcher`, `find`/`matches`, групп, замен и Unicode; это продолжение изложенных здесь `split` и `replaceAll`.
+
+**Переход к пользовательским языкам и кодировкам:** [CORE-I18N](internationalization.md) разбирает `Locale`, турецкое преобразование регистра, `ResourceBundle` и независимость `Charset` от локали. UTF-16, `String` и кодовые точки изучаются здесь.

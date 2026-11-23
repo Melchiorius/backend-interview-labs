@@ -350,3 +350,5 @@ class ThrowNull {
 **Порядок чтения:** [CORE-INHERITANCE](inheritance.md) → **эта статья** → [CORE-RESOURCES](resources.md) → [CORE-INIT](initialization.md).
 
 **Приложения к классификации ошибок:** [CORE-REGEX](regex.md) отделяет недопустимый Java string escape от runtime `PatternSyntaxException` и replacement failures; [CORE-UTIL](utilities.md) разбирает runtime `NullPointerException`/`IndexOutOfBoundsException`/`UnsupportedOperationException` и отдельные ошибки сигнатур при `javac`.
+
+**Ошибки сериализации и локализованного ввода:** [CORE-SERIAL](serialization.md) различает `NotSerializableException`, `InvalidObjectException`, `InvalidClassException` из-за фильтра и несовместимости версии; [CORE-I18N](internationalization.md) показывает `ParseException`, `MissingResourceException` и отдельные ошибки типов при `javac`.

@@ -244,3 +244,5 @@ try {
 **NOT RUN относительно интегрированного G2:** все короткие embedded snippets отдельно как compilation units; восемь compiler-negative в штатном CI; все иные JDK/vendor/OS/tzdb, будущие переходы и исторические timezone rule changes, нетипичные midnight-gaps, real parser ResolverStyle tests, полноценные Locale/CLDR/chronology, распределённые часы/NTP/leap seconds/monotonic deadline tests, JDBC/DB TIMESTAMP/ORM, scheduler timing, все P2, IDE/Obsidian GUI, HTTP status/anchors. **Не** обещаем воспроизводимость UTC/DST примера на бесконечно будущих версиях tzdb: фиксированы конкретный год, зона и реально наблюдавшаяся версия базы.
 
 [CORE-NUMBERS](numbers.md) объясняет числовое представление; [immutability](immutability.md) — общий принцип value objects. Статусы [CURRICULUM](../../docs/CURRICULUM.md) и [COVERAGE](../../docs/COVERAGE.md) меняются только после G5/G6.
+
+**Локализованные названия дат:** [CORE-I18N](internationalization.md) объясняет `DateTimeFormatter.withLocale`, различие языка, `ZoneId` и `Instant`, Unicode/CLDR drift. Правила DST и временная шкала остаются предметом этой статьи.

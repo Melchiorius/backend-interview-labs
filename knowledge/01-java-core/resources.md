@@ -370,3 +370,5 @@ class CheckedClose {
 **Где тот же принцип нужен Stream API:** [CORE-STREAM-ADV: `BaseStream.close()`, `onClose()` и suppressed-ошибки обработчиков](stream-advanced.md). Терминальная операция Stream сама по себе не обязана закрывать поток; если источник удерживает внешний ресурс, ответственность за его закрытие остаётся у вызывающего кода. Сравните этот контракт с try-with-resources выше; это не обещание автоматического `commit`/`rollback` или завершения внешнего IO.
 
 **Читать дальше:** [CORE-EXCEPTIONS](exceptions.md) → **эта статья** → [CORE-INTERFACES](interfaces.md) → [CORE-INIT](initialization.md) → [Stream.close/onClose](stream-advanced.md); позднее IO-FILES / DB-JDBC и SPR-TX после появления этих материалов.
+
+**Граница потоков ввода и безопасности:** [CORE-SERIAL](serialization.md) разбирает `ObjectOutputStream`/`ObjectInputStream` только на собственных доверенных `ByteArray`-потоках, специальные `readObject`/`InvalidObjectException` и запрет на недоверенную нативную десериализацию.

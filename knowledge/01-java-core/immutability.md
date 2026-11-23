@@ -378,3 +378,5 @@ class KeyMutation {
 **NOT RUN без отдельного evidence:** автоматическое извлечение/компиляция *всех* фрагментов Java из статьи; отрицательные N01–N16 в CI; визуальный Obsidian/IntelliJ; другие JDK/JVM/OS, реальные concurrent mutation/JMM litmus, property-based проверки всех возможных graph aliases, reflection/serialization/ORM, Unicode/IO, benchmark/JMH/GC/JIT. Положительный запуск одного примера не заменяет нормативного доказательства глубокой неизменяемости или безопасной публикации.
 
 **Продолжение про стандартные представления коллекций:** [CORE-UTIL](utilities.md) сопоставляет backed `Arrays.asList`, `Collections.unmodifiableList` как живую обёртку, `List.of` и shallow structural snapshot `List.copyOf`.
+
+**Инварианты при восстановлении объектов:** [CORE-SERIAL](serialization.md) показывает проверку состояния в `readObject`, особые правила канонического конструктора `record` и почему `transient`/shallow-copy сами по себе не гарантируют безопасность или неизменяемость.
