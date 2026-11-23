@@ -153,3 +153,7 @@ CHECK PASSED
 ## Регулярные выражения и утилиты Java 21
 
 [CORE-REGEX + CORE-UTIL — два самостоятельных runnable](regex-util/README.md) связывает [теорию регулярных выражений](../../knowledge/01-java-core/regex.md) и [утилиты JDK](../../knowledge/01-java-core/utilities.md) с двумя полными Java21 программами: `RegexProbe` (33 RG) и `UtilProbe` (38 UT). Команда `bash examples/core/regex-util/verify.sh` выполняет **одну чистую компиляцию и две отдельные JVM**, сравнивает оба полных stdout и их G1 SHA-256 (**71 наблюдение, не 71 JUnit-тест**). Отдельные 14 compiler-negative описаны в [G1 §7](../../docs/plans/CORE-REGEX-UTIL.md) и не подменяются runtime exception-примерами.
+
+## Интернационализация и сериализация (Java 21)
+
+[CORE-I18N + CORE-SERIAL — два безопасных воспроизводимых runnable](i18n-serialization/README.md) дополняют [статью о локализации](../../knowledge/01-java-core/internationalization.md) и [статью о Java native serialization](../../knowledge/01-java-core/serialization.md). Одна команда `bash examples/core/i18n-serialization/verify.sh` выполняет чистую Java 21 компиляцию, две отдельные JVM и две полные сверки stdout (**29 L + 20 S = 49 подписанных наблюдений, не 49 JUnit-тестов**). Сериализация только собственных доверенных локально созданных байтов; `UNDECIDED` не означает отказ. Локализованный вывод зависит от CLDR/JDK.
