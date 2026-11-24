@@ -121,7 +121,7 @@ sorted.add("a");
 System.out.println(sorted.size()); // 1
 ~~~
 
-Это не ошибка реализации дерева: у порядка и равенства **разные контракты**. Но comparator, несовместимый с equals, может нарушить общий ожидаемый Set semantics при сравнении с другими Set. Полный дизайн контрактов и сортированных структур выходит за границы статьи; [CORE-EQUALITY](equality.md) объясняет математический смысл и инженерные последствия.
+Это не ошибка реализации дерева: у порядка и равенства **разные контракты**. Но comparator, несовместимый с equals, может нарушить общий ожидаемый Set semantics при сравнении с другими Set. Полный дизайн контрактов и сортированных структур выходит за границы статьи; [CORE-EQUALITY](equality.md) объясняет математический смысл и инженерные последствия. Для хеш-структур дополнительно доступен [COL-HASH](../02-collections/hash-collections.md): коллизии, поиск через `equals` и контракт стабильного ключа. Сортированные структуры остаются отдельной темой `COL-SORTED`.
 
 ## 5. Arrays.equals, deepEquals, mismatch и compare (UT-15–UT-18)
 
@@ -198,7 +198,7 @@ mutable.append("67");
 System.out.println(snap.get(0)); // A67
 ~~~
 
-Unmodifiable не означает deeply immutable. Это принцип владения ссылками, разобранный в [CORE-IMMUTABLE](immutability.md). `List.copyOf` и `List.of` не допускают null элементов.
+Unmodifiable не означает глубоко неизменяемый. Это принцип владения ссылками, разобранный в [CORE-IMMUTABLE](immutability.md). `List.copyOf` и `List.of` не допускают `null` среди элементов. Систематическое сравнение представлений `Map.keySet()`/`entrySet()`, фабрик `List.of` и копий `List.copyOf` — в [COL-CONTRACTS](../02-collections/contracts.md).
 
 ## 9. P1: расширение API без приписывания непроведённых проверок (UT-30–UT-36)
 
