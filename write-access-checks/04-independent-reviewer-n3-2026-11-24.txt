@@ -1,0 +1,2 @@
+04 — Independent Reviewer: startup write-access check, 2026-11-24.
+Test only; no changes to main or audit PR #253.
