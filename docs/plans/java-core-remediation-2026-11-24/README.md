@@ -1,8 +1,8 @@
 # Java Core remediation — R0 planning index
 
-Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-01 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
+Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-02 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
 
-## Checkpoint R0-01
+## Checkpoint R0-01 (historical)
 
 - [Blocker ledger](findings-B.md): all 7 original stable IDs, OPEN, canonical ownership B1/B2/B3/B4a/B4b, primary acceptance. No closure.
 - [A02 additional findings](findings-A02.md): 7 P1 + 2 P2, OPEN, D-A02.
@@ -19,8 +19,18 @@ Next D packages partition by actual original stage/topic and file ownership, not
 
 Every package: primary exact acceptance, affected paths, original rows and source anchors, 02/03 roles, 05 G3, 04 G4 exact integrated HEAD, 00 guarded G5, 06 G6 published exact evidence. Dispositions FIXED / ALREADY-SATISFIED / DUPLICATE-OF / DEFERRED / UNRESOLVED only after appropriate new evidence and decision; initial OPEN. New findings separate namespace. Q independent re-audit of all 499 and 925/42 IDs after remediation, cross-topic/regression and new frozen snapshot, no unresolved mandatory blockers/ERROR/P0, new 00 GO and postmerge CI. C full Collections audit only after new Core GO; 8 articles/IDs, 144 original requirements + B2 additional mandatory question and prior fixes, new exact snapshot; remediation and independent acceptance if necessary. CON HOLD until two new GO and explicit operator permission.
 
-## Next cursor — R0-02
+## Historical cursor — R0-02
 
 Read A05, A06, A09.1/A09.2 primary acceptance and original matrices at immutable source, import exact B2 row mappings and non-blockers without duplicating B ledger; create bounded B2 brief(s). Then A07 B3, A10.1/.2 and A17.1/.2/.3 B4, checking authoritative consolidated reports and avoiding double-count. Afterwards A01/A03/A04/A08 and remaining A11–A24 in bounded batches. A25.2 §1 determines authoritative matrix reports and original-line ranges; preserve early unnumbered IDs, NF/GE/ER aliases, L/S tail spelling and A22 correction. Reconcile each batch before moving cursor, explicitly flag unmapped mandatory deficits, do not guess mapping. Re-read existing ledger before write; new branch commits only within this directory, keep one draft PR. If B brief ready, separate addressed 00 comment; separate 01 continuation comment. When complete report reconciliation and exact HEAD to 00. No merge, no teaching files, no status edits.
 
 Verification so far: primary A02 full source plan/report and seven blocker lines read; local javac/java/Gradle, runner, locale regression, GUI NOT RUN. CI exact HEAD verified separately in checkpoint. No independent substantive verdict by 01.
+
+## Checkpoint R0-02 — B2 planning complete
+
+[A05 findings](findings-A05.md) / [requirements](requirements-A05.md): 8 non-blockers (6 P1/2 P2), 20 rows 9 OK/7 DEPTH/1 ERROR/3 BOUND. [A06 findings](findings-A06.md) / [requirements](requirements-A06.md): 10 non-blockers (8 P1/2 P2), 25 rows 9 OK/10 DEPTH/2 ERROR/4 BOUND. [A09 findings](findings-A09.md) / [requirements](requirements-A09.md): 15 non-blockers (11 P1/4 P2), 30 rows 9 OK/13 DEPTH/2 ERROR/6 BOUND. A09 consolidated matrix counted once; B01 already canonical in findings-B. Original plan ID, priority, line matched to report; no DEPTH rows without explicit finding marker in these three stages. [B2 brief](B2-ACCESS-INHERITANCE-INTERFACES.md) ready for 00 decision, proposed sequential subpackages with distinct paths. B1 unchanged.
+
+Cumulative **49/499** findings (7 BLOCKER/32 P1/10 P2); **86/925** requirements (31 OK/35 DEPTH/6 ERROR/14 BOUND). Remaining 450 findings (378 P1/72 P2), 839 requirements (234 OK/471 DEPTH/19 ERROR/115 BOUND). All OPEN, no remediation claimed. Exact HEAD/CI in checkpoint comment. Prior cursor above historical, superseded below.
+
+## Next cursor — R0-03
+
+A07 B3: primary A07-CORE-INIT.md, original CORE-INIT.md L120–139, canonical JC-A07-B01 already registered; import non-blockers and 20 rows, prepare B3 brief with zero actual arguments vs zero formal params, varargs/access/ambiguity/throws and preserve original negative. Then B4a/b A10/A17, followed by remaining D batches. Recheck live BASE and PR HEAD before changes. Separate address 00 for ready B3 and 01 continuation. Do not edit teaching files or interfere with B1/B2. No merge/C/CON. Local checks NOT RUN.
