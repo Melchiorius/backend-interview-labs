@@ -1,6 +1,6 @@
 # Сортированные коллекции и приоритетная очередь: проверки Java 21
 
-Целевые статьи C3: `knowledge/02-collections/sorted.md` и `knowledge/02-collections/priority-queue.md` (ссылки активировать после появления файлов).
+Теория: [сортированные коллекции](../../../knowledge/02-collections/sorted.md) и [приоритетная очередь](../../../knowledge/02-collections/priority-queue.md).
 Предпосылки: [контракты](../../../knowledge/02-collections/contracts.md), [hash-based коллекции](../../../knowledge/02-collections/hash-collections.md), [последовательные коллекции](../../../knowledge/02-collections/sequential.md), [итераторы](../../../knowledge/02-collections/iteration.md), [equals/hashCode](../../../knowledge/01-java-core/equality.md), [generics](../../../knowledge/01-java-core/generics.md), [неизменяемость](../../../knowledge/01-java-core/immutability.md).
 Основание: [план C3](../../../docs/plans/COL-SORTED-HEAP.md).
 
