@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, docs/core-enums-control-146, docs/core-syntax-operators-154, docs/core-assert-optional-162, docs/core-annotations-reflection-170, docs/core-modules-classloader-177, docs/core-numbers-datetime-186, docs/core-regex-utilities-195, docs/core-i18n-serial-203, author/col-contracts-hash-c1, author/col-sequential-iter-c2, author/col-sorted-heap-c3]
+    branches: [main, docs/core-enums-control-146, docs/core-syntax-operators-154, docs/core-assert-optional-162, docs/core-annotations-reflection-170, docs/core-modules-classloader-177, docs/core-numbers-datetime-186, docs/core-regex-utilities-195, docs/core-i18n-serial-203, author/col-contracts-hash-c1, author/col-sequential-iter-c2, author/col-sorted-heap-c3, author/col-concurrent-tradeoffs-c4]
   workflow_dispatch:
 
 jobs:
@@ -103,3 +103,6 @@ jobs:
 
       - name: Verify COL-SORTED + COL-HEAP Java 21 runnable
         run: bash examples/collections/sorted-heap/verify.sh
+
+      - name: Verify COL-CONCURRENT + COL-TRADEOFFS Java 21 runnable
+        run: bash examples/collections/concurrent-tradeoffs/verify.sh
