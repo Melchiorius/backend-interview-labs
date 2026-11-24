@@ -1,45 +1,45 @@
 # Сортированные коллекции и приоритетная очередь: проверки Java 21
 
 Теория: [сортированные коллекции](../../../knowledge/02-collections/sorted.md) и [приоритетная очередь](../../../knowledge/02-collections/priority-queue.md).
-Предпосылки: [контракты](../../../knowledge/02-collections/contracts.md), [hash-based коллекции](../../../knowledge/02-collections/hash-collections.md), [последовательные коллекции](../../../knowledge/02-collections/sequential.md), [итераторы](../../../knowledge/02-collections/iteration.md), [equals/hashCode](../../../knowledge/01-java-core/equality.md), [generics](../../../knowledge/01-java-core/generics.md), [неизменяемость](../../../knowledge/01-java-core/immutability.md).
+Предпосылки: [контракты](../../../knowledge/02-collections/contracts.md), [хеш-коллекции](../../../knowledge/02-collections/hash-collections.md), [последовательные коллекции](../../../knowledge/02-collections/sequential.md), [итераторы](../../../knowledge/02-collections/iteration.md), [equals/hashCode](../../../knowledge/01-java-core/equality.md), [обобщённые типы](../../../knowledge/01-java-core/generics.md), [неизменяемость](../../../knowledge/01-java-core/immutability.md).
 Основание: [план C3](../../../docs/plans/COL-SORTED-HEAP.md).
 
 ## Запуск и контракт
 
-[SortedHeapProbe.java](src/SortedHeapProbe.java) — самостоятельный пример без зависимостей и входных данных. Проверка check сравнивает ожидаемое и фактическое значения, throwsType проверяет тип исключения; расхождения вызывают AssertionError независимо от -ea. stdout содержит 51 строку ([эталон](expected.stdout)). Это не 51 JUnit-тест и не полное покрытие всей матрицы.
+[SortedHeapProbe.java](src/SortedHeapProbe.java) — самостоятельная программа без внешних зависимостей. Метод `check` сравнивает ожидаемое и фактическое значения, `throwsType` проверяет тип исключения. При расхождении возникает `AssertionError` независимо от флага `-ea`. 51 строка стандартного вывода ([эталон](expected.stdout)) — наблюдения одной программы, а не 51 тест JUnit и не полное покрытие матрицы.
 
-Нужны OpenJDK 21 (javac и java одного JDK), Bash, diff, grep, mktemp и стандартные Unix-утилиты. Из корня checkout:
+Нужны OpenJDK 21 (команды `javac` и `java` из одного JDK), Bash, `diff`, `grep`, `mktemp` и стандартные утилиты Unix. Из корня репозитория:
 
 ```bash
 bash examples/collections/sorted-heap/verify.sh
 ```
 
-Из каталога примера: `./verify.sh`. Для отдельного позитивного запуска: `java src/SortedHeapProbe.java`. Runner использует временный каталог, javac --release 21 -Xlint:all, java, полный diff -u, затем отдельно компилирует N01/N02. Временные файлы удаляются; exit 0 означает прохождение всех проверок.
+Из каталога примера можно выполнить `./verify.sh`, а для отдельного запуска корректной программы — `java src/SortedHeapProbe.java`. Проверочный скрипт создаёт временный каталог, компилирует основной исходник командой `javac --release 21 -Xlint:all`, запускает JVM и сравнивает весь вывод через `diff -u`. Затем N01 и N02 **по отдельности передаются компилятору и ожидаемо не проходят компиляцию**. Временные файлы удаляются; код выхода 0 означает успешную проверку всех условий.
 
 ## Разбор
 
 | Сценарий | Матрица | Механизм |
 |---|---|---|
-| R01 BigDecimal | CT-03/04 | 1.0 и 1.00 различаются scale и equals, но compareTo возвращает 0. TreeSet хранит один элемент, HashSet два. Порядок HashSet не проверяется. Несогласованный с equals порядок допустим для sorted semantics, но нарушает общий Set/Map equality contract. |
-| R02 Overflow | CT-01/02, CP-02 | MAX_VALUE - (-1) переполняется до MIN_VALUE; обратное вычитание также MIN_VALUE. Оба знака отрицательные, что нарушает антисимметрию знака. Integer.compare даёт противоположные знаки. С ошибочным comparator сортировка не запускается. |
-| R03 Navigation/range | CT-05/06/07 | В порядке ключей 10,20,30 для 20 lower/floor/ceiling/higher равны 10/20/20/30. Диапазон [10,30) исключает 30; put через view меняет parent, parent update виден в range. Вставка 30 через range запрещена. |
-| R04 Reverse/snapshot | CT-08/12 | descendingMap/reversed меняют порядок обхода и остаются backed views; удаление/вставка отражаются в parent. TreeMap putFirst/putLast запрещены, порядок задаётся сравнением. firstEntry — snapshot отображения, setValue не поддерживается; не deep copy mutable value. |
-| R05 PQ | CP-01/02/05/07 | Natural head — минимум; reverseOrder даёт максимум. Извлекать по приоритету через poll/remove(), не считать iterator отсортированным. remove(Object) ищет конкретный равный элемент, а remove() удаляет голову. |
-| R06 PQ boundaries | CP-03/04/06 | peek/poll на пустой очереди возвращают null, element/remove бросают NSE, offer(null) — NPE. Дубликаты допустимы. Две разные Task с priority=1 проверяются по приоритету и принадлежности множеству, не по относительному порядку. |
-| R07 Comparator equivalence | CT-03/04/10/14 | Сравнение строк только по длине делает ab/cd/xy эквивалентными. TreeSet отвергает повтор, TreeMap заменяет значение. Natural TreeSet отвергает null; nullsFirst позволяет null в выбранном TreeSet. |
-| R08 Mutable ordering/priority | CT-11, CP-13 | Объяснение ниже, не фиксированный runtime результат. |
+| R01 BigDecimal | CT-03/04 | Числа 1.0 и 1.00 различаются масштабом (scale), поэтому `equals` возвращает false, но `compareTo` возвращает 0. В `TreeSet` остаётся один элемент, в `HashSet` — два. Порядок `HashSet` не проверяется. Несогласованный с `equals` порядок имеет определённую семантику сортированной коллекции, но нарушает общий контракт `Set/Map`. |
+| R02 Переполнение | CT-01/02, CP-02 | `MAX_VALUE - (-1)` переполняется до `MIN_VALUE`; обратное вычитание даёт тот же результат. Оба знака отрицательны. `Integer.compare` даёт противоположные знаки. С некорректным компаратором сортировка не запускается. |
+| R03 Навигация и диапазон | CT-05/06/07 | Для ключей 10,20,30 методы `lowerKey/floorKey/ceilingKey/higherKey` относительно 20 дают 10/20/20/30. Диапазон [10,30) исключает 30. Вызывающий код изменяет исходную карту через `range.put`, а замена значения через исходную карту видна в представлении. Вставка ключа 30 через представление вызывает `IllegalArgumentException`. |
+| R04 Обратный порядок и снимок | CT-08/12 | `descendingMap/reversed` возвращают связанные с исходной картой представления. Удаление и вставка через них отражаются в исходной карте. `TreeMap.putFirst/putLast` вызывают `UnsupportedOperationException`: порядок определяется сравнением. `firstEntry()` возвращает снимок отображения, не поддерживающий `setValue`; объекты ключа и значения глубоко не копируются. |
+| R05 Приоритетная очередь | CP-01/02/05/07 | При естественном порядке голова — минимум; `Comparator.reverseOrder()` даёт максимум. Последовательные извлечения `poll/remove()` идут по приоритету при отсутствии промежуточных изменений. Итератор не обещает такой порядок. `remove(Object)` ищет равный объект, `remove()` удаляет голову. |
+| R06 Границы очереди | CP-03/04/06 | На пустой очереди `peek/poll` возвращают `null`, `element/remove` вызывают `NoSuchElementException`. `offer(null)` вызывает `NullPointerException`. Дубликаты допустимы. Две разные задачи с приоритетом 1 проверяются по приоритету и принадлежности множеству, а не по относительному порядку. |
+| R07 Эквивалентность по сравнению | CT-03/04/10/14 | При сравнении строк только по длине ab/cd/xy эквивалентны. `TreeSet` отвергает повтор, `TreeMap` заменяет значение. Естественный порядок `TreeSet` запрещает `null`, а переданный `Comparator.nullsFirst` допускает его в данном множестве. |
+| R08 Изменяемые ключи и приоритеты | CT-11, CP-13 | Объяснение ниже; конкретный результат выполнения после нарушения инварианта не фиксируется. |
 
 ### Изменяемые ключи и приоритеты (R08)
 
-Дерево размещает ключ по результатам сравнений при вставке; куча восстанавливает инвариант при операциях offer/poll. Если изменить поле, участвующее в сравнении уже сохранённого объекта, коллекция не получает уведомления об изменении и не перестраивается автоматически. Например, задача с priority=67 может стать priority=1, но это не даёт обещания немедленно увидеть её в head. У TreeMap/TreeSet поиск по изменённому ключу также не должен считаться надёжным. Не закрепляем результат такой мутации как Java API guarantee. Выбирайте immutable ordering key либо удаляйте элемент **до** изменения сравниваемых полей, затем вставляйте снова. Если инвариант уже нарушен, требуется корректное перестроение из достоверного набора элементов, а не обещание успешного remove мутированного ключа.
+Дерево размещает ключ по результатам сравнения при вставке; куча восстанавливает инвариант при операциях `offer/poll`. Если вызывающий код изменит поле уже сохранённого объекта, участвующее в сравнении, коллекция не получает уведомления и не перестраивается автоматически. Например, задача с приоритетом 67 может получить приоритет 1, но это не гарантирует её немедленного появления в голове. Поиск изменённого ключа в `TreeMap/TreeSet` также ненадёжен. Выбирайте неизменяемые поля сравнения либо удаляйте элемент **до** изменения, а затем вставляйте снова. Если инвариант уже нарушен, может потребоваться перестроение из достоверного набора элементов; успешное удаление изменённого ключа не гарантируется.
 
-## Compiler-negative
+## Примеры ожидаемых ошибок компиляции
 
-- [N01](negative/N01.java): TreeMap<Integer,String> не принимает String в качестве ключа (CT-18).
-- [N02](negative/N02.java): TreeSet не имеет get(int) (CT-05).
+- [N01](negative/N01.java): `TreeMap<Integer,String>` не принимает `String` в качестве ключа (CT-18).
+- [N02](negative/N02.java): `TreeSet` не имеет метода `get(int)` (CT-05).
 
-На javac 21.0.12.1 оба завершаются exit=1. N01: compiler.err.cant.apply.symbols с вложенной compiler.misc.inconvertible.types (String/Integer); N02: compiler.err.cant.resolve.location.args (get/int). Runner проверяет статус и диагностическую категорию, не весь текст ошибки. Файлы намеренно некомпилируемы; не включать их в позитивную компиляцию.
+По отчёту роли 03 на `javac` 21.0.12.1 обе отдельные компиляции завершились с кодом 1. N01: `compiler.err.cant.apply.symbols` с вложенной категорией `compiler.misc.inconvertible.types` (String/Integer); N02: `compiler.err.cant.resolve.location.args` (get/int). Скрипт проверяет код выхода и диагностическую категорию, а не весь текст ошибки. Эти исходники намеренно не проходят компиляцию и не входят в успешную сборку основной программы.
 
 ## Границы
 
-Никаких проверок неопределённого порядка итератора PQ, tie placement, формы дерева/кучи, latency, GC, памяти, private reflection или гонок. CT-09/CP-07 — оценки сложности из API с учётом цены сравнения, не benchmark; CT-13/CP-08/11 — механизмы реализации, не наблюдаемые гарантии формы структуры. PQ не потокобезопасна. См. Java SE 21 [TreeMap](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeMap.html), [TreeSet](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html), [Comparator](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html), [PriorityQueue](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html).
+Пример не фиксирует порядок итератора `PriorityQueue`, расположение равноприоритетных элементов или форму дерева и кучи. Не измеряются время, память и работа сборщика мусора; не используются рефлексия для чтения закрытых полей и тесты гонок. CT-09/CP-07 — оценки сложности из API с учётом цены сравнения, а не измерения; CT-13/CP-08/11 — механизмы реализации, а не гарантии конкретной формы структуры. `PriorityQueue` не потокобезопасна. См. Java SE 21 [TreeMap](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeMap.html), [TreeSet](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html), [Comparator](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html), [PriorityQueue](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html).
