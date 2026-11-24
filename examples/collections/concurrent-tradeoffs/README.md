@@ -1,6 +1,6 @@
 # Конкурентные коллекции и выбор структуры: практические проверки Java 21
 
-Целевые статьи C4: `knowledge/02-collections/concurrent.md` и `knowledge/02-collections/tradeoffs.md` (ссылки активировать после появления файлов).
+Теория: [COL-CONCURRENT](../../../knowledge/02-collections/concurrent.md), [COL-TRADEOFFS](../../../knowledge/02-collections/tradeoffs.md).
 Предпосылки: [контракты](../../../knowledge/02-collections/contracts.md), [hash-based коллекции](../../../knowledge/02-collections/hash-collections.md), [последовательные коллекции](../../../knowledge/02-collections/sequential.md), [итераторы](../../../knowledge/02-collections/iteration.md), [сортированные коллекции](../../../knowledge/02-collections/sorted.md), [приоритетная очередь](../../../knowledge/02-collections/priority-queue.md).
 Основание: [план C4](../../../docs/plans/COL-CONCURRENT-TRADEOFFS.md).
 
