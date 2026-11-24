@@ -2,9 +2,9 @@
 
 **Issue:** [#252](https://github.com/Melchiorius/backend-interview-labs/issues/252), [поручение A00](https://github.com/Melchiorius/backend-interview-labs/issues/252#issuecomment-7131244069). **Роль 04**, дата 2026-11-24. **Frozen source BASE** `f04f1eb5ee3a400a988757414bcae09113bd885b`, совпал с live main при A00. Ветка `audit/java-core-full-252`, один draft audit-only PR; точный HEAD и PR фиксируются в адресных GitHub-комментариях, а не как самоссылочный SHA внутри собственного коммита.
 
-**Состояние:** A00 COMPLETE (инвентаризация/протокол); **A01–A24 NOT STARTED; A25 NOT STARTED. Содержательная готовность нового аудита: 0/41 статей, 0/42 curricular ID, 0/925 исходных строк матриц проверены заново.** Никакого PASS Java Core этим этапом не выдано. Findings пока не оценены, не «ошибок нет». Исторические G1/G4/GO сохранены. Исключение из паузы только для #252; не менять статьи/код/CI/main/реестры/планы, не открывать remediation до решения 00, не запускать Concurrency. Не merge; draft до завершения A25.
+**Состояние:** A00 COMPLETE (инвентаризация/протокол); A01 COMPLETE (CHANGES recommended; 0 BLOCKER / 7 P1 / 2 P2); **A02–A24 NOT STARTED; A25 NOT STARTED. Содержательный аудит: 1/41 статей, 1/42 curricular ID, 12/925 исходных строк матриц проверены заново.** Нет итогового PASS Java Core. Исторические G1/G4/GO сохранены. Исключение из паузы только для #252; не менять статьи/код/CI/main/реестры/планы, не открывать remediation до решения 00, не запускать Concurrency. Не merge; draft до завершения A25.
 
-**NEXT CURSOR:** A01 — CORE-TYPES, frozen `knowledge/01-java-core/types.md` blob `37f3f3cf3fd8d1cb03732b28e14176e0539f0d00`, строка **1**, весь диапазон 1–251; `docs/plans/CORE-TYPES.md` 1–26 (TYPES-01..12 L9–20); ранние `examples/core/TypesAndVariablesDemo.java` и `ValuesAndReferencesDemo.java` (общая зависимость). Сначала прочитать этот README на actual audit HEAD и входящий checkpoint; затем исследовать A01 полностью с evidence, при необходимости закончить конкретный диапазон и зафиксировать next cursor. Не засчитывать A00 за содержательное прочтение.
+**NEXT CURSOR:** A02 — CORE-CONVERSIONS, frozen `knowledge/01-java-core/conversions.md` blob `a004e1be87a926194033665d2c74d5d859eb7690`, строка **1**, диапазон 1–270; `docs/plans/CORE-CONVERSIONS.md` 1–23 (11 исходных строк L9–19, включая P0/P1 mixed L11; audit-local ID по номеру строки); `examples/core/ConversionsDemo.java`; общая зависимость `ValuesAndReferencesDemo.java` — прочитан и исполнен в [A01](A01-CORE-TYPES.md), сверить релевантность A02 без фиктивного повторного запуска. Сначала восстановить refs, README и A01 по актуальному audit HEAD.
 
 ## 1. Источники и способ инвентаризации
 
@@ -20,7 +20,7 @@
 | Дополнительный inheritance post-draft audit | 1 / 80 строк / 10257 bytes |
 | Строки исходных матриц (не все уникальные глобальные ID) | 925: 583 P0 / 212 P1 / 129 P2 / 1 mixed P0/P1 |
 | examples/core | 181 blobs / 103 Java-файла / 20 verify.sh / 5 ранних standalone |
-| Содержательный аудит | NOT STARTED, A01 — первая статья |
+| Содержательный аудит | A01 COMPLETE; A02 next; 1/41 article; 12/925 requirements reviewed |
 
 Счётчик матриц — число исходных строк требований, включая ранние без ID, с приоритетом из ячейки или заголовка P0-секции. Не удваивать retrospective coverage table CORE-CLASSES, inheritance post-draft и вспомогательные таблицы источников/negative cases. CL-xx и S-xx повторяются между разными планами; ключ = stage + original plan + row/ID, а не один глобальный префикс. I18N/SERIAL P1/P2 имеют L28/S28 без дефиса: учтены отдельно. A02 mixed P0/P1 сохранён одной строкой, не автоматически повышен/понижен. Каждый этап перепроверяет свой счётчик, читает план целиком и фиксирует дополнительные требования вне матрицы.
 
@@ -30,7 +30,7 @@
 
 | Этап | G1 / articles | Плановые строки P0/P1/P2/mixed | Следующие диапазоны статьи (предлагаемые) | Практика | Статус |
 |---|---|---:|---|---|---|
-| A01 | [CORE-TYPES.md](https://github.com/Melchiorius/backend-interview-labs/blob/f04f1eb5ee3a400a988757414bcae09113bd885b/docs/plans/CORE-TYPES.md): CORE-TYPES | 9/2/1/0 | types.md 1–251 | TypesAndVariablesDemo.java; ValuesAndReferencesDemo.java | NOT STARTED |
+| A01 | [CORE-TYPES.md](https://github.com/Melchiorius/backend-interview-labs/blob/f04f1eb5ee3a400a988757414bcae09113bd885b/docs/plans/CORE-TYPES.md): CORE-TYPES | 9/2/1/0 | types.md 1–251 | TypesAndVariablesDemo.java; ValuesAndReferencesDemo.java | COMPLETE — [A01 report](A01-CORE-TYPES.md), CHANGES recommended |
 | A02 | [CORE-CONVERSIONS.md](https://github.com/Melchiorius/backend-interview-labs/blob/f04f1eb5ee3a400a988757414bcae09113bd885b/docs/plans/CORE-CONVERSIONS.md): CORE-CONVERSIONS | 6/3/1/1 | conversions.md 1–270 | ConversionsDemo.java | NOT STARTED |
 | A03 | [CORE-PARAMS.md](https://github.com/Melchiorius/backend-interview-labs/blob/f04f1eb5ee3a400a988757414bcae09113bd885b/docs/plans/CORE-PARAMS.md): CORE-PARAMS | 6/5/1/0 | parameters.md 1–272 | ParametersDemo.java; ValuesAndReferencesDemo.java (общий ранний пример) | NOT STARTED |
 | A04 | [CORE-CLASSES.md](https://github.com/Melchiorius/backend-interview-labs/blob/f04f1eb5ee3a400a988757414bcae09113bd885b/docs/plans/CORE-CLASSES.md): CORE-CLASSES | 9/6/2/0 | classes.md 1–350 | ClassesAndObjectsDemo.java | NOT STARTED |
@@ -213,10 +213,13 @@ Compare old source 049736b99c1fa437fc660a3accf7b2bf76b65d91 → frozen H: 18 ahe
 | Checkpoint | Проверенный объём | Findings / verdict | Next |
 |---|---|---|---|
 | A00 — этот README | inventory 42 ID/41 статьи/24 G1 + post-draft audit, 925 rows, 20 runners + 5 standalone, exact CI metadata/raw log, old audit provenance | организационно COMPLETE; substantive NOT STARTED; findings NOT ASSESSED | A01 types.md 1–251, plan 1–26, TYPES-01..12, два ранних примера |
+| [A01 — CORE-TYPES](A01-CORE-TYPES.md) | 251/251 article lines, 26/26 plan, 12/12 rows (8 OK/3 DEPTH/1 BOUND); 12 Java fences + 1 shell; 2 exact standalone runs, 17 wrappers, 27 isolated compiler negatives; 82/82 relative targets; 4 C sources | COMPLETE, CHANGES recommended; 0 BLOCKER, 7 P1, 2 P2 | A02 conversions.md 1–270, plan 1–23, 11 rows, ConversionsDemo.java |
 
 Следующие записи добавляются без удаления старых. На A00 нет содержательных findings, поскольку этот этап их не оценивал. Внешние блокеры A00 не выявлены; дальнейшие ограничения источников/локальной среды ещё не исследованы.
 
+**Реестр A01:** JC-A01-N01 (P1 precision floating point), N02 (P1 var restrictions), N03 (P1 boolean/DA/shadowing), N04 (P1 equality/cache premise), N05 (P1 taxonomy null/type variables), N06 (P1 final/constant), N07 (P1 literal sign), N08 (P2 void/surrogate), N09 (P2 prose/follow-ups/source links). Все остаются открытыми рекомендациями до решения 00; N01/N02 — P0 depth gaps, N04 — P1 depth. Подробности и acceptance criteria в [A01](A01-CORE-TYPES.md). Cross-check A02/A06/A07/A08/A10/A11/A18/A22/A25. Не менять frozen источник.
+
 ### Передача эстафеты
 Кому: **04 — Independent Reviewer (продолжение аудита)**.
-Что сделать: после read-back checkpoint A00 продолжить A01 на frozen source `f04f1eb5ee3a400a988757414bcae09113bd885b`, начать types.md со строки 1, план CORE-TYPES.md 1–26, два standalone примера. Проверить все claims, исходные вопросы, inline cases, C/A/I, навигацию и педагогическое качество; сохранить отдельный отчёт и обновить индекс, не изменять исходники. Точный audit HEAD и номер draft PR — в адресном комментарии #252.
+Что сделать: выполнить A02 CORE-CONVERSIONS на frozen source `f04f1eb5ee3a400a988757414bcae09113bd885b`, conversions.md 1–270, CORE-CONVERSIONS.md 1–23, 11 rows (L9–19), ConversionsDemo.java; учитывать общую Values evidence A01, проверить собственную тему, зафиксировать findings/NOT RUN и новый cursor. Прочитать index и A01 на actual audit HEAD, не менять исходники. Точный audit HEAD и permalink в адресном комментарии #252.
 Передать: оператор пересылает прямую ссылку на опубликованный checkpoint-комментарий в чат 04.
