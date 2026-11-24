@@ -1,6 +1,6 @@
 # Последовательные коллекции и итераторы: практические проверки Java 21
 
-Теория: [COL-SEQUENTIAL](../../../knowledge/02-collections/sequential.md). COL-ITER — согласованный путь `knowledge/02-collections/iteration.md`; добавить ссылку при интеграции после появления файла.
+Теория: [COL-SEQUENTIAL](../../../knowledge/02-collections/sequential.md). [COL-ITER](../../../knowledge/02-collections/iteration.md).
 Предпосылки: [контракты коллекций](../../../knowledge/02-collections/contracts.md), [hash-based коллекции](../../../knowledge/02-collections/hash-collections.md), [массивы](../../../knowledge/01-java-core/arrays.md), [generics](../../../knowledge/01-java-core/generics.md).
 Основание: [план C2](../../../docs/plans/COL-SEQUENTIAL-ITER.md).
 
