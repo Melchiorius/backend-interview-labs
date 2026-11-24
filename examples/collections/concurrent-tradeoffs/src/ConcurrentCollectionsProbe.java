@@ -82,6 +82,75 @@ public class ConcurrentCollectionsProbe {
         check("current list", "[a67, d, c]", list.toString());
         throwsType("snapshot remove", UnsupportedOperationException.class, it::remove);
     }
+
+    @FunctionalInterface
+    interface CheckedAction {
+        void run() throws InterruptedException, ExecutionException, TimeoutException;
+    }
+
+    // Preserve the primary exception even if the bounded cleanup itself fails.
+    static void runWithCleanup(CheckedAction work, CheckedAction cleanup)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        Throwable primary = null;
+        try {
+            work.run();
+        } catch (InterruptedException | ExecutionException | TimeoutException | RuntimeException | Error failure) {
+            primary = failure;
+            throw failure;
+        } finally {
+            try {
+                cleanup.run();
+            } catch (InterruptedException | ExecutionException | TimeoutException | RuntimeException | Error secondary) {
+                if (primary == null) throw secondary;
+                if (primary != secondary) primary.addSuppressed(secondary);
+                // The checked interruption cannot replace the already propagating primary.
+                if (secondary instanceof InterruptedException) Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    static Throwable captureFailure(CheckedAction action) {
+        try {
+            action.run();
+        } catch (InterruptedException | ExecutionException | TimeoutException | RuntimeException | Error failure) {
+            return failure;
+        }
+        throw new AssertionError("expected failure");
+    }
+
+    static void cleanupDiagnostics() throws InterruptedException, ExecutionException, TimeoutException {
+        // Synchronous injected failures, not a blocked-worker or scheduling experiment.
+        var cleaned = new boolean[1];
+        runWithCleanup(() -> {}, () -> cleaned[0] = true);
+        check("N8 happy cleanup executed", true, cleaned[0]);
+        var primary = new ExecutionException(new IllegalStateException("worker"));
+        var secondary = new IllegalStateException("cleanup");
+        check("N8 primary only identity", true,
+                captureFailure(() -> runWithCleanup(() -> { throw primary; }, () -> {})) == primary);
+        check("N8 cleanup only identity", true,
+                captureFailure(() -> runWithCleanup(() -> {}, () -> { throw secondary; })) == secondary);
+        var both = captureFailure(() -> runWithCleanup(() -> { throw primary; }, () -> { throw secondary; }));
+        check("N8 primary preserved", true, both == primary);
+        check("N8 secondary suppressed", true,
+                both.getSuppressed().length == 1 && both.getSuppressed()[0] == secondary);
+        var interruption = new InterruptedException("injected");
+        check("N8 primary interruption propagated", true,
+                captureFailure(() -> runWithCleanup(() -> { throw interruption; }, () -> {})) == interruption);
+        check("N8 cleanup interruption propagated", true,
+                captureFailure(() -> runWithCleanup(() -> {}, () -> { throw interruption; })) == interruption);
+        var timeout = new TimeoutException("primary");
+        try {
+            var failure = captureFailure(() -> runWithCleanup(() -> { throw timeout; }, () -> { throw interruption; }));
+            check("N8 interrupted cleanup primary", true, failure == timeout);
+            check("N8 interrupted cleanup suppressed", true,
+                    failure.getSuppressed().length == 1 && failure.getSuppressed()[0] == interruption);
+            check("N8 interrupt flag restored", true, Thread.currentThread().isInterrupted());
+        } finally {
+            // Clear only the flag injected by this diagnostic in the standalone main thread.
+            Thread.interrupted();
+        }
+    }
+
     static void atomicity() throws InterruptedException, ExecutionException, TimeoutException {
         var m = new ConcurrentHashMap<String, Integer>();
         m.put("x", 0);
@@ -100,7 +169,7 @@ public class ConcurrentCollectionsProbe {
             var t = new Thread(task); t.setDaemon(true); return t;
         });
         var futures = new ArrayList<Future<?>>();
-        try {
+        runWithCleanup(() -> {
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
             for (int i = 0; i < 2; i++) futures.add(pool.submit(() -> {
                 start.await();
@@ -113,12 +182,12 @@ public class ConcurrentCollectionsProbe {
             start.countDown();
             for (var f : futures) f.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
             check("completed per-key increments", 2000, counts.get("x"));
-        } finally {
+        }, () -> {
             start.countDown();
             for (var f : futures) f.cancel(true);
             pool.shutdownNow();
             if (!pool.awaitTermination(5, TimeUnit.SECONDS)) throw new IllegalStateException("worker cleanup timeout");
-        }
+        });
     }
     static void views() {
         Map<String, Integer> wrapper = Collections.synchronizedMap(new HashMap<>());
@@ -136,6 +205,6 @@ public class ConcurrentCollectionsProbe {
         check("stable size", 3, m.size());
     }
     public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException {
-        transitions(); queues(); snapshot(); atomicity(); views();
+        transitions(); queues(); snapshot(); atomicity(); views(); cleanupDiagnostics();
     }
 }

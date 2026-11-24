@@ -151,8 +151,80 @@ public class ContractsHashProbe {
                 () -> counts.merge("new", null, Integer::sum));
     }
 
+
+    // The counter belongs to the query, not to the identity of the key.
+    static final class CountingKey {
+        final int id;
+        int equalsCalls;
+        CountingKey(int id) { this.id = id; }
+        @Override public int hashCode() { return 67; }
+        @Override public boolean equals(Object other) {
+            equalsCalls++;
+            return other instanceof CountingKey key && id == key.id;
+        }
+    }
+
+    private static Map<CountingKey, Integer> sameHashMap(int size) {
+        Map<CountingKey, Integer> map = new HashMap<>(128);
+        for (int i = 0; i < size; i++) map.put(new CountingKey(i), i);
+        return map;
+    }
+
+    private static void sameHashLookup() {
+        var map = sameHashMap(67);
+        expect("B1 same-hash size", 67, map.size());
+        expect("B1 equal key lookup", 66, map.get(new CountingKey(66)));
+        expect("B1 absent key lookup", null, map.get(new CountingKey(-1)));
+    }
+
+    private static void observeCollisions() {
+        for (int n : new int[]{16, 32, 67, 128}) {
+            var map = sameHashMap(n);
+            var query = new CountingKey(-1);
+            if (map.get(query) != null || map.size() != n) throw new AssertionError("lookup");
+            // I observation only: no assertion on the count or internal tree shape.
+            System.out.println("same-hash n=" + n + " absent equals calls=" + query.equalsCalls);
+        }
+    }
+
+    private static void orderedHash() {
+        var insertion = new LinkedHashMap<String, Integer>();
+        var access = new LinkedHashMap<String, Integer>(16, 0.75f, true);
+        for (var map : List.of(insertion, access)) {
+            map.put("a", 1);
+            map.put("b", 2);
+            expect(map == insertion ? "B2 insertion get" : "B2 access get", 1, map.get("a"));
+        }
+        expect("B2 insertion order", List.of("a", "b"), new ArrayList<>(insertion.keySet()));
+        expect("B2 access order", List.of("b", "a"), new ArrayList<>(access.keySet()));
+        var lru = new LinkedHashMap<String, Integer>(16, 0.75f, true) {
+            @Override protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+                return size() > 2;
+            }
+        };
+        lru.put("a", 1);
+        lru.put("b", 2);
+        expect("B2 LRU touch", 1, lru.get("a"));
+        lru.put("c", 67);
+        expect("B2 LRU keys", List.of("a", "c"), new ArrayList<>(lru.keySet()));
+        expect("B2 LRU evicted b", false, lru.containsKey("b"));
+        expect("B2 LRU size", 2, lru.size());
+        var set = new LinkedHashSet<>(List.of(1, 67, 2));
+        expect("B2 set repeated add", false, set.add(1));
+        expect("B2 set unchanged order", List.of(1, 67, 2), new ArrayList<>(set));
+        set.addLast(1);
+        expect("B2 set addLast order", List.of(67, 2, 1), new ArrayList<>(set));
+    }
+
     public static void main(String[] args) {
+        if (args.length == 1 && args[0].equals("--observe-collisions")) {
+            observeCollisions();
+            return;
+        }
+        if (args.length != 0) throw new IllegalArgumentException("unknown arguments");
         contracts();
         hashAndUpdates();
+        sameHashLookup();
+        orderedHash();
     }
 }
