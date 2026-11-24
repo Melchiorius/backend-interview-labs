@@ -27,7 +27,7 @@ System.out.println(list.size()); // 1
 
 `get(i)` и `set(i, value)` в `ArrayList` выполняются за постоянное время при допустимом индексе. Для добавления в конец при достаточной вместимости достаточно записать ссылку; при заполнении хранилища `ArrayList` расширяет его и копирует прежние ссылки. В длинной серии `add(e)` стоимость **амортизированно O(1)**, но отдельный вызов с расширением может быть O(n). Это не противоречие: амортизированная оценка распределяет редкую дорогую работу на множество вызовов.
 
-В [исходнике OpenJDK 21 `ArrayList.java`](https://github.com/openjdk/jdk21/blob/890adb6410dab4606a4f26a942aed02fb2f55387/src/java.base/share/classes/java/util/ArrayList.java) механизм виден в `grow` и копировании массива. **Конкретная формула увеличения capacity — реализационная деталь**, не нормативная гарантия `List` или всех JDK.
+В [исходнике OpenJDK 21 `ArrayList.java`](https://github.com/openjdk/jdk21/blob/890adb6410dab4606a4f26a942aed02fb2f55387/src/java.base/share/classes/java/util/ArrayList.java) механизм виден в `grow` и копировании массива. **Конкретная формула увеличения вместимости — реализационная деталь**, не нормативная гарантия `List` или всех JDK.
 
 Вставка в начало/середину `add(index, e)` сдвигает элементы вправо, а `remove(index)` — влево для закрытия промежутка: O(n) в худшем случае, даже если индекс известен. `set(index, e)` лишь заменяет элемент, без изменения `size`.
 
@@ -182,8 +182,8 @@ System.out.println(words.length); // 2
 | CS-11 | P1 | SequencedCollection/reversed |
 | CS-12 | P1 | ensureCapacity/trimToSize/modCount |
 | CS-13 | P1 | LinkedList как List/Deque |
-| CS-14 | P1 | unmodifiable view vs copy |
-| CS-15 | P2 | Memory/locality/GC — явно не измерены |
+| CS-14 | P1 | немодифицируемое представление и независимая копия |
+| CS-15 | P2 | объём памяти, локальность доступа и сборка мусора — без измерений |
 | CS-16 | P2 | removeIf/toArray/sort/RandomAccess/Spliterator |
 
 ## Источники и состояние доказательств
