@@ -1,6 +1,6 @@
 # Итераторы Java 21: состояние, изменения и модели обхода
 
-**Проверяемый самостоятельный пример Java 21:** [SequentialIteratorProbe, вывод и два compiler-negative N01/N02](../../examples/collections/sequential-iter/README.md). **Тема:** `COL-ITER`. **Платформа:** Java SE 21. **Принятый план:** [C2 — COL-SEQUENTIAL + COL-ITER](../../docs/plans/COL-SEQUENTIAL-ITER.md). Предпосылки: [контракты коллекций](contracts.md), [последовательные коллекции](sequential.md), [массивы](../01-java-core/arrays.md) и [обобщённые типы](../01-java-core/generics.md).
+**Проверяемый самостоятельный пример Java 21:** [SequentialIteratorProbe, вывод и два случая ожидаемой ошибки компиляции N01/N02](../../examples/collections/sequential-iter/README.md). **Тема:** `COL-ITER`. **Платформа:** Java SE 21. **Принятый план:** [C2 — COL-SEQUENTIAL + COL-ITER](../../docs/plans/COL-SEQUENTIAL-ITER.md). Предпосылки: [контракты коллекций](contracts.md), [последовательные коллекции](sequential.md), [массивы](../01-java-core/arrays.md) и [обобщённые типы](../01-java-core/generics.md).
 
 Итератор — не просто синтаксическая замена цикла. Это **объект с состоянием обхода и правилами допустимых изменений**. Нельзя одинаково рассуждать о `ArrayList.iterator()`, `CopyOnWriteArrayList.iterator()` и итераторе представления `ConcurrentHashMap`: они имеют разные договоры о наблюдении изменений. Ниже **A** обозначает Java 21 API/JLS; **I** — подробности реализации OpenJDK 21.
 
@@ -162,8 +162,8 @@ it.forEachRemaining(System.out::println); // 67, затем 2
 | CI-10 | P1 | ListIterator cursor после add/previous |
 | CI-11 | P1 | Spliterator и характеристики |
 | CI-12 | P1 | AbstractList.modCount — I |
-| CI-13 | P1 | Snapshot/weakly-consistent/fail-fast |
-| CI-14 | P1 | subList view и нарушения условий |
+| CI-13 | P1 | обход по снимку, слабосогласованный и fail-fast |
+| CI-14 | P1 | представление `subList` и нарушение условий его использования |
 | CI-15 | P2 | Необязательные методы изменения |
 | CI-16 | P2 | Ограничения конкурентного обхода и stream |
 
@@ -173,4 +173,4 @@ it.forEachRemaining(System.out::println); // 67, затем 2
 
 **Повторная выборка C (24.11.2026):** [Baeldung](https://www.baeldung.com/java-collections-interview-questions) содержит вопрос о fail-fast/fail-safe; [teamlead (фиксированная ревизия)](https://github.com/teamlead/java-interview-questions/blob/4c0784024412904625e1455189d3c05cba07bebf/README.md) — вопросы об итераторах и `CopyOnWriteArrayList`; [in28minutes](https://github.com/in28minutes/JavaInterviewQuestionsAndAnswers/blob/master/src/main/java/com/in28minutes/java/collections/CollectionHierarchy.java) — об `Iterator` и `ListIterator`; [Q-CHERNYSHOV (фиксированная ревизия)](https://github.com/ViacheslavChernyshov/java-interview-questions-and-answers/blob/597e08112ab6a57d6eac8e3c70c070da606dae73/eng/README.md) — о различии `Iterator`/`ListIterator` и fail-fast/fail-safe. Четыре банка подтверждают **вопросы**, но не нормативную классификацию: `ConcurrentHashMap` слабо согласован, а не обязан создавать снимок; статистика интервью не установлена.
 
-Авторский текст представляет **объяснение API и ограничений, а не воспроизведённый набор локальных запусков**. Отдельная компиляция Markdown snippets, GUI Obsidian/IDE, Java runtime и clean clone автором роли 02 — **NOT RUN**. Самостоятельный проверочный скрипт и два отдельных сценария ожидаемых ошибок компиляции роли 03 **интегрированы** из технического PR #228; локальное выполнение роли 03 на OpenJDK 21.0.12.1 и технический CI #45358515688 (HEAD `a3c14cb67a2ffee026e335e507af8ebf1e610077`) успешны. Они не доказывают отдельную компиляцию всех Markdown-фрагментов и не заменяют CI нового интегрированного HEAD.
+Авторский текст представляет **объяснение API и ограничений, а не воспроизведённый набор локальных запусков**. Отдельная компиляция всех фрагментов кода внутри Markdown, визуальная проверка в Obsidian/IDE, локальный запуск Java-программы и проверка на чистой копии репозитория ролью 02 — **NOT RUN**. Самостоятельный проверочный скрипт и два отдельных сценария ожидаемых ошибок компиляции роли 03 **интегрированы** из технического PR #228; локальное выполнение роли 03 на OpenJDK 21.0.12.1 и технический CI #45358515688 (HEAD `a3c14cb67a2ffee026e335e507af8ebf1e610077`) успешны. Они не доказывают отдельную компиляцию всех Markdown-фрагментов и не заменяют CI нового интегрированного HEAD.
