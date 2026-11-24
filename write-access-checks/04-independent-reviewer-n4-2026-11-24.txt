@@ -1,0 +1,2 @@
+04 — Independent Reviewer / new chat N4 / 2026-11-24
+Write access verification only. No teaching content or audit checkpoint changed. Do not merge this branch.
