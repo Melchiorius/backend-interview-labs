@@ -157,7 +157,7 @@ System.out.println(Arrays.toString(words)); // [a, cc, bbb]
 
 ## 7. Arrays.asList: фиксированный размер и двусторонний backing (UT-21–UT-23)
 
-`Arrays.asList(T... a)` возвращает **фиксированного размера List backed исходным массивом**. `set` меняет соответствующую ячейку исходного массива, а изменение массива видно в List. `add`/`remove`, изменяющие размер, бросают `UnsupportedOperationException`. Слова **fixed-size** и **unmodifiable** означают разные свойства.
+`Arrays.asList(T... a)` возвращает **список фиксированного размера, связанный с исходным массивом**. Дополнительные примеры со связанным представлением, `subList` и независимой изменяемой копией есть в [COL-SEQUENTIAL](../02-collections/sequential.md). `set` меняет соответствующую ячейку исходного массива, а изменение массива видно в List. `add`/`remove`, изменяющие размер, бросают `UnsupportedOperationException`. Слова **fixed-size** и **unmodifiable** означают разные свойства.
 
 ~~~java
 import java.util.*;
