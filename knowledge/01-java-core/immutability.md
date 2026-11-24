@@ -128,6 +128,8 @@ class ShallowCopyBoundary {
 2. **`Collections.unmodifiableList(source)`** — *unmodifiable view*, через который нельзя применять структурные мутации списка, но view **поддерживается исходным списком**: изменения source остаются видимы.
 3. **`List.copyOf(source)`** — *unmodifiable snapshot* элементов source **на момент копирования**, при условии отсутствия null; последующие структурные изменения source не отражаются в результате. Это **не рекурсивная копия элементов**.
 
+Те же различия между связанным с исходником представлением и независимой немодифицируемой структурой сопоставлены в [контрактах коллекций Java 21](../02-collections/contracts.md); в [примере Collections C1](../../examples/collections/contracts-hash/README.md) это наблюдается на изменяемом `StringBuilder` внутри `List.copyOf`.
+
 ~~~java
 import java.util.ArrayList;
 import java.util.Collections;
