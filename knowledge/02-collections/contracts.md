@@ -1,6 +1,6 @@
 # Контракты коллекций Java 21: Collection, Map и упорядоченные представления
 
-**Раздел:** `COL-CONTRACTS`. **Java:** 21. **Предварительное исследование:** [COL-CONTRACTS-HASH](../../docs/plans/COL-CONTRACTS-HASH.md). Следующая тема — [хеш-коллекции](hash-collections.md).
+**Раздел:** `COL-CONTRACTS`. **Java:** 21. **Предварительное исследование:** [COL-CONTRACTS-HASH](../../docs/plans/COL-CONTRACTS-HASH.md). Следующая тема — [хеш-коллекции](hash-collections.md). **Проверяемая практика:** [Java 21 ContractsHashProbe, N01/N02 и команды запуска](../../examples/collections/contracts-hash/README.md).
 
 Java Collections Framework задаёт **контракты хранения и доступа к группам объектов**. Интерфейс определяет, какие операции доступны и какие результаты допустимы, а реализация — дополнительные ограничения, стоимость и, иногда, порядок. Например, `Set` запрещает одинаковые по `equals` элементы; это не означает, что любой `Set` сохраняет порядок добавления или разрешает `null`.
 
