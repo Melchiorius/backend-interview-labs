@@ -13,6 +13,9 @@
 - [`client.AccessDemo`](src/client/AccessDemo.java) — точка входа с проверками. Сам не наследуется от `Parent`, но создаёт `new Parent() {}`: анонимный подкласс с вызовом protected-конструктора по особому правилу JLS §6.6.2.2.
 - [`api.InterfaceTypes`](src/api/InterfaceTypes.java) — типы-члены интерфейса неявно `public static` (JLS §9.5).
 
+- [`api.Hidden`](src/api/Hidden.java) — package-private класс с public полем `value`, методом `read()` и статическим типом-членом `Visible`.
+- [`api.Exported`](src/api/Exported.java) — public подкласс `Hidden`, не переобъявляющий эти члены. Клиент из другого пакета выбирает их через доступный тип `Exported` (JLS 21 [§6.6.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.6.1), [§6.5.5.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.5.5.2), [§8.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.2)).
+
 ## Положительная проверка
 
 Из **корня репозитория**, JDK 21 (Windows PowerShell, Linux/macOS):
@@ -22,11 +25,19 @@ javac --release 21 -d examples/core/access/build/classes -sourcepath examples/co
 java -cp examples/core/access/build/classes client.AccessDemo
 ```
 
-Ожидается `CHECK PASSED`. Через `-sourcepath` компилятор находит все зависимости по пакетам. Скомпилированные `.class` лежат в исключённом из Git каталоге `build/`. Gradle, JUnit и Mockito не нужны.
+Ожидаются две строки (девять прежних и три дополнительные проверки выполняются до итогового маркера):
+
+```text
+public_inherited=67:67:Visible
+CHECK PASSED
+```
+
+Клиент создаёт `Exported`, читает `e.value`, вызывает `e.read()`, создаёт `new Exported.Visible()` и проверяет тип и возвращаемую методом `label()` строку. Имя `Hidden` непосредственно недоступно из `client`, но это не запрещает обращение к унаследованным public-членам через доступный подкласс. `Hidden.Visible` и `Exported.Visible` не два разных вложенных класса. Пример не использует рефлексию и не переобъявляет члены.
+ Через `-sourcepath` компилятор находит все зависимости по пакетам. Скомпилированные `.class` лежат в исключённом из Git каталоге `build/`. Gradle, JUnit и Mockito не нужны.
 
 ## Независимые отрицательные случаи
 
-Каждый файл из каталога `negative/` содержит одно намеренно **недопустимое** обращение. Они никогда не включаются в общую успешную компиляцию. Проверять по одному, читать диагностику по смыслу, не сравнивать её точный текст с шаблоном.
+Каждый из десяти файлов каталога `negative/` содержит одно намеренно **недопустимое** обращение. Они никогда не включаются в общую успешную компиляцию. Проверять по одному, читать диагностику по смыслу, не сравнивать её точный текст с шаблоном.
 
 | Файл | Запрещённое выражение | Объяснение |
 |---|---|---|
@@ -38,6 +49,8 @@ java -cp examples/core/access/build/classes client.AccessDemo
 | [`BadStaticUnrelated.java`](negative/BadStaticUnrelated.java) | `Parent.total` | В постороннем классе `client` protected static недоступен |
 | [`BadPrivateInterfaceMember.java`](negative/BadPrivateInterfaceMember.java) | `private class Member` в интерфейсе | §9.5 запрещает private тип-член интерфейса |
 | [`BadProtectedInterfaceMember.java`](negative/BadProtectedInterfaceMember.java) | `protected interface Nested` в интерфейсе | §9.5 запрещает protected тип-член интерфейса |
+| [`BadHiddenName.java`](negative/BadHiddenName.java) | `api.Hidden h;` | Сам package-private тип недоступен из другого пакета |
+| [`BadHiddenVisible.java`](negative/BadHiddenVisible.java) | `api.Hidden.Visible v;` | public тип-член назван через недоступный квалифицирующий тип |
 
 **Контраст instance и static:** в `Child` допустимо `Parent.total`, но не `parent.value` при параметре типа `Parent`. Ограничение на статический тип квалификатора из JLS §6.6.2.1 относится к **экземплярным** членам, а не к static. Это не делает static-член публичным.
 
@@ -58,6 +71,15 @@ bash examples/core/access/verify.sh
 ```
 
 Скрипт запускает положительный пример, затем отдельный `javac` для **каждого** отрицательного файла, выводит фактическую диагностику и проверяет ненулевой exit code. Сверка причины ошибки с JLS остаётся содержательной, а не машинной проверкой точной локализованной строки ошибки. В PowerShell без Bash можно повторять указанную команду с разными именами файлов и проверять `$LASTEXITCODE` после каждой.
+
+Для двух новых случаев после положительной компиляции можно дополнительно получить категории диагностик javac:
+
+```sh
+javac --release 21 -XDrawDiagnostics -cp examples/core/access/build/classes -d examples/core/access/build/negative/BadHiddenName examples/core/access/negative/BadHiddenName.java
+javac --release 21 -XDrawDiagnostics -cp examples/core/access/build/classes -d examples/core/access/build/negative/BadHiddenVisible examples/core/access/negative/BadHiddenVisible.java
+```
+
+Создайте соответствующие выходные каталоги заранее (runner уже создаёт их). На javac 21.0.12.1 отдельно наблюдались exit=1 и `compiler.err.not.def.public.cant.access` (Hidden не public), `compiler.err.not.def.access.class.intf.cant.access` (Hidden.Visible назван через недоступный Hidden). Это разные причины, не отсутствие классов или синтаксическая ошибка. Точный текст/ключ диагностики зависит от компилятора. Полный runner сохраняет восемь прежних отрицательных случаев и проверяет десять отдельных компиляций; итоговый маркер — `ALL EXPECTED OUTCOMES OBSERVED`. Как и ранее, причины диагностики проверяются содержательно.
 
 ## Границы
 
