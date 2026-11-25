@@ -10,7 +10,7 @@
 
 ## Центральный проверяемый пример: кто исполняет метод
 
-Ниже отдельный **диагностический листинг** для правил интерфейсов. Помимо него [общий запускаемый пример CORE-INTERFACES + CORE-COMPOSITION](../../examples/core/interfaces-composition/README.md) показывает взаимодействие `api.Policy`, `client.Service` и реализаций из пакета `impl` с десятью проверяемыми строками вывода. Этот листинг не следует выдавать за исходник общего проекта: он отдельно проверяет более широкий набор правил разрешения методов.
+Ниже отдельный **диагностический листинг** для правил интерфейсов. Помимо него [общий запускаемый пример CORE-INTERFACES + CORE-COMPOSITION](../../examples/core/interfaces-composition/README.md) показывает взаимодействие `api.Policy`, `client.Service` и реализаций из пакета `impl` с проверяемым выводом. Этот листинг не следует выдавать за исходник общего проекта: он отдельно проверяет более широкий набор правил разрешения методов.
 
 Сохраните в `InterfaceMechanics.java`:
 
@@ -169,11 +169,75 @@ Compile-time constant `int LIMIT = 67` можно прочитать без за
 | `void run();` | Неявный `public abstract`, тела нет | Конкретный класс обязан удовлетворить требование |
 | `default void run() { ... }` | Публичный экземплярный метод с телом | В наследовании, override и dispatch |
 | `static void help() { ... }` | Метод самого интерфейса, не наследуется реализацией | `Api.help()` |
-| `private void help() { ... }` или `private static ...` | Внутренний helper с телом | Только код внутри данного интерфейса |
+| `private void help() { ... }` или `private static ...` | Вспомогательный метод с телом, не наследуется и не входит в публичный API | Доступ в пределах объемлющего верхнеуровневого типа; для экземплярного метода нужен экземпляр |
 
 Отсутствие ключевого слова `public` перед обычным абстрактным методом интерфейса **не делает метод package-private**. Попытка `class X implements Api { void run(){} }` при `interface Api { void run(); }` — ошибка компиляции: реализация снижает видимость public-контракта. Не компилируются и `protected void run();` в интерфейсе, `private abstract void run();`, `static default void run() {}` и `default void run();` без тела.
 
-Вызов `Standard.kind()` из центрального примера отвергается не из-за недоступности, а потому что static-методы интерфейсов **не наследуются классами**. Вызов `Policy.helper()` из клиента отвергается из-за `private`. Эти два ограничения нельзя смешивать. Основание — [JLS 21 §9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4), [§9.4.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.3).
+Вызов `Standard.kind()` из центрального примера отвергается не из-за недоступности, а потому что static-методы интерфейсов **не наследуются классами**. Для private-методов нужно различать доступность объявления, наследование и форму вызова. Основание — [JLS 21 §6.6.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.6.1), [§9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4), [§9.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1), [§9.4.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.3) и [§15.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12).
+
+### Private-метод: кто может вызвать и нужен ли экземпляр
+
+`private` не означает «доступен только внутри текста данного интерфейса». При обычном обращении из тела типа JLS разрешает доступ к private-члену из тела верхнеуровневого класса или интерфейса, объемлющего его объявление, при соблюдении остальных правил доступности. Для вложенного интерфейса это может быть и код объемлющего класса, и код других вложенных типов того же верхнеуровневого типа. Самостоятельный соседний верхнеуровневый класс не получает такого права даже в том же пакете. См. также [CORE-ACCESS](access.md).
+
+При этом private-метод не наследуется ни подинтерфейсом, ни реализующим классом; он не становится публичной операцией клиента. Доступность не требует наследования. Экземплярный private-метод вызывается на экземпляре (в том числе через переменную интерфейсного типа), а не через имя интерфейса. Private static helper не требует экземпляра; модификатор private по-прежнему ограничивает его доступность.
+
+В центральном листинге вызов `policy.helper()` допустим из `InterfaceMechanics.main`, потому что `Policy` вложен в тот же верхнеуровневый класс. Проверим этот контраст отдельно, не меняя девять строк центрального примера. Файл `InterfacePrivateAccessDemo.java`:
+
+~~~java
+public class InterfacePrivateAccessDemo {
+    public interface Policy {
+        int apply(int value);
+        private String helper() { return "policy"; }
+    }
+
+    public static void main(String[] args) {
+        Policy policy = value -> value;
+        System.out.println("nestPrivate=" + policy.helper());
+    }
+}
+~~~
+
+~~~sh
+mkdir -p out
+javac --release 21 -d out InterfacePrivateAccessDemo.java
+java -cp out InterfacePrivateAccessDemo
+~~~
+
+Ожидаемый stdout: `nestPrivate=policy`. Даже из static-метода объемлющего класса допустимо вызвать экземплярный helper, если есть подходящий receiver — здесь переменная `policy`.
+
+**Два независимых отрицательных контраста.** Сохраните их в отдельных файлах рядом с положительным примером. Первый файл `BadExternalPrivateAccess.java` использует доступный тип `InterfacePrivateAccessDemo.Policy` и экземпляр, но расположен в другом верхнеуровневом классе:
+
+~~~java
+class BadExternalPrivateAccess {
+    static String read(InterfacePrivateAccessDemo.Policy policy) {
+        return policy.helper();
+    }
+}
+~~~
+
+Второй файл `BadTypeQualifiedInstance.java` помещает интерфейс и вызов в один верхнеуровневый класс. Даже в экземплярном методе `read()` обращение `Policy.helper()` недопустимо: имя типа перед точкой не предоставляет экземпляр интерфейса.
+
+~~~java
+class BadTypeQualifiedInstance {
+    interface Policy {
+        private String helper() { return "policy"; }
+    }
+
+    String read() {
+        return Policy.helper();
+    }
+}
+~~~
+
+После компиляции положительного примера выполните по отдельности:
+
+~~~sh
+mkdir -p bad-private bad-type
+javac --release 21 -XDrawDiagnostics -cp out -d bad-private BadExternalPrivateAccess.java
+javac --release 21 -XDrawDiagnostics -d bad-type BadTypeQualifiedInstance.java
+~~~
+
+Оба вызова javac должны завершиться ненулевым кодом, но по разным причинам: в первом случае — недоступный private-член, во втором — попытка вызвать экземплярный метод через имя типа ([JLS 21 §15.12.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.3)). На OpenJDK/javac 21.0.12.1 отдельно получены exit code 1 и категории `compiler.err.report.access` и `compiler.err.non-static.cant.be.ref` соответственно; положительный пример скомпилирован и запущен с exit code 0, stdout — строка выше. Конкретные названия диагностик принадлежат javac, а не JLS. Запреты на сочетания модификаторов и отсутствие тела из предыдущего абзаца остаются самостоятельными ограничениями.
 
 ## Разрешение default/abstract: пять разных ситуаций
 
@@ -431,7 +495,7 @@ javac --release 21 -d out N02.java
 
 [README, команды и источники](../../examples/core/interfaces-composition/README.md) · [код интерфейса Policy](../../examples/core/interfaces-composition/src/api/Policy.java) · [точка входа Java-программы](../../examples/core/interfaces-composition/src/client/InterfaceCompositionDemo.java) · [expected.stdout](../../examples/core/interfaces-composition/expected.stdout).
 
-Это **одна** группа из восьми Java-файлов с реальными пакетами. Контракт `api.Policy` имеет единственную абстрактную операцию `int apply(int)`, default `describe(int)` и закрытый вспомогательный метод форматирования `private static`. Клиентский `Service` принимает политику через конструктор; классы-реализаторы и декоратор живут в `impl`. Для проверки JLS в entry point две отдельные небольшие иллюстрации:
+Это **одна** группа примеров с реальными пакетами. Контракт `api.Policy` имеет единственную абстрактную операцию `int apply(int)`, default `describe(int)` и закрытый вспомогательный метод форматирования `private static`. Клиентский `Service` принимает политику через конструктор; классы-реализаторы и декоратор живут в `impl`. Для проверки разрешения методов в entry point используются две отдельные небольшие иллюстрации:
 
 - `Resolved implements LeftOrigin, RightOrigin` явно вызывает `LeftOrigin.super.origin()` и `RightOrigin.super.origin()` → `left|right`;
 - `ClassWins extends OriginBase implements LeftOrigin` использует конкретный метод родителя вместо default → `class`.
@@ -444,4 +508,4 @@ javac --release 21 -d out N02.java
 bash examples/core/interfaces-composition/verify.sh
 ```
 
-Скрипт компилирует Java 21, запускает `client.InterfaceCompositionDemo` и сравнивает все **10 строк** с `expected.stdout` через `diff -u`. Успешное сравнение — доказательство **конкретного сценария**, но не всей таблицы IC-01–IC-30. Разница между допустимым API и качеством делегирования разобрана в [CORE-COMPOSITION](composition.md).
+Скрипт компилирует Java 21, запускает `client.InterfaceCompositionDemo` и сравнивает полный stdout с `expected.stdout` через `diff -u`. Успешное сравнение — доказательство **конкретного сценария**, но не всей таблицы IC-01–IC-30. Разница между допустимым API и качеством делегирования разобрана в [CORE-COMPOSITION](composition.md).
