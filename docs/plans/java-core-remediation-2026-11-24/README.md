@@ -1,6 +1,6 @@
 # Java Core remediation — R0 planning index
 
-Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-11i, IN PROGRESS / FINAL HOLD. Интеграционная база main: 8312d4e11af55c1afdc96e140d49c665cb49b3c4; историческая база аудита: c7e223fd2230a776921fa142fab39ff7fbc019f2; замороженный учебный источник: f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
+Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-12a, IN PROGRESS / FINAL HOLD. Интеграционная база main: fdda125a39946212a04d95b863988f88e2ec447f; историческая база аудита: c7e223fd2230a776921fa142fab39ff7fbc019f2; замороженный учебный источник: f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
 
 ## Checkpoint R0-01 (historical)
 
@@ -211,6 +211,14 @@ A23/A24, при необходимости разделить. Первичны�
 
 [Отчёт](R0-11i-FIDELITY-A23-A24.md): 68 замечаний (32+36), 159 требований (51 OK/86 DEPTH/4 ERROR/18 BOUND; 62 P0 DEPTH). Полные первичные criteria, вопросы, exact ID/priority/verdict/evidence, .1/.2 и .3 locators сверены, без удвоения; no missing/extra, хвост L28..38/S28..39 сохранён. RG-21/N08, UT-32/N29, UT-35/N30, S-10/N23 ERROR/P1 сохранены. N12: добавлена управляющая ссылка A24.3 L102 (API повторно открыт историческим аудитом, JEP226 403 сохранён, DEPTH/P1 неизменны); исходные criterion и остальные ledger fields сохранены. **499/499 замечаний, 925/925 требований** (265 OK/506 DEPTH/25 ERROR/129 BOUND; 350 P0 DEPTH). Primary fidelity всех A01–A24 завершена; это не окончательное принятие R0. 1 FIXED/498 OPEN. Локальные проверки NOT RUN.
 
-## Следующий этап — R0-12 final reconciliation
+## Исторический этап — R0-12 final reconciliation
 
 Повторить глобальную L1 всех 49 таблиц после правок, exact 499/925 unique ID, severity/verdict/priority, все 42 curricular ID и 25 historical ERROR/350 P0 DEPTH. Согласовать остаточные D-A02/A05/A06/A07/A09/A10/A17 после B-пакетов, единственные ответственные по всем finding/mandatory row, accepted B/D scopes, dependency DAG без циклов и порядок приоритетов, Q/C. Проверить актуальные решения 00, B1 FIXED/остаток D-A02 и текущий BASE/HEAD/CI. Не переписывать принятые briefs без решения 00, не объединять PR, не начинать самостоятельно B/D/C/CON. При необходимости разбить на bounded checkpoints, итоговый отчёт 00 только после полной готовности. R0 IN PROGRESS / FINAL HOLD.
+
+## R0-12a — global integrity / residual D scopes
+
+[Отчёт](R0-12a-GLOBAL-INTEGRITY.md): 49/49 таблиц по фактической схеме заголовка, 499 unique findings, 925 unique rows, 42/42 curricular ID, 2521 source/frozen links immutable tree path checks, missing=0; 25 ERROR/350 P0 DEPTH = 375 mandatory. 1 FIXED/498 OPEN. B2a #266 G5 merged, G6 pending; B01 OPEN. Ordinary merge 900bb697ead442db7f7785f878280eef6159cc85 integrated new main fdda125a39946212a04d95b863988f88e2ec447f, all original planning blobs preserved. [Остаточные D-пакеты](D-RESIDUAL-B-GROUPS.md): 94 non-blockers, 63 proposed mandatory closure rows; R11→D-A02, CI-08→D-A07, IC-17→D-A09 proposed single final owner, B prerequisite evidence. Accepted briefs unchanged; no execution authorization.
+
+## Следующий этап — R0-12b
+
+Complete exact canonical owner assignment and mandatory row map (375=6 B-only+63 residual D+306 accepted D waves); all 499 findings, 42 curricular ID, accepted scopes/source anchors, no double count. Check G6 B2a and latest 00 decision, explicit acyclic DAG and priority order, single writer/shared paths, all mandatory first and P2 evidence-backed individual decision, Q/C/CON gates. Preserve B1 FIXED/R11 residual and other B scope; update B2a only after 00 final G6 decision. No accepted brief rewrite, no independent verdict, no merge PR or launch. Final addressed 00 report only after all ready; R0 IN PROGRESS / FINAL HOLD.
