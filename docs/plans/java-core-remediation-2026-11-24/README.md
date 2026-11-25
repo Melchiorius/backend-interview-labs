@@ -1,6 +1,6 @@
 # Java Core remediation — R0 planning index
 
-Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-04 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
+Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-05 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
 
 ## Checkpoint R0-01 (historical)
 
@@ -51,6 +51,16 @@ Coordinator [B2 ACCEPTED / QUEUED](https://github.com/Melchiorius/backend-interv
 
 Cumulative **101/499** findings (7 BLOCKER/75 P1/19 P2), **190/925** requirements (62 OK/89 DEPTH/8 ERROR/31 BOUND). Remaining 398 findings (335 P1/63 P2), 735 rows (203 OK/417 DEPTH/17 ERROR/98 BOUND). All OPEN; neither R0 nor repair complete. Exact HEAD/CI in published checkpoint.
 
-## Next cursor — R0-05
+## Historical cursor — R0-05
 
 Continue D ledgers: A01/A03/A04/A08 then A11/A12/A13/A14/A15/A16/A18–A24 in bounded batches. Use A25.2 authoritative matrix/ranges, actual original priority/ID and primary finding acceptance. Prioritize ERROR and P0 DEPTH within coherent file-owned packages; map each finding once, distinguish technical N-case labels from finding IDs, explicit row-only gaps, BOUND not automatic acceptance. Prepare bounded D briefs, only 00 decides authorized execution and dependencies (avoid same-file collision with B packages). Reconcile counts, cross-topic clusters, mandatory deficits and dispositions; final R0 review before merge decision. Recheck live BASE/head, preserve immutable historical source and all existing files. No teaching edits, CI changes, merge, C/CON.
+
+## Checkpoint R0-05 — first D wave planned
+
+B3 [ACCEPTED / QUEUED by 00](https://github.com/Melchiorius/backend-interview-labs/pull/256#issuecomment-7149337132), after B2c G6; additional positive tracked varargs and isolated unchecked-only throws/default distinction, preserve existing 29-line prefix, bash invocation and runner mode. This decision supplements immutable B3 brief. R0-04 already complete and not duplicated. [D-WAVE-01](D-WAVE-01-A01-A03-A04-A08.md) contains four bounded scopes for 00. A01: [9 findings](findings-A01.md), [12 rows](requirements-A01.md) (8 OK/3 DEPTH/1 BOUND); A03: [7](findings-A03.md), [12](requirements-A03.md) (8/3/1); A04: [9](findings-A04.md), [17](requirements-A04.md) (8/7/2); A08: [15](findings-A08.md), [26](requirements-A08.md) (11/9/6). A04 14 retrospective entries not counted, A08.1 provisional matrix not counted twice; A03 original unnumbered row labels reversible. New 29 P1/11 P2 and 67 rows (35 OK/22 DEPTH/0 ERROR/10 BOUND). Shared ValuesAndReferencesDemo read-only unless 00 explicitly assigns owner. All proposed D scopes, no execution authorized.
+
+Cumulative **141/499** findings (7 BLOCKER/104 P1/30 P2); **257/925** requirements (97 OK/111 DEPTH/8 ERROR/41 BOUND). Remaining 358 findings (306 P1/52 P2), 668 requirements (168 OK/395 DEPTH/17 ERROR/88 BOUND). All OPEN. Exact HEAD/CI in checkpoint. No local runtime evidence.
+
+## Next cursor — R0-06
+
+A11/A12 generics/erasure and A13 exceptions (split by budget); use A25.2 authoritative original GE/ER alias normalization and primary report ranges; check exact counts before publishing. Continue A14/A15/A16/A18–A24. Preserve original ERROR and P0 DEPTH priority, primary finding IDs/acceptance, row-only gaps, and distinct D ownership; no duplicate findings from technical N labels or consolidated interim reports. Prepare bounded D briefs, identify dependencies on B G6 and cross-topic owners; 00 authorizes actual execution. Recheck live main/HEAD, preserve historical source and no teaching/status/CI changes, no merge/C/CON.
