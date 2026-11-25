@@ -6,7 +6,7 @@
 **Полный ожидаемый stdout основного примера:** [expected.stdout](expected.stdout)  
 **Проверка точного вывода:** [verify.sh](verify.sh)
 
-Теоретические предпосылки: [CORE-INIT — порядок инициализации](../../../knowledge/01-java-core/initialization.md), [CORE-CLASSES — поля и конструкторы](../../../knowledge/01-java-core/classes.md), [CORE-INHERITANCE — переопределение и динамический вызов](../../../knowledge/01-java-core/inheritance.md). Нормативная основа — JLS 21 §§4.12.4–4.12.5, 8.3.2, 8.6–8.8, 9.4, 12.4.1–12.4.2 и 12.5.
+Теоретические предпосылки: [CORE-INIT — порядок инициализации](../../../knowledge/01-java-core/initialization.md), [CORE-CLASSES — поля и конструкторы](../../../knowledge/01-java-core/classes.md), [CORE-INHERITANCE — переопределение и динамический вызов](../../../knowledge/01-java-core/inheritance.md). Нормативная основа — JLS 21 §§4.12.4–4.12.5, 8.3.2, 8.6–8.8, 9.4, 12.4.1–12.4.2 и 12.5. [План CORE-INIT](../../../docs/plans/CORE-INIT.md), [JLS §15.9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.9.4), [§11.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.3).
 
 ## Запуск из корня репозитория
 
@@ -96,7 +96,7 @@ Child.BOXED — не constant variable: тип Integer не подходит п�
 1. Инициализатор поля Parent.parentValue, затем instance initializer block Parent.
 2. Тело конструктора Parent. Он вызывает переопределяемый observe(), поэтому фактический объект Child приводит к Child.observe(). Инициализаторы Child ещё не исполнялись, и override печатает 0/null.
 3. После возврата из конструктора Parent выполняются инициализаторы полей Child в порядке объявления, затем instance initializer block Child.
-4. Выполняется остаток тела Child(int), вызванного через super().
+4. Выполняется остаток тела `Child(int)`: этот конструктор вызван из `Child()` через `this(67)` и сам вызывает `super()` для `Parent`.
 5. Возвращаемся в Child() после this(67) и выполняем остаток его тела.
 
 Child.instance field, Child.instance reference field и Child.instance block встречаются ровно по одному разу: делегирование this(67) не запускает instance initializers повторно. В финале объект имеет parentValue=67, childValue=68, childLabel="ready".
