@@ -12,6 +12,14 @@
 
 Приватный метод Base не переопределяется одноимённым методом Derived. Package-private метод Base из чужого пакета также не переопределяется: это два отдельных объявления. Пример показывает допустимое сужение return Number → Integer и checked IOException → FileNotFoundException.
 
+### Независимые объявления static и instance (B2b)
+
+В [IndependentBase](src/base/IndependentBase.java) объявлены private static final privateStatic(), private final экземплярный privateInstance() и package-private static final foreignStatic(). В [IndependentDeclarationsDemo](src/client/IndependentDeclarationsDemo.java), прямом public подклассе из другого пакета, одноимённые методы имеют противоположные модификаторы static/instance. Родительская и дочерняя ссылки указывают на один объект. В первой строке private-final значения идут в порядке: родительская обёртка для private static (67), дочерний instance (68), родительская обёртка для private instance (67), дочерний static через имя подкласса (68). Private методы здесь не переопределяются и не скрываются. Final ограничивает действительное переопределение/скрытие, а не независимое объявление.
+
+Вторая строка foreign_static сравнивает вызов родительской обёртки callForeignStatic() (67) и дочернего instance foreignStatic() (68): исходный package-private static final недоступен прямому подклассу из другого пакета. Это независимое объявление, не override/hide. Не распространяйте этот пример на транзитивное переопределение или другие ограничения объявления. См. JLS 21 [§8.4.8.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.1), [§8.4.8.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.2), [§8.4.8.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.3).
+
+Это исполняемые контрасты к отдельным учебным фрагментам статьи, а не их буквальное копирование: runner объединяет оба случая в одной прямой иерархии; порядок private static → instance, затем private instance → static отличается от порядка в статье. InheritanceDemo вызывает IndependentDeclarationsDemo.verify() перед CHECK PASSED; добавлено шесть вызовов check к прежним шестнадцати. Негативные BadStaticForInstance и BadInstanceForStatic остаются корректными: в них доступные методы родителя образуют запрещённый конфликт. Остальные десять отрицательных примеров также сохранены.
+
 ## Запуск из корня репозитория
 
 Установить **JDK 21**, чтобы были доступны java и javac. Linux/macOS или Git Bash (Windows):
@@ -50,8 +58,20 @@ static method: base:static / derived:static
 field: 67 / 68 / 67
 covariant + throws: 68 / derived:read
 private/package: base:private / base:package
+private-final=67:68:67:68
+foreign_static=67:68
 CHECK PASSED
 ~~~
+
+Изолированный запуск только новых положительных контрастов (из корня, Linux/macOS/Git Bash):
+
+~~~sh
+mkdir -p examples/core/inheritance/build/standalone
+javac --release 21 -XDrawDiagnostics -d examples/core/inheritance/build/standalone -sourcepath examples/core/inheritance/src examples/core/inheritance/src/client/IndependentDeclarationsDemo.java
+java -cp examples/core/inheritance/build/standalone client.IndependentDeclarationsDemo
+~~~
+
+Ожидаются две новые строки private-final и foreign_static из вывода выше, без CHECK PASSED (это маркер общего InheritanceDemo).
 
 ## Преднамеренно некомпилируемые случаи
 
@@ -71,6 +91,15 @@ CHECK PASSED
 | [BadReturnOnlyOverload](negative/BadReturnOnlyOverload.java) | По возвращаемому типу перегрузки нет |
 
 Скрипт проверяет ненулевой exit code **и характерную причину ошибки** по английским диагностическим фрагментам OpenJDK 21. Точные строки диагностик javac — не гарантия JLS; на другой локали или компиляторе тестовый скрипт может потребовать адаптации. Ошибки сохраняются в build/negative/<имя>/stderr.log.
+
+Для отдельной проверки категорий javac двух доступных конфликтов после общего runner:
+
+~~~sh
+javac --release 21 -XDrawDiagnostics -cp examples/core/inheritance/build/classes -d examples/core/inheritance/build/negative/BadStaticForInstance examples/core/inheritance/negative/BadStaticForInstance.java
+javac --release 21 -XDrawDiagnostics -cp examples/core/inheritance/build/classes -d examples/core/inheritance/build/negative/BadInstanceForStatic examples/core/inheritance/negative/BadInstanceForStatic.java
+~~~
+
+На OpenJDK 21.0.12.1 фактически получены exit 1 и соответственно compiler.err.override.static / compiler.misc.cant.override и compiler.err.override.meth / compiler.misc.cant.override (static). Диагностики относятся к доступным методам Base, а не к недостающим зависимостям.
 
 ## Проверки и границы
 
