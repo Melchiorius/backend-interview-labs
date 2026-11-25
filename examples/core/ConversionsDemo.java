@@ -55,6 +55,17 @@ public class ConversionsDemo {
         check((int) Double.POSITIVE_INFINITY == Integer.MAX_VALUE,
                 "Positive infinity to int");
 
+        // JLS 5.1.3: int/long conversion rounds toward zero and saturates at
+        // the int/long bounds. byte/short/char first use int, then low bits.
+        check((byte) 300.0 == 44, "Double to byte: low 8 bits of 300");
+        check((byte) Double.POSITIVE_INFINITY == -1, "Infinity to byte via int");
+        check((short) Double.POSITIVE_INFINITY == -1, "Infinity to short via int");
+        check((int) (char) Double.NEGATIVE_INFINITY == 0, "Negative infinity to char via int");
+        check((int) (char) Double.POSITIVE_INFINITY == 65535, "Positive infinity to char via int");
+        check((long) Double.NEGATIVE_INFINITY == Long.MIN_VALUE, "Negative infinity to long");
+        check((int) -3.9 == -3, "Negative fraction truncates toward zero");
+        check((byte) Double.NaN == 0, "NaN to byte via int");
+
         String interned = "Java";
         String literalConcat = "Ja" + "va";
         String different = new String("Java");
