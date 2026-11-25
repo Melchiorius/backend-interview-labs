@@ -1,9 +1,9 @@
 # CORE-INIT — порядок инициализации в Java 21
 
-Один автономный пример показывает **два связанных этапа** создания объекта: инициализацию классов/интерфейсов и инициализацию полей/конструкторов конкретного экземпляра. Исходник намеренно оставлен одним файлом: вложенные типы позволяют увидеть причинно-следственный порядок в одном запуске, не создавая лишний source set или Gradle-модуль.
+Один автономный пример показывает **два связанных этапа** создания объекта: инициализацию классов/интерфейсов и инициализацию полей/конструкторов конкретного экземпляра. Основной исходник намеренно оставлен одним файлом: вложенные типы позволяют увидеть причинно-следственный порядок в одном запуске, не создавая лишний source set или Gradle-модуль.
 
-**Исходник:** [src/InitializationDemo.java](src/InitializationDemo.java)  
-**Полный ожидаемый stdout:** [expected.stdout](expected.stdout)  
+**Основной исходник:** [src/InitializationDemo.java](src/InitializationDemo.java)  
+**Полный ожидаемый stdout основного примера:** [expected.stdout](expected.stdout)  
 **Проверка точного вывода:** [verify.sh](verify.sh)
 
 Теоретические предпосылки: [CORE-INIT — порядок инициализации](../../../knowledge/01-java-core/initialization.md), [CORE-CLASSES — поля и конструкторы](../../../knowledge/01-java-core/classes.md), [CORE-INHERITANCE — переопределение и динамический вызов](../../../knowledge/01-java-core/inheritance.md). Нормативная основа — JLS 21 §§4.12.4–4.12.5, 8.3.2, 8.6–8.8, 9.4, 12.4.1–12.4.2 и 12.5.
@@ -30,7 +30,7 @@ java -cp examples/core/initialization/build/classes InitializationDemo
 bash examples/core/initialization/verify.sh
 ~~~
 
-Скрипт удаляет и пересоздаёт только локальный examples/core/initialization/build/, компилирует исходник с --release 21, запускает InitializationDemo, сравнивает stdout через diff -u и завершает работу с ненулевым кодом при любом расхождении. После вывода программы скрипт печатает CHECK PASSED: stdout matches expected.stdout. Каталог build/ уже исключён существующим .gitignore.
+Скрипт удаляет и пересоздаёт только локальный examples/core/initialization/build/, компилирует исходник с --release 21, запускает InitializationDemo, сравнивает stdout через diff -u и завершает работу с ненулевым кодом при любом расхождении. После исходного вывода скрипт отдельно проверяет два случая неявного super() (см. B3 ниже), затем печатает исходный финальный маркер CHECK PASSED: stdout matches expected.stdout. Каталог build/ уже исключён существующим .gitignore.
 
 PowerShell — те же команды из корня:
 
@@ -39,7 +39,7 @@ javac --release 21 -d examples/core/initialization/build/classes examples/core/i
 java -cp examples/core/initialization/build/classes InitializationDemo
 ~~~
 
-## Полный ожидаемый stdout
+## Полный ожидаемый stdout основного примера
 
 ~~~text
 == 1. Compile-time constant ==
@@ -101,8 +101,33 @@ Child.BOXED — не constant variable: тип Integer не подходит п�
 
 Child.instance field, Child.instance reference field и Child.instance block встречаются ровно по одному разу: делегирование this(67) не запускает instance initializers повторно. В финале объект имеет parentValue=67, childValue=68, childLabel="ready".
 
-## Почему пример ограничен одним сценарием
+## B3 — неявный super() с нулём фактических аргументов
+
+Отдельный [ImplicitSuperDemo.java](src/ImplicitSuperDemo.java) показывает два контраста в static nested ordinary classes. У Parent есть только package-private конструктор Parent(int... xs), который сохраняет длину массива. Explicit имеет явно объявленный пустой конструктор без явного super(); Implicit не объявляет конструкторов. Объемлющий класс создаёт оба объекта, отдельно проверяет count == 0 и печатает длины в порядке Explicit, Implicit. Это не побайтный повтор верхнеуровневого листинга статьи, а проверка того же механизма с другим layout; доступ package-private не зависит от разрешённого private-доступа внутри одного top-level типа.
+
+Изолированный запуск из корня репозитория:
+
+~~~sh
+mkdir -p examples/core/initialization/build/implicit-super-classes
+javac --release 21 -XDrawDiagnostics -d examples/core/initialization/build/implicit-super-classes examples/core/initialization/src/ImplicitSuperDemo.java
+java -cp examples/core/initialization/build/implicit-super-classes ImplicitSuperDemo
+~~~
+
+Ожидаемый stdout самостоятельного примера:
+
+~~~text
+0
+0
+~~~
+
+Исходный InitializationDemo и 29 строк expected.stdout не изменены (29 строк — не число тестов). Runner компилирует новый пример в отдельный каталог, сравнивает его две строки с отдельным временным эталоном, выводит их после исходного stdout и до прежнего финального маркера. Две отдельные проверки с AssertionError — не JUnit.
+
+**Нормативная граница.** Ноль фактических аргументов не равен пустому списку формальных параметров: [JLS 21 §8.8.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.7), [§8.8.7.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.7.1), [§15.12.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.2). Для default constructor [§8.8.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.9) формулирует условие о доступном конструкторе суперкласса, принимающем ноль аргументов и не имеющем секции throws. Наблюдаемый javac 21.0.12.1 принимает обе varargs-цепочки; отдельная временная проба также принимает default subclass при Parent() throws IllegalStateException, тогда как checked IOException отвергается. Буквальное условие no throws clause строже последнего наблюдения с unchecked-only throws; [§11.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.3) отдельно регулирует checked exceptions. Это наблюдение конкретного компилятора, не объявление спецификации ошибочной и не гарантия переносимости. Подробности и самостоятельные временные фрагменты — в связанной статье CORE-INIT, не в tracked negative harness. Private constructor negative проверялся в двух разных верхнеуровневых классах.
+
+## Почему основной пример ограничен одним сценарием
 
 Этот runnable демонстрирует связное ядро L1/I1/I2 из плана CORE-INIT: active use и declaring type, constant vs non-constant static member, superclass/interface/class ordering, default values, superclass-first instance initialization, this(...) и virtual dispatch во время construction. Отдельные сценарии для recursive class initialization, initialization failure, Class.forName/ClassLoader, multi-thread deadlock и отрицательных компиляций намеренно не добавлены в этот файл: они имеют отдельные механизмы и требуют независимых изолированных запусков. Их место — самостоятельные фрагменты статьи, а не искусственное усложнение центрального примера.
 
-**Фактическая проверка автора:** OpenJDK 21.0.12.1 / javac 21.0.12.1; bash examples/core/initialization/verify.sh — exit code 0, полный stdout совпал с expected.stdout, скрипт вывел CHECK PASSED: stdout matches expected.stdout. Другие JDK-поставщики/версии и визуальная проверка Obsidian/IntelliJ — not run.
+**Историческая проверка основного примера:** OpenJDK 21.0.12.1 / javac 21.0.12.1; bash examples/core/initialization/verify.sh — exit code 0, полный stdout совпал с expected.stdout, скрипт вывел CHECK PASSED: stdout matches expected.stdout. Другие JDK-поставщики/версии и визуальная проверка Obsidian/IntelliJ — not run.
+
+**B3 — фактическая локальная проверка роли 03:** Debian OpenJDK/javac 21.0.12.1, LC_ALL=C. Baseline/final bash -n и полный bash runner exit 0, stderr пуст. Исходный actual.stdout совпал побайтно с baseline и expected.stdout; полный runner 30→32 строки, прежний вывод после удаления двух новых строк идентичен. Изолированные compile/run ImplicitSuperDemo exit 0/0, stdout 0/0, compiler stdout/stderr и java stderr пусты. Семь временных отрицательных компиляций exit 1 с ожидаемыми причинами (неприменимость, неоднозначность, private access, checked explicit/default, first statement, cyclic this); две временные положительные compile/run exit 0/0, stdout checked=67 и unchecked=67. Все временные пробы отдельно, не tracked и не часть CI runner. Git blob hashes сверены для 3/3 исходных и 4/4 итоговых исполняемых/input файлов, runner mode100644 сохранён. Gradle/JUnit/clean clone/GUI локально не запускались; CI проверяется отдельно на точном SHA.
