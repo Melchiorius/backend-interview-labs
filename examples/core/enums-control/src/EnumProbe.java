@@ -3,6 +3,7 @@
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Locale;
 
 public class EnumProbe {
     enum Status {
@@ -21,7 +22,7 @@ public class EnumProbe {
                 case DONE -> false;
             };
         }
-        @Override public String toString() { return "status-" + name().toLowerCase(); }
+        @Override public String toString() { return "status-" + name().toLowerCase(Locale.ROOT); }
     }
     interface Action { int apply(int a, int b); }
     enum Operation implements Action {
