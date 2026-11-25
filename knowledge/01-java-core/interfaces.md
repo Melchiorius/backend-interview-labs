@@ -120,9 +120,9 @@ default
 
 1. `68` — компилятор допускает `policy.apply(int)` по статическому типу `Policy`, а во время выполнения по фактическому классу объекта `Standard` выбирается его реализация. Проверка допустимости вызова и выбор реализации во время выполнения — разные этапы ([JLS 21 §15.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12)).
 2. `policy/68` — унаследованный экземплярный default `label()` вызывает вспомогательный `private`-метод и виртуальную операцию `apply(67)`. Default имеет тело, но это не означает статическое связывание всех вызовов внутри него.
-3. `interface` — метод `kind()` статический, поэтому вызывается через `Policy.kind()`, а не через `Standard.kind()` и не через переменную.
+3. `interface` — метод `kind()` статический: здесь используется `Policy.kind()`. Вызов через имя реализующего класса `Standard` или через переменную недопустим; простое имя допустимо в подходящей лексической области или после статического импорта (см. ниже).
 4. `left+right` — при двух независимых default класс `Both` **явно разрешает конфликт** и вызывает две допустимые реализации через `InterfaceName.super`.
-5. `class` — конкретный метод, унаследованный от класса `Parent`, имеет приоритет перед default из `Welcome`.
+5. `class` — совместимый публичный экземплярный метод, унаследованный от класса `Parent`, реализует контракт `Welcome`; default его не подменяет.
 6. `child` — подинтерфейс `B extends A` более специфичен, чем `A`; переопределив default, он выбирает своё поведение. Порядок перечисления интерфейсов не является алгоритмом «первый побеждает».
 7. `default` — конфликт независимых `abstract`- и `default`-деклараций разрешён объявлением собственного метода `Resolved.status()`; внутри него автор явно вызывает default.
 8. `136` — функциональный интерфейс имеет один абстрактный метод `calculate`. Объявление `equals(Object)`, соответствующее публичному методу Object, а методы `default` и `static` не создают вторую абстрактную операцию. Лямбда даёт 68, default удваивает результат.
@@ -160,7 +160,36 @@ interface Settings {
 
 `Settings.LIMIT = 68` — ошибка компиляции: поле final. `Settings.VALUES[0] = 68` — **допустимое присваивание элементу массива** внутри метода: final запрещает переназначить ссылку, но не делает содержимое массива неизменяемым. Публичный изменяемый массив — потенциально плохой контракт API, даже когда формально соответствует JLS. В интерфейсе нет отдельных для каждого объекта полей, `private int state = 67` тоже нельзя ([JLS 21 §9.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.3)).
 
-Compile-time constant `int LIMIT = 67` можно прочитать без запуска инициализации интерфейса, но `int[] VALUES` не является constant variable. Class initialization и связь default methods с инициализацией — отдельная точная тема [CORE-INIT](initialization.md) ([JLS 21 §12.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1)).
+Два разных объявления поля с одинаковым именем могут быть унаследованы без ошибки, пока обращение не становится неоднозначным:
+
+~~~java
+interface A { int X=1; }
+interface B { int X=2; }
+interface Fields extends A,B { int SUM=A.X+B.X; int N=Integer.parseInt("67"); }
+class FieldsDemo { public static void main(String[] args){System.out.println(A.X+","+B.X+","+Fields.SUM+","+Fields.N);} }
+~~~
+
+Сохраните отдельно FieldsDemo.java; `javac --release 21 FieldsDemo.java`, `java FieldsDemo` — ожидается `1,2,3,67`. Если вместо SUM написать `int SUM = X;`, компилятор не сможет выбрать между A.X и B.X. Два пути к одному объявлению поля, напротив, не создают неоднозначность. Похожее правило действует для унаследованных вложенных типов (§9.5). Поле N тоже final, но инициализатор не является константным выражением: константная переменная должна иметь примитивный тип или String и быть инициализирована константным выражением. См. [JLS 21 §9.3–9.3.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.3).
+
+### Инициализация интерфейса
+
+Чтение константной переменной `Settings.LIMIT` не запускает инициализацию интерфейса. Чтение неконстантного static-поля и вызов объявленного static-метода запускают инициализацию именно объявившего их типа, если он ещё не инициализирован. Инициализация интерфейса сама по себе не инициализирует его суперинтерфейсы только из-за extends. При инициализации класса, напротив, инициализируются его суперкласс и рекурсивно найденные суперинтерфейсы, **объявляющие** default-методы (в том числе сгенерированные компилятором synthetic defaults); одного наследования default недостаточно.
+
+Сохраните отдельно `InitDemo.java`:
+
+~~~java
+class InitDemo {
+    static int mark(String name){System.out.println(name);return 67;}
+    interface Anc { int N=mark("Anc"); }
+    interface D extends Anc { int N=mark("D"); default void f(){} }
+    static class C implements D {}
+    interface U { int N=mark("U"); }
+    interface V extends U { int N=mark("V"); }
+    public static void main(String[] args){new C();System.out.println(V.N);}
+}
+~~~
+
+При `javac --release 21 InitDemo.java` и `java InitDemo` ожидаются строки `D`, `V`, `67`: создание C инициирует D, но не Anc; чтение V.N инициирует V, но не U. Полный протокол, порядок и исключения — [CORE-INIT](initialization.md), [JLS 21 §12.4.1–2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1).
 
 ## Четыре вида методов
 
@@ -174,6 +203,23 @@ Compile-time constant `int LIMIT = 67` можно прочитать без за
 Отсутствие ключевого слова `public` перед обычным абстрактным методом интерфейса **не делает метод package-private**. Попытка `class X implements Api { void run(){} }` при `interface Api { void run(); }` — ошибка компиляции: реализация снижает видимость public-контракта. Не компилируются и `protected void run();` в интерфейсе, `private abstract void run();`, `static default void run() {}` и `default void run();` без тела.
 
 Вызов `Standard.kind()` из центрального примера отвергается не из-за недоступности, а потому что static-методы интерфейсов **не наследуются классами**. Для private-методов нужно различать доступность объявления, наследование и форму вызова. Основание — [JLS 21 §6.6.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.6.1), [§9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4), [§9.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1), [§9.4.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.3) и [§15.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12).
+
+Статический метод не наследуется также подинтерфейсом. Однако отсутствие наследования не означает запрета простого имени. В файле `Api.java`:
+
+~~~java
+package demo;
+public interface Api { static int kind(){return 67;} default int inside(){return kind();} }
+~~~
+
+В отдельном файле `StaticScope.java`:
+
+~~~java
+package demo;
+import static demo.Api.kind;
+class StaticScope implements Api { public static void main(String[] args){System.out.println(kind()+","+new StaticScope().inside());} }
+~~~
+
+Из каталога обоих файлов: `javac --release 21 -d out Api.java StaticScope.java`, затем `java -cp out demo.StaticScope` — ожидается `67,67`. Внутри Api имя kind доступно лексически, а в клиенте — благодаря статическому импорту, не наследованию. Вызов `Api.kind()` тоже допустим. Без импорта или другого подходящего объявления вызов `kind()` в реализующем классе не разрешается только благодаря implements; `StaticScope.kind()` и `api.kind()` (где api — переменная типа Api) недопустимы. См. [JLS 21 §7.5.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.5.3), [§15.12.1–3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.1).
 
 ### Private-метод: кто может вызвать и нужен ли экземпляр
 
@@ -243,7 +289,23 @@ javac --release 21 -XDrawDiagnostics -d bad-type BadTypeQualifiedInstance.java
 
 ### 1. Метод класса и default интерфейса
 
-В центральном примере `Descendant extends Parent implements Welcome` получает `Parent.hello()`, возвращающий `"class"`. Конкретный метод класса имеет приоритет; интерфейсный default не подменяет существующую реализацию в иерархии классов.
+В центральном примере `Descendant extends Parent implements Welcome` получает `Parent.hello()`, возвращающий `"class"`. Правило «class wins» не означает, что любое совпадение имени и параметров законно. Унаследованный экземплярный метод должен удовлетворять публичному контракту интерфейса: быть public, иметь совместимый возвращаемый тип и не расширять допустимые checked exceptions. Private-метод суперкласса не наследуется. Статический метод класса не реализует экземплярный метод интерфейса.
+
+Два отдельных отрицательных примера (не компилировать вместе):
+
+~~~java
+interface Api { default int f(){return 67;} }
+class Base { protected int f(){return 68;} }
+class ProtectedWins extends Base implements Api {}
+~~~
+
+~~~java
+interface Api { default int f(){return 67;} }
+class Base { public static int f(){return 68;} }
+class StaticWins extends Base implements Api {}
+~~~
+
+В первом случае недостаточна видимость, во втором — статический метод не может реализовать экземплярную операцию. Если метод Base private, он не наследуется; через ссылку типа Api на экземпляр наследника можно вызвать default (при отсутствии другого конфликта). См. [JLS 21 §8.4.8.1–4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.1).
 
 **Опасное упрощение:** «любой метод суперкласса, даже abstract, уже реализует default». Нет: абстрактный метод класса не даёт готового тела.
 
@@ -267,7 +329,20 @@ interface Right { default int count() { return 68; } }
 class Broken implements Left, Right { } // N01: конфликт defaults
 ```
 
-Класс должен объявить собственный override. Он может вызвать `Left.super.count()`, `Right.super.count()`, обе реализации либо написать новый алгоритм. В центральном примере `Both` вызывает обе. Никакого правила «победит первый/последний в implements» нет.
+В обычном случае независимых defaults, без исключения для абстрактного метода суперкласса, класс должен объявить собственный override. Он может вызвать `Left.super.count()`, `Right.super.count()`, обе реализации либо написать новый алгоритм. В центральном примере `Both` вызывает обе. Никакого правила «победит первый/последний в implements» нет.
+
+Есть исключение из правила конфликтов: если абстрактный метод **объявлен в суперклассе и унаследован**, а его сигнатура эквивалентна по переопределению конфликтующим методам, абстрактный промежуточный класс может наследовать оба default без собственного объявления. Например, отдельный файл `DeferredDemo.java`:
+
+~~~java
+abstract class Base { public abstract int f(); }
+interface Left { default int f(){return 1;} }
+interface Right { default int f(){return 2;} }
+abstract class Deferred extends Base implements Left, Right {}
+class Finished extends Deferred { public int f(){return 67;} }
+class DeferredDemo { public static void main(String[] args){System.out.println(new Finished().f());} }
+~~~
+
+`javac --release 21 DeferredDemo.java`, `java DeferredDemo` — ожидается 67. Абстрактный метод класса не переопределяет эти defaults, а действует особое правило наследования; требуется совместимость возвращаемых типов. Конкретный Finished предоставляет реализацию. Исключение не распространяется на ситуацию, когда все унаследованные abstract-методы объявлены только в интерфейсах ([JLS 21 §8.4.8.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.4)).
 
 Иное положение, если два пути **ведут к одному исходному default**:
 
@@ -289,7 +364,7 @@ interface Provided { default String label() { return "default"; } }
 class Broken implements Required, Provided { } // N02: нужен override
 ```
 
-В `Resolved` центрального примера этот случай разрешён явно: `public String status() { return DefaultStatus.super.status(); }`. Default не удовлетворяет автоматически несовместимому **параллельному** наследованию абстрактного метода другого интерфейса. Это другая причина ошибки, чем N03 с абстрактным методом **суперкласса**. Нельзя сводить оба механизма к одной схеме приоритетов.
+В `Resolved` центрального примера этот случай разрешён явно: `public String status() { return DefaultStatus.super.status(); }`. Default не удовлетворяет автоматически несовместимому **параллельному** наследованию абстрактного метода другого интерфейса. Это другая причина ошибки, чем N03 с абстрактным методом **суперкласса**. Нельзя сводить оба механизма к одной схеме приоритетов. Описанное выше исключение для унаследованного abstract-метода суперкласса применимо и к паре abstract/default при соблюдении его условий. Сам подинтерфейс, наследующий два конфликтующих объявления, может разрешить конфликт собственной абстрактной декларацией: `interface Combined extends Required, Provided { @Override String label(); }`. Конкретный реализатор Combined должен предоставить тело; это именно переобъявление в подинтерфейсе, а не действие исключения для суперкласса.
 
 ### 4. Более специфичный подинтерфейс
 
@@ -333,6 +408,16 @@ class N12_RedundantSuper implements A, B {
 
 Во втором случае `A` указана напрямую, но одновременно унаследована более специфичной `B` — такой квалификатор тоже запрещён. Каждую отрицательную программу компилируйте в **отдельном файле**, чтобы повторные объявления `A/B` не скрыли истинную причину отказа. См. [JLS 21 §15.12.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.1).
 
+Аналогичная ошибка возникает через непосредственный суперкласс, который уже реализует A:
+
+~~~java
+interface A { default void f(){} }
+class Base implements A {}
+class BadSuper extends Base implements A { void test(){A.super.f();} }
+~~~
+
+Запрещено также обходить отличное переопределяющее объявление из другого непосредственного суперкласса или суперинтерфейса (§15.12.3). Даже допустимый по структуре квалификатор не позволяет вызвать abstract-метод без тела. Это отдельные проверки от выбора виртуальной реализации при обычном вызове. См. [JLS 21 §15.12.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.3).
+
 ## Return types и checked exceptions: ещё одно измерение конфликтов
 
 Подстановка реализации должна соблюдать return-type-substitutability, объявленные checked exceptions и достаточную видимость. **Допустимое сужение**:
@@ -366,7 +451,21 @@ class Bad implements Source {
 }
 ```
 
-Эти фрагменты намеренно самостоятельны, их типы не должны смешиваться с другими примерами в одной компиляции. Невозможно разрешить всякий конфликт только совпадением имени и параметров: несовместимые возвращаемые типы и checked throws способны сделать реализацию незаконной. Точная основа: [JLS 21 §8.4.8.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.3), [§8.4.8.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.4), [§9.4.1.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.2). Это отдельный контрпример для IC-21, не только reabstract из плана G1.
+Эти фрагменты намеренно самостоятельны, их типы не должны смешиваться с другими примерами в одной компиляции. Совпадения имени и параметров недостаточно: несовместимый возвращаемый тип или расширение checked throws может сделать конкретное переопределение незаконным. При этом разные throws сами по себе не запрещают наследование совместимых abstract-деклараций. Точная основа: [JLS 21 §8.4.8.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.3), [§8.4.8.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.4), [§9.4.1.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.2). Это отдельный контрпример для IC-21, не только reabstract из плана G1.
+
+Одна реализация может удовлетворить независимым контрактам с разными возвращаемыми типами и непересекающимися checked exceptions. Сохраните `CovariantDemo.java`:
+
+~~~java
+import java.io.IOException;
+import java.sql.SQLException;
+interface R1 { Number get() throws IOException; }
+interface R2 { Integer get() throws SQLException; }
+@FunctionalInterface interface R3 extends R1,R2 {}
+class Good implements R3 { public Integer get(){return 67;} }
+class CovariantDemo { public static void main(String[] args){R3 lambda=()->68;System.out.println(new Good().get()+","+lambda.get());} }
+~~~
+
+`javac --release 21 CovariantDemo.java`, `java CovariantDemo` — ожидается `67,68`. Integer совместим с обоими возвращаемыми типами; реализация не объявляет checked exceptions. Если добавить к Good.get() `throws IOException`, компилятор отвергнет реализацию по контракту R2. Объявление checked exception должно удовлетворять **каждому** переопределяемому контракту; можно не объявлять ни одного. Если же у двух abstract-методов с одинаковыми параметрами несовместимые возвращаемые типы (например, Number и String), уже само наследование обоих в подинтерфейсе без разрешения незаконно. Функциональный тип R3 здесь не содержит checked exceptions ([JLS 21 §9.4.1.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.3), [§9.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.9)).
 
 ## Интерфейс и методы `Object`
 
@@ -380,9 +479,20 @@ interface Broken {
 
 Аналогично нельзя объявить `default boolean equals(Object other)` (N17). Однако **абстрактное** `boolean equals(Object other);` допустимо: тип может требовать этот контракт, и такая декларация не добавляет вторую абстрактную операцию для SAM. Утверждение «в интерфейсах вообще нельзя объявлять equals» неверно. Подробный контракт identity и value-equality — [CORE-OBJECT](object.md), [CORE-EQUALITY](equality.md). Правила: [JLS 21 §9.4.1.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.2).
 
+**Граница нормы и реализации.** Буквальное правило §9.4.1.2 относится к non-private методам Object, включая protected clone(). При локальной проверке Debian OpenJDK/javac 21.0.12.1 команда `javac --release 21 -XDrawDiagnostics CloneDefault.java` для отдельного файла `interface CloneDefault { default Object clone(){return null;} }` завершилась с кодом 0 без диагностики; обычный default equals был отвергнут. Это наблюдение конкретного компилятора, не опровержение JLS и не гарантия переносимости default clone(). Причина расхождения здесь не установлена. Не путайте его с допустимым abstract clone() при определении SAM.
+
 ## Functional interface, marker и abstract class
 
 **Functional interface (SAM)** в Java 21 — это interface, который **не объявлен с модификатором `sealed`** и имеет одну логическую abstract-операцию. Не считаются самостоятельными SAM-операциями его `default`, `static` и `private` методы, а также abstract-декларации, совпадающие с публичными методами `Object`. В центральном примере `Operation` допускает lambda, хотя содержит `equals(Object)`, `twice()` и `identity()`. Аннотация `@FunctionalInterface` проверяет правильность объявления, но не изменяет его типовую семантику.
+
+Формально из множества abstract-методов исключаются сигнатуры публичных экземплярных методов Object; среди оставшихся должен существовать метод, чья сигнатура является subsignature каждой из них и чей возвращаемый тип допустим при замене возвращаемого типа каждого метода (return-type-substitutable). Поэтому две унаследованные декларации R1.get/R2.get в примере выше образуют одну логическую операцию R3. Защищённый Object.clone() не является публичным, поэтому abstract clone() **не исключается**:
+
+~~~java
+@FunctionalInterface interface CloneSam { Object clone(); }
+class CloneSamDemo { public static void main(String[] args){CloneSam c=()->67;System.out.println(c.clone());} }
+~~~
+
+`javac --release 21 CloneSamDemo.java`, `java CloneSamDemo` — ожидается 67. Если добавить `void run();` в CloneSam, аннотация отвергается: две операции. Аннотация необязательна. Обобщённый абстрактный метод `interface Generic { <T> T id(T x); }` может образовать функциональный интерфейс, однако `Generic g = x -> x;` не компилируется: функциональный тип с собственными параметрами типа не подходит для лямбды. Это не запрет на лямбды для всех параметризованных интерфейсов. См. [JLS 21 §9.8–9.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.8), [§15.27.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27.3), [CORE-GENERICS](generics.md).
 
 Даже одна abstract-операция не делает `sealed`-интерфейс функциональным. Такой интерфейс не может быть целью lambda expression:
 
@@ -408,7 +518,7 @@ interface Broken {
 }
 ```
 
-Интерфейс может быть вообще без методов — *marker interface*:
+Интерфейс может не объявлять собственных операций — *marker interface*. Это не означает отсутствия неявных публичных методов, соответствующих Object (§9.2):
 
 ```java
 interface Marker {}
