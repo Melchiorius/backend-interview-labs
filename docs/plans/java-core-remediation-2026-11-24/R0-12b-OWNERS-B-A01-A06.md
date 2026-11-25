@@ -1,11 +1,11 @@
 # Canonical ownership map — B registry and A01–A06
 
-Source ledger HEAD cbd1fac510b1b567b45a93f16e25c5c0491e9604. Proposed final accountability, not execution permission or disposition change. 02 lead for each package; 03 designated practice writer if authorized, 05/04/00/06 gates per plan. B2 canonical family resolved to B2a/b/c per accepted scope. R11 final D-A02, B1 G6 prerequisite.
+Source ledger HEAD cbd1fac510b1b567b45a93f16e25c5c0491e9604; B2a disposition updated by 00 final G6 #7155224420, see findings-B.md. Proposed final accountability, not execution permission or disposition change. 02 lead for each package; 03 designated practice writer if authorized, 05/04/00/06 gates per plan. B2 canonical family resolved to B2a/b/c per accepted scope. R11 final D-A02, B1 G6 prerequisite.
 
 | Finding ID | Severity | CORE | Package | Disposition | Ledger |
 |---|---|---|---|---|---|
 | JC-A02-B01 | BLOCKER | CORE-CONVERSIONS | B1 | FIXED | [source](findings-B.md) |
-| JC-A05-B01 | BLOCKER | CORE-ACCESS | B2a | OPEN | [source](findings-B.md) |
+| JC-A05-B01 | BLOCKER | CORE-ACCESS | B2a | FIXED | [source](findings-B.md) |
 | JC-A06-B01 | BLOCKER | CORE-INHERITANCE | B2b | OPEN | [source](findings-B.md) |
 | JC-A09-B01 | BLOCKER | CORE-INTERFACES | B2c | OPEN | [source](findings-B.md) |
 | JC-A07-B01 | BLOCKER | CORE-INIT | B3 | OPEN | [source](findings-B.md) |
