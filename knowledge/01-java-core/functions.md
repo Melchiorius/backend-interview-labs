@@ -267,12 +267,12 @@ class References {
 
     public static void main(String[] args) {
         ToIntFunction<String> staticRef = Integer::parseInt;
-        Supplier<String> boundRef = "hi"::toUpperCase;
+        Supplier<String> boundRef = "abc"::toUpperCase;
         ToIntFunction<String> unboundRef = String::length;
         IntFunction<Box> constructorRef = Box::new;
 
         System.out.println(staticRef.applyAsInt("67")); // 67
-        System.out.println(boundRef.get());            // HI
+        System.out.println(boundRef.get());            // ABC
         System.out.println(unboundRef.applyAsInt("ab"));// 2
         System.out.println(constructorRef.apply(67).value()); // 67
     }
@@ -283,7 +283,63 @@ class References {
 
 Для конструктора `Box::new` экземпляр `Box` не создаётся в момент вычисления ссылки; он появляется при вызове `constructorRef.apply(67)`. Тип `IntFunction<Box>` ограничивает и количество аргументов, и их тип, и возвращаемый объект. Помимо этих четырёх форм у Java есть дополнительные нюансы массивов/супертипов/overloads; они не заменяют основных правил §15.13.
 
-Нормы: [JLS §15.13.1–3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.13).
+### Локаль и выбор перегрузки `toUpperCase`
+
+Здесь для ссылки на метод конкретного объекта (bound) выбрана строка `"abc"`: в проверяемых конфигурациях JVM она даёт `ABC`. Это позволяет сохранить пример с `Supplier<String>` (его метод `get()` не принимает аргументов) и воспроизводимый технический вывод. Сам метод [`String.toUpperCase()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toUpperCase()) от этого не становится независимым от локали: он применяет правила `Locale.getDefault()` **при вызове метода**. Например, для `"hi"` при `en_US` результат — `HI`, а при `tr_TR` — `Hİ` (последний символ U+0130, заглавная I с точкой). Это различие правил преобразования регистра, а не ошибка кодировки.
+
+Если правила регистра не должны зависеть от текущей локали (например, при нормализации технического ключа), используйте [`toUpperCase(Locale)`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toUpperCase(java.util.Locale)) с [`Locale.ROOT`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Locale.html#ROOT). Для текста, предназначенного человеку, выбирайте локаль согласно требованиям языка и интерфейса. `Locale.ROOT` задаёт нейтральную локаль, а не неизменность результата для любых версий Unicode/JDK.
+
+Выбор перегрузки с параметром `Locale` влияет на число параметров единственного абстрактного метода целевого интерфейса (SAM). В ссылке `text::toUpperCase` на метод конкретного объекта (bound) получатель уже задан, поэтому `Function<Locale, String>` позволяет передать локаль единственным аргументом при вызове `apply`. Для ссылки с передаваемым получателем (unbound) `String::toUpperCase` и перегрузки с локалью нужны два аргумента — строка-получатель и локаль (`BiFunction<String, Locale, String>`). Если требуется именно `Supplier<String>` с заранее выбранной локалью, используйте лямбду: ссылка на метод сама по себе не подставляет произвольные значения аргументов.
+
+Сохраните в отдельном файле `LocaleCaseProbe.java`:
+
+~~~java
+import java.util.Locale;
+import java.util.function.*;
+
+class LocaleCaseProbe {
+    public static void main(String[] args) {
+        String text = "hi";
+        Supplier<String> original = text::toUpperCase;
+        Supplier<String> sample = "abc"::toUpperCase;
+        Supplier<String> technical = () -> text.toUpperCase(Locale.ROOT);
+        Function<Locale, String> boundWithLocale = text::toUpperCase;
+        BiFunction<String, Locale, String> unboundWithLocale = String::toUpperCase;
+
+        System.out.println("locale=" + Locale.getDefault());
+        System.out.println("stdout=" + System.out.charset());
+        System.out.println("stdout.encoding=" + System.getProperty("stdout.encoding"));
+        System.out.println("original=" + original.get());
+        System.out.println("sample=" + sample.get());
+        System.out.println("technical=" + technical.get());
+        System.out.println("bound-root=" + boundWithLocale.apply(Locale.ROOT));
+        System.out.println("unbound-root=" + unboundWithLocale.apply(text, Locale.ROOT));
+    }
+}
+~~~
+
+Для сопоставления запустите три отдельных процесса JVM (команды ниже для Bash; локаль системы и `Locale.setDefault` не меняем):
+
+~~~sh
+export LC_ALL=C
+mkdir -p out
+javac --release 21 -encoding UTF-8 -XDrawDiagnostics -d out LocaleCaseProbe.java
+java -Dstdout.encoding=UTF-8 -cp out LocaleCaseProbe
+java -Duser.language=en -Duser.country=US -Dstdout.encoding=UTF-8 -cp out LocaleCaseProbe
+java -Duser.language=tr -Duser.country=TR -Dstdout.encoding=UTF-8 -cp out LocaleCaseProbe
+~~~
+
+**Фактическая локальная проверка роли 02:** [отчёт о трёх компиляциях и девяти запусках](https://github.com/Melchiorius/backend-interview-labs/issues/284#issuecomment-7159833708) для авторской версии `1fb987d7956df70611bf87d3908ab0138ad3b816`, Debian OpenJDK/javac 21.0.12.1. Для `LocaleCaseProbe.java`: Компиляция — код 0, stdout/stderr пусты; все три запуска — код 0, stderr пуст. Фактическая `System.out.charset()` и свойство `stdout.encoding` равны `UTF-8` во всех трёх процессах.
+
+| Конфигурация JVM | Фактическая `Locale.getDefault()` | `original` | `sample` | `technical`, `bound-root`, `unbound-root` |
+|---|---|---|---|---|
+| По умолчанию (без `user.language` и `user.country`) | `en_US` | `HI` | `ABC` | `HI` |
+| Явная `en_US` | `en_US` | `HI` | `ABC` | `HI` |
+| Явная `tr_TR` | `tr_TR` | `Hİ` | `ABC` | `HI` |
+
+Проверены кодовые точки и байты UTF-8: `HI` — U+0048 U+0049 (`48 49`), `Hİ` — U+0048 U+0130 (`48 C4 B0`). Отдельно скомпилирован и запущен верхний листинг `References.java` под теми же тремя конфигурациями: во всех случаях четыре строки `67`, `ABC`, `2`, `67`; неизменённый `ReceiverTiming.java` из §8 — строки `1`, `3`. Компиляции и запуски завершились с кодом 0, без stderr. Это самостоятельные учебные проверки, не запуск общего `verify.sh` и не доказательство для всех локалей, ОС или версий JDK.
+
+Нормы: [JLS §15.13.1–3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.13). При создании ссылки на метод конкретного объекта вычисляется выражение-получатель, а выбранный метод выполняется при вызове единственного абстрактного метода целевого интерфейса. Перегрузка определяется целевым типом. Подробности момента вычисления — в следующем разделе.
 
 ## 8. Bound receiver вычисляется сразу — не путать с вызовом метода
 
