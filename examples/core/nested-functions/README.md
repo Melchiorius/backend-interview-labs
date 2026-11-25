@@ -1,6 +1,6 @@
 # CORE-NESTED + CORE-FUNCTIONS — вложенные классы и лямбды в Java 21
 
-**Один автономный запускаемый пример**, а не обязательное упражнение. Он связывает ситуации, которые легко перепутать на интервью: чем `static nested` отличается от `inner`, какой `this` видят локальные и анонимные классы, какие локальные значения захватывает лямбда и *когда* вычисляется получатель ссылки на метод. Все наблюдения `P01–P17` повторяют §5 [принятого исследовательского плана](../../../docs/plans/CORE-NESTED-FUNCTIONS.md). **17 строк — один запуск программы**, не 17 независимых тестов.
+**Один автономный запускаемый пример**, а не обязательное упражнение. Он связывает ситуации, которые легко перепутать на интервью: чем `static nested` отличается от `inner`, какой `this` видят локальные и анонимные классы, какие локальные значения захватывает лямбда и *когда* вычисляется получатель ссылки на метод. Наблюдения `P01–P17` основаны на §5 [принятого исследовательского плана](../../../docs/plans/CORE-NESTED-FUNCTIONS.md). Исторический план использует `hi` в P10; исправленный runnable B4a использует `abc` и `ABC`, не меняя смысл ссылки на метод. **17 строк — один запуск программы**, не 17 независимых тестов.
 
 **Файлы:** [NestedFunctionsProbes.java](src/NestedFunctionsProbes.java), [полный эталон expected.stdout](expected.stdout), [проверочный verify.sh](verify.sh). Единственная точка входа — `NestedFunctionsProbes.main` (default package), никаких внешних зависимостей, JUnit, Mockito или нового Gradle-модуля нет.
 
@@ -37,7 +37,7 @@ P06=138
 P07=false,true
 P08=68
 P09=68
-P10=67,HI,2,67
+P10=67,ABC,2,67
 P11=true,true
 P12=1,3
 P13=int
@@ -56,10 +56,37 @@ P17=68
 | `P06` | Локальный `Local` читает effectively-final `captured=67` и `Local.marker=71`; сумма **138**. |
 | `P07` | `this` внутри анонимного `Supplier` обозначает его собственный объект, поэтому сравнение с внешним объектом — **false**. У лямбды `this` лексически относится к внешнему `NestedFunctionsProbes` — **true**. |
 | `P08` | Ссылка `box` захвачена без переназначения локальной переменной, но содержимое массива можно изменить с 67 на **68**. Захват effectively-final ссылки не делает объект immutable или thread-safe. |
-| `P09–P10` | `IntUnaryOperator` задаёт lambda target type. Далее четыре вида method reference: `String::valueOf` (static), `"hi"::toUpperCase` (bound), `String::length` (unbound, получатель передаётся как аргумент SAM) и `Widget::new` (constructor). Получается `67,HI,2,67`. |
+| `P09–P10` | `IntUnaryOperator` задаёт lambda target type. Далее четыре вида method reference: `String::valueOf` (static), `"abc"::toUpperCase` (bound), `String::length` (unbound, получатель передаётся как аргумент SAM) и `Widget::new` (constructor). Получается `67,ABC,2,67`. |
 | `P11–P12` | Выражение `missing::trim` выбрасывает NPE **в момент создания bound reference**. Лямбда `() -> missing.trim()` создаётся и бросает NPE лишь при `get()`. `receiver(calls)::toUpperCase` вызывает фабрику получателя **один раз**, поэтому после двух `get()` счётчик 1; лямбда `() -> receiver(calls).toUpperCase()` ещё дважды вызывает фабрику, итог **3**. |
 | `P13–P14` | Приведение lambda к `IntUnaryOperator` разрешает перегрузку `choose`; `Checked.run()` объявляет `IOException`, поэтому соответствующая лямбда может бросить это checked exception. У `Runnable.run()` такого объявления нет. |
 | `P15–P17` | Локальный `record LocalRecord` не захватывает переменные метода (он implicitly static); anonymous/lambda оба читают effectively-final `captured`; переобъявленный публичный `equals(Object)` из `Object` не добавляет вторую функциональную операцию `Transform`. |
+
+## B4a — default locale и технический stdout
+
+No-arg [String.toUpperCase()](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toUpperCase()) использует default locale при вызове метода, а не при создании bound reference. Исходное слово hi даёт HI при en_US, но Hİ (U+0048 U+0130) при tr_TR. Выбор abc сохраняет bound reference с SAM Supplier<String> без аргументов и даёт ABC в проверенных конфигурациях. Это не превращает toUpperCase() в locale-independent API.
+
+Для нейтрального технического преобразования произвольной строки явно передавайте [Locale.ROOT](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Locale.html#ROOT) в [toUpperCase(Locale)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toUpperCase(java.util.Locale)). Сравните SAM-арности:
+
+~~~java
+String text = "hi";
+Supplier<String> technical = () -> text.toUpperCase(Locale.ROOT);
+Function<Locale, String> boundWithLocale = text::toUpperCase;
+BiFunction<String, Locale, String> unboundWithLocale = String::toUpperCase;
+// technical.get(), boundWithLocale.apply(Locale.ROOT)
+// и unboundWithLocale.apply(text, Locale.ROOT) дают HI.
+~~~
+
+Это альтернативы с import java.util.Locale и java.util.function.*: первая — lambda, вторая — bound reference с одним аргументом SAM, третья — unbound с receiver и locale. Для человекочитаемого текста выбор локали определяется языком пользователя, а не обязательно ROOT. Никакой глобальной смены или фиксации локали в runnable/runner нет.
+
+**Фактическая локальная проверка 03:** Debian OpenJDK/javac 21.0.12.1, LC_ALL=C; шесть полных запусков baseline/final с временными PATH-local java wrappers (один абсолютный java, флаги JVM перед аргументами), без JAVA_TOOL_OPTIONS/JDK_JAVA_OPTIONS/_JAVA_OPTIONS. Default — только -Dstdout.encoding=UTF-8, en_US и tr_TR дополнительно -Duser.language=en/tr -Duser.country=US/TR. Отдельная Java probe под теми же wrappers подтвердила actual Locale.getDefault() = en_US/en_US/tr_TR, System.out.charset() и stdout.encoding = UTF-8 во всех трёх. file.encoding и default charset UTF-8, native.encoding ANSI_X3.4-1968 (LC_ALL=C). Это JVM-конфигурации, не проверка всех OS/locales.
+
+| JVM config | Baseline exit / P10 | Final exit / P10 |
+|---|---|---|
+| Default (actual en_US) | 0 / 67,HI,2,67 | 0 / 67,ABC,2,67 |
+| en_US | 0 / 67,HI,2,67 | 0 / 67,ABC,2,67 |
+| tr_TR | 1 / 67,Hİ,2,67 | 0 / 67,ABC,2,67 |
+
+Во всех шести запусках stderr пуст; baseline tr_TR завершился на diff (без CHECK PASSED), все final stdout содержат точные 17 строк expected.stdout и исходный финальный маркер, побайтно одинаковы. 16 non-P10 lines и другие поля P10 сохранены, P11/P12 неизменны. Исходный runner mode100755 и blob сохранены; source/fixture/runner blobs сверены (3/3 baseline, 3/3 final). Прямые команды compile/run без JVM locale flags также дали точный final fixture. Команды, параметры wrappers и хэши — в technical PR. Full Gradle/JUnit/clean clone/GUI locally NOT RUN; exact CI отдельно. Не утверждаем инвариантность произвольного Unicode или всех локалей/JDK.
 
 ## Негативные случаи и границы
 

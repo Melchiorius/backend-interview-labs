@@ -53,7 +53,7 @@ public class NestedFunctionsProbes {
         IntUnaryOperator add = x -> x + 1;
         System.out.println("P09=" + add.applyAsInt(67));
         IntFunction<String> staticRef = String::valueOf;
-        Supplier<String> boundRef = "hi"::toUpperCase;
+        Supplier<String> boundRef = "abc"::toUpperCase;
         ToIntFunction<String> unboundRef = String::length;
         IntFunction<Widget> ctorRef = Widget::new;
         System.out.println("P10=" + staticRef.apply(67) + "," + boundRef.get() + "," + unboundRef.applyAsInt("ab") + "," + ctorRef.apply(67).id());
