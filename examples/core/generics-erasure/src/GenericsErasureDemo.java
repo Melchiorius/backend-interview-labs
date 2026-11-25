@@ -62,7 +62,8 @@ public final class GenericsErasureDemo {
         List<Integer> producerValues = List.of(67, 68);
         List<Number> destination = new ArrayList<>(List.of(0, 0));
         Collections.copy(destination, producerValues);
-        copyFirst(destination, producerValues);
+        List<Number> firstDestination = new ArrayList<>(List.of(0, 0));
+        copyFirst(firstDestination, producerValues);
 
         List<? extends Number> producer = new ArrayList<Integer>(List.of(67));
         Number first = producer.get(0);
@@ -110,6 +111,7 @@ public final class GenericsErasureDemo {
 
         verify(box.get() == 67 && comparison < 0, "bounded type variable");
         verify(destination.equals(List.of(67, 68)), "PECS copy into existing elements");
+        verify(firstDestination.equals(List.of(67, 0)), "copyFirst must replace only the first element");
         verify(first.intValue() == 67 && producer.size() == 2, "extends read, null write");
         verify(readBack.equals(67), "super write, Object read");
         verify(captured.equals(List.of("a", "a")), "wildcard capture");
