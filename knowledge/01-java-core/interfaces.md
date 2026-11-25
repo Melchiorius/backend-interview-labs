@@ -181,7 +181,7 @@ Compile-time constant `int LIMIT = 67` можно прочитать без за
 
 При этом private-метод не наследуется ни подинтерфейсом, ни реализующим классом; он не становится публичной операцией клиента. Доступность не требует наследования. Экземплярный private-метод вызывается на экземпляре (в том числе через переменную интерфейсного типа), а не через имя интерфейса. Private static helper не требует экземпляра; модификатор private по-прежнему ограничивает его доступность.
 
-В центральном листинге вызов `policy.helper()` допустим из `InterfaceMechanics.main`, потому что `Policy` вложен в тот же верхнеуровневый класс. Проверим этот контраст отдельно, не меняя девять строк центрального примера. Файл `InterfacePrivateAccessDemo.java`:
+В центральном листинге `helper()` вызывается внутри `Policy.label()`. Если добавить прямой вызов `policy.helper()` в `InterfaceMechanics.main`, он также будет допустим: `Policy` вложен в тот же верхнеуровневый класс. Не меняя центральный листинг и его девять строк вывода, покажем этот случай отдельным примером. Файл `InterfacePrivateAccessDemo.java`:
 
 ~~~java
 public class InterfacePrivateAccessDemo {
@@ -203,7 +203,7 @@ javac --release 21 -d out InterfacePrivateAccessDemo.java
 java -cp out InterfacePrivateAccessDemo
 ~~~
 
-Ожидаемый stdout: `nestPrivate=policy`. Даже из static-метода объемлющего класса допустимо вызвать экземплярный helper, если есть подходящий receiver — здесь переменная `policy`.
+Ожидаемый stdout: `nestPrivate=policy`. Даже из `static`-метода объемлющего класса допустимо вызвать экземплярный вспомогательный метод, если есть выражение, задающее экземпляр, — здесь переменная `policy`.
 
 **Два независимых отрицательных контраста.** Сохраните их в отдельных файлах рядом с положительным примером. Первый файл `BadExternalPrivateAccess.java` использует доступный тип `InterfacePrivateAccessDemo.Policy` и экземпляр, но расположен в другом верхнеуровневом классе:
 
@@ -237,7 +237,7 @@ javac --release 21 -XDrawDiagnostics -cp out -d bad-private BadExternalPrivateAc
 javac --release 21 -XDrawDiagnostics -d bad-type BadTypeQualifiedInstance.java
 ~~~
 
-Оба вызова javac должны завершиться ненулевым кодом, но по разным причинам: в первом случае — недоступный private-член, во втором — попытка вызвать экземплярный метод через имя типа ([JLS 21 §15.12.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.3)). На OpenJDK/javac 21.0.12.1 отдельно получены exit code 1 и категории `compiler.err.report.access` и `compiler.err.non-static.cant.be.ref` соответственно; положительный пример скомпилирован и запущен с exit code 0, stdout — строка выше. Конкретные названия диагностик принадлежат javac, а не JLS. Запреты на сочетания модификаторов и отсутствие тела из предыдущего абзаца остаются самостоятельными ограничениями.
+Оба вызова `javac` должны завершиться ненулевым кодом, но по разным причинам: в первом случае — недоступный `private`-член, во втором — попытка вызвать экземплярный метод через имя типа ([JLS 21 §15.12.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.3)). **Фактическая локальная проверка роли 02:** три учебных листинга выше (без объявления пакета и дополнительной проверки с `AssertionError`) проверены по отдельности на Debian OpenJDK/javac 21.0.12.1; см. [отчёт 02 с командами и диагностикой](https://github.com/Melchiorius/backend-interview-labs/issues/274#issuecomment-7155944932). Компиляция и запуск положительного примера завершились с кодом 0, stdout — `nestPrivate=policy`. Обе отрицательные компиляции завершились с кодом 1, пустым stdout и одной ошибкой: `compiler.err.report.access: helper(), private, InterfacePrivateAccessDemo.Policy` и `compiler.err.non-static.cant.be.ref: kindname.method, helper()` соответственно. Это результаты учебных листингов, не проверка многофайлового примера роли 03. Конкретные диагностические ключи принадлежат `javac`, а не JLS. Самостоятельные ограничения из раздела «Четыре вида методов» остаются в силе: нельзя сочетать `private abstract` или `static default`, а `default`-метод должен иметь тело.
 
 ## Разрешение default/abstract: пять разных ситуаций
 
