@@ -1,6 +1,6 @@
 # Java Core remediation — R0 planning index
 
-Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-05 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
+Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-06 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
 
 ## Checkpoint R0-01 (historical)
 
@@ -61,6 +61,16 @@ B3 [ACCEPTED / QUEUED by 00](https://github.com/Melchiorius/backend-interview-la
 
 Cumulative **141/499** findings (7 BLOCKER/104 P1/30 P2); **257/925** requirements (97 OK/111 DEPTH/8 ERROR/41 BOUND). Remaining 358 findings (306 P1/52 P2), 668 requirements (168 OK/395 DEPTH/17 ERROR/88 BOUND). All OPEN. Exact HEAD/CI in checkpoint. No local runtime evidence.
 
-## Next cursor — R0-06
+## Historical cursor — R0-06
 
-A11/A12 generics/erasure and A13 exceptions (split by budget); use A25.2 authoritative original GE/ER alias normalization and primary report ranges; check exact counts before publishing. Continue A14/A15/A16/A18–A24. Preserve original ERROR and P0 DEPTH priority, primary finding IDs/acceptance, row-only gaps, and distinct D ownership; no duplicate findings from technical N labels or consolidated interim reports. Prepare bounded D briefs, identify dependencies on B G6 and cross-topic owners; 00 authorizes actual execution. Recheck live main/HEAD, preserve historical source and no teaching/status/CI changes, no merge/C/CON.
+A11 generics/erasure, A12 exceptions/resources, A13 streams/stream-advanced (corrected from A25.2; split by budget); use A25.2 authoritative original GE/ER alias normalization and primary report ranges; check exact counts before publishing. Continue A14/A15/A16/A18–A24. Preserve original ERROR and P0 DEPTH priority, primary finding IDs/acceptance, row-only gaps, and distinct D ownership; no duplicate findings from technical N labels or consolidated interim reports. Prepare bounded D briefs, identify dependencies on B G6 and cross-topic owners; 00 authorizes actual execution. Recheck live main/HEAD, preserve historical source and no teaching/status/CI changes, no merge/C/CON.
+
+## Checkpoint R0-06 — second D wave planned
+
+Both incoming historical #7149337132 (B3 accepted/queued) and #7149358310 (R0-05) already satisfied in R0-05, not duplicated. A25.2 corrects prior cursor topic labels: A11 GENERICS/ERASURE, A12 EXCEPTIONS/RESOURCES, A13 STREAMS/STREAM-ADV. [D-WAVE-02](D-WAVE-02-A11-A12-A13.md). A11 [21 findings](findings-A11.md) / [30 rows](requirements-A11.md) (6 OK/19 DEPTH/0 ERROR/5 BOUND); A12 [23](findings-A12.md) / [30](requirements-A12.md) (5/21/0/4); A13 [30](findings-A13.md) / [36](requirements-A13.md) (7/23/2/4). Final matrix only once; 60 GE/ER aliases normalized and matched original priority/line. Mandatory ERROR ST-03 (N04 locale) and ST-25 (N28 onClose) retain underlying P1 findings, not blockers. 74 added findings (64 P1/10 P2), 96 rows (18 OK/63 DEPTH/2 ERROR/13 BOUND). No scope execution approved; common B dependencies and separate shared-runner ownership proposals.
+
+Cumulative **215/499** findings (7 BLOCKER/168 P1/40 P2); **353/925** requirements (115 OK/174 DEPTH/10 ERROR/54 BOUND). Remaining 284 findings (242 P1/42 P2), 572 rows (150 OK/332 DEPTH/15 ERROR/75 BOUND). All OPEN. Local evidence NOT RUN; exact CI in checkpoint.
+
+## Next cursor — R0-07
+
+A14 arrays/strings/builders, A15 and A16 according to authoritative A25.2; split as needed. A14 original AR-01..22 L76–97, TX-01..20 L103–122, BL-01..09 L128–136 (51 once); strings.md split across A14.2/.3, no duplicate findings/matrix counts; verify authoritative final matrix and original priorities. Continue remaining A18–A24. Use exact primary acceptance and stable IDs, prioritize ERROR/P0 DEPTH, preserve P1/P2 severity vs requirement priority; technical probe IDs distinct. Bounded D proposals, no overlapping shared-runner ownership, 00 decides actual scope after dependencies. Recheck live main/HEAD before writes; no historical, teaching, CI/status changes, merge, C/CON. 
