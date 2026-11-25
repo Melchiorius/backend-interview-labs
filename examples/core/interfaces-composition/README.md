@@ -1,6 +1,6 @@
 # CORE-INTERFACES + CORE-COMPOSITION — один Java 21 runnable
 
-Один автономный многофайловый пример показывает **две разные задачи**: (1) правила интерфейсного API — abstract/default/private, разрешение конфликтов двух default и приоритет реализации класса; (2) композицию — сервис хранит интерфейсную зависимость и явно делегирует ей работу. Вместо двух несвязанных проектов используется **одна** группа из восьми Java-файлов с реальными пакетами `api`, `impl`, `client`. Это готовый пример, не ученическая заготовка и не доказательство «композиция всегда лучше наследования».
+Один автономный многофайловый пример показывает **две разные задачи**: (1) правила интерфейсного API — abstract/default/private, разрешение конфликтов двух default и приоритет реализации класса; (2) композицию — сервис хранит интерфейсную зависимость и явно делегирует ей работу. Вместо двух несвязанных проектов используется **одна** исходная группа из восьми Java-файлов с реальными пакетами `api`, `impl`, `client`. Дополнительный самостоятельный пример B2c проверяет private-доступ отдельно, не изменяя исходную композицию. Это готовый пример, не ученическая заготовка и не доказательство «композиция всегда лучше наследования».
 
 **Исходники:** [Policy.java](src/api/Policy.java), [LeftOrigin.java](src/api/LeftOrigin.java), [RightOrigin.java](src/api/RightOrigin.java), [AddTenPolicy.java](src/impl/AddTenPolicy.java), [DoublePolicy.java](src/impl/DoublePolicy.java), [IncrementingDecorator.java](src/impl/IncrementingDecorator.java), [Service.java](src/client/Service.java), [InterfaceCompositionDemo.java](src/client/InterfaceCompositionDemo.java). **Контрольные файлы:** [expected.stdout](expected.stdout), [verify.sh](verify.sh).
 
@@ -29,7 +29,7 @@ javac -version
 bash examples/core/interfaces-composition/verify.sh
 ```
 
-Скрипт очищает **только** `examples/core/interfaces-composition/build/`, выполняет `javac --release 21`, запускает точку входа и сравнивает `expected.stdout` с `build/actual.stdout` через `diff -u`. Любое несовпадение выдаёт ненулевой exit code; при успехе скрипт печатает полный вывод Java-программы и дополнительную контрольную строку `CHECK PASSED: stdout matches expected.stdout` (эта дополнительная строка **не** входит в сохранённый stdout). Каталог `build/` игнорируется Git через существующий `.gitignore`; нет отдельного Gradle-подпроекта, JUnit или Mockito.
+Исходная часть скрипта очищает **только** `examples/core/interfaces-composition/build/`, выполняет `javac --release 21`, запускает точку входа и сравнивает `expected.stdout` с `build/actual.stdout` через `diff -u`. Любое несовпадение выдаёт ненулевой exit code; при успехе скрипт печатает полный исходный вывод Java-программы, выполняет отдельный блок B2c и завершает работу дополнительной контрольной строкой `CHECK PASSED: stdout matches expected.stdout` (эта дополнительная строка **не** входит в сохранённый stdout). Каталог `build/` игнорируется Git через существующий `.gitignore`; нет отдельного Gradle-подпроекта, JUnit или Mockito.
 
 ## Полный ожидаемый stdout Java-программы
 
@@ -54,8 +54,47 @@ CHECK PASSED
 
 `final` в `Service.policy` **не** означает автоматическую потокобезопасность `Policy`, не фиксирует побочные эффекты delegate и не доказывает соответствие LSP/SOLID. Декоратор меняет поведение, поэтому его подстановка корректна лишь для предметного контракта, допускающего новое преобразование; в общем случае decorator обязан осознанно сохранять нужные свойства API, возвращаемые значения и исключения. `Objects.requireNonNull` устанавливает только инвариант non-null ссылки, а не принадлежность, потокобезопасность или жизненный цикл зависимости.
 
+## B2c — private helper вложенного интерфейса
+
+Отдельный [InterfacePrivateAccessDemo.java](src/client/InterfacePrivateAccessDemo.java) в пакете `client` содержит вложенный `public`-интерфейс `Policy` с абстрактным методом `apply` и экземплярным `private`-методом `helper()`. Объемлющий верхнеуровневый класс создаёт лямбду, вызывает `helper()` на экземпляре через переменную типа `Policy`, проверяет результат и печатает `nestPrivate=policy`. Доступ разрешён из тела объемлющего верхнеуровневого типа; `private`-метод не наследуется и не является публичным API. Это не исходный `api.Policy` с методом `private static format`. Исходные восемь Java-файлов, семь проверок, десять строк и `expected.stdout` не менялись. Добавлена одна самостоятельная проверка с `AssertionError`, не тест JUnit.
+
+Изолированный положительный запуск из корня репозитория:
+
+~~~sh
+mkdir -p examples/core/interfaces-composition/build/private-classes
+javac --release 21 -XDrawDiagnostics -d examples/core/interfaces-composition/build/private-classes examples/core/interfaces-composition/src/client/InterfacePrivateAccessDemo.java
+java -cp examples/core/interfaces-composition/build/private-classes client.InterfacePrivateAccessDemo
+~~~
+
+Ожидаемый вывод самостоятельной программы:
+
+~~~text
+nestPrivate=policy
+~~~
+
+Два намеренно некомпилируемых файла проверяются отдельно:
+
+| Файл | Выражение | Причина |
+|---|---|---|
+| [BadExternalPrivateAccess.java](negative/BadExternalPrivateAccess.java) | `policy.helper()` | Экземпляр и публичный вложенный тип доступны, но другой верхнеуровневый класс не имеет доступа к `private`-методу |
+| [BadTypeQualifiedInstance.java](negative/BadTypeQualifiedInstance.java) | `Policy.helper()` | В объемлющем классе доступ к `private`-методу разрешён, но экземплярный метод вызывается через имя типа без экземпляра |
+
+После положительного запуска (создайте выходные каталоги заранее):
+
+~~~sh
+mkdir -p examples/core/interfaces-composition/build/negative/BadExternalPrivateAccess examples/core/interfaces-composition/build/negative/BadTypeQualifiedInstance
+javac --release 21 -XDrawDiagnostics -cp examples/core/interfaces-composition/build/private-classes -d examples/core/interfaces-composition/build/negative/BadExternalPrivateAccess examples/core/interfaces-composition/negative/BadExternalPrivateAccess.java
+javac --release 21 -XDrawDiagnostics -cp examples/core/interfaces-composition/build/private-classes -d examples/core/interfaces-composition/build/negative/BadTypeQualifiedInstance examples/core/interfaces-composition/negative/BadTypeQualifiedInstance.java
+~~~
+
+**Фактическая локальная проверка роли 03** ([отчёт с командами и результатами](https://github.com/Melchiorius/backend-interview-labs/pull/275#issuecomment-7156019201), технический HEAD `05e810cf6e97b5a0051f744e2433f0964fe745c6`): на Debian OpenJDK/javac 21.0.12.1 обе изолированные компиляции дали код завершения 1, пустой stdout и одну ожидаемую ошибку: `compiler.err.report.access: helper(), private, client.InterfacePrivateAccessDemo.Policy` и `compiler.err.non-static.cant.be.ref: kindname.method, helper()` соответственно. Причины различны, не отсутствие типа. JLS 21 [§6.6.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.6.1), [§9.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1), [§15.12.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.3). Конкретные диагностические ключи и аргументы относятся к javac, не гарантия формата JLS.
+
+Runner сохраняет исходное сравнение expected.stdout, отдельно компилирует и запускает B2c в private-classes, сравнивает его одну строку с отдельным временным эталоном и проверяет каждую negative-компиляцию по exit=1, пустому stdout, категории/аргументам и одной ошибке. Строка nestPrivate=policy, EXPECTED REJECTION и диагностики печатаются **после** десяти исходных строк, но **до** последнего маркера CHECK PASSED: stdout matches expected.stdout. Они не входят в исходный expected.stdout.
+
 ## Что здесь намеренно не воспроизводится
 
 Отдельные **некомпилируемые** случаи из плана (default/default без override, abstract/default, недопустимый `InterfaceName.super`, override-equivalent `Object`-метод) должны оставаться самостоятельными короткими примерами в статье CORE-INTERFACES: они не входят в рабочую компиляцию и не выдают общий failure `javac` за точное доказательство JLS. Специализированные наследование конфликтующих generics, sealed interfaces, Spring DI, mutable lifecycle, concurrency и продакшен-тестирование — за пределами этого runnable.
 
-**Фактическая локальная проверка роли 03:** OpenJDK `21.0.12.1` / `javac 21.0.12.1`, из корня запущено `bash examples/core/interfaces-composition/verify.sh` — exit code `0`, все **10 строк** stdout совпали с `expected.stdout`, после сравнения выведено `CHECK PASSED: stdout matches expected.stdout`. Сохранённые Java-файлы, `verify.sh` и `expected.stdout` сверены с опубликованными Git blob SHA (10/10 совпадений). Для другого поставщика JDK, UI Obsidian/IntelliJ и локального Gradle/JUnit — **not run**. GitHub Actions нужно проверять отдельно на **фактическом SHA конкретного PR**: успешный запуск предыдущего HEAD не доказывает прохождение CI после новых изменений.
+**Историческая локальная проверка исходного сценария роли 03:** OpenJDK `21.0.12.1` / `javac 21.0.12.1`, из корня запущено `bash examples/core/interfaces-composition/verify.sh` — exit code `0`, все **10 строк** stdout совпали с `expected.stdout`, после сравнения выведено `CHECK PASSED: stdout matches expected.stdout`. Сохранённые Java-файлы, `verify.sh` и `expected.stdout` сверены с опубликованными Git blob SHA (10/10 совпадений). Для другого поставщика JDK, UI Obsidian/IntelliJ и локального Gradle/JUnit — **not run**. GitHub Actions нужно проверять отдельно на **фактическом SHA конкретного PR**: успешный запуск предыдущего HEAD не доказывает прохождение CI после новых изменений.
+
+**B2c — локальная проверка роли 03:** [отчёт #275](https://github.com/Melchiorius/backend-interview-labs/pull/275#issuecomment-7156019201), технический HEAD `05e810cf6e97b5a0051f744e2433f0964fe745c6`, Debian OpenJDK/javac 21.0.12.1. На исходной и итоговой версиях `LC_ALL=C bash -n` и полный запуск `verify.sh` завершились с кодом 0, stderr скрипта пуст. Исходные десять строк `actual.stdout` совпали побайтно с предыдущей версией и `expected.stdout`; прежние 11 строк вывода скрипта (включая финальный маркер) сохранены, новый блок добавил 7 строк. Отдельные компиляция и запуск положительного примера завершились с кодом 0; две изолированные отрицательные компиляции — с кодом 1 по указанным выше причинам. Проверены 10/10 исходных и 13/13 итоговых исполняемых и входных файлов по Git blob SHA; режим `verify.sh` 100755 сохранён. Роль 03 локально не запускала Gradle/JUnit, полный чистый клон и GUI. Это локальная проверка технической версии, а не результат CI. [Интеграционный CI #45569888313](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45569888313) завершился успешно на предыдущем интеграционном HEAD `05f1f3c725147428fa2ae40a9564550a9f47d9fb`; для каждой следующей редакции результат CI проверяется отдельно.
