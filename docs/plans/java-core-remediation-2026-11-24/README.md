@@ -1,6 +1,6 @@
 # Java Core remediation — R0 planning index
 
-Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-02 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
+Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-03 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
 
 ## Checkpoint R0-01 (historical)
 
@@ -31,6 +31,16 @@ Verification so far: primary A02 full source plan/report and seven blocker lines
 
 Cumulative **49/499** findings (7 BLOCKER/32 P1/10 P2); **86/925** requirements (31 OK/35 DEPTH/6 ERROR/14 BOUND). Remaining 450 findings (378 P1/72 P2), 839 requirements (234 OK/471 DEPTH/19 ERROR/115 BOUND). All OPEN, no remediation claimed. Exact HEAD/CI in checkpoint comment. Prior cursor above historical, superseded below.
 
-## Next cursor — R0-03
+## Historical cursor — R0-03
 
 A07 B3: primary A07-CORE-INIT.md, original CORE-INIT.md L120–139, canonical JC-A07-B01 already registered; import non-blockers and 20 rows, prepare B3 brief with zero actual arguments vs zero formal params, varargs/access/ambiguity/throws and preserve original negative. Then B4a/b A10/A17, followed by remaining D batches. Recheck live BASE and PR HEAD before changes. Separate address 00 for ready B3 and 01 continuation. Do not edit teaching files or interfere with B1/B2. No merge/C/CON. Local checks NOT RUN.
+
+## Checkpoint R0-03 — B3 planning complete
+
+[A07 findings](findings-A07.md) / [requirements](requirements-A07.md): 10 additional findings (8 P1/2 P2), 20 rows (8 OK/7 DEPTH/1 ERROR/4 BOUND); original ID, priority and line verified against immutable G1. B01 already canonical; CI-08 also has independent N05, retained D-A07. [B3 brief](B3-CORE-INIT.md) ready for 00 scope decision, execution contingent on B2 G6 and coordinator authorization. Historical probes and new proposed cases distinguished. All previous B1/B2 files unchanged.
+
+Cumulative **59/499** findings (7 BLOCKER/40 P1/12 P2); **106/925** requirements (39 OK/42 DEPTH/7 ERROR/18 BOUND). Remaining 440 findings (370 P1/70 P2), 819 requirements (226 OK/464 DEPTH/18 ERROR/111 BOUND). All registered findings OPEN. Exact HEAD/CI in checkpoint. No new local runtime evidence.
+
+## Next cursor — R0-04
+
+B4a/b: A10.1 CORE-NESTED and A10.2 CORE-FUNCTIONS (authoritative combined NF matrix in A10.2; original CORE-NESTED-FUNCTIONS.md L54–83, NFxx alias normalization, priority embedded in second column); A17.1 CORE-ENUMS and A17.2 CORE-CONTROL (original CORE-ENUMS-CONTROL.md L74–90,96–114,122–139; 54 rows once); A17.3 cross-topic/technical closure, check for unique additional findings vs duplicates, see A25.2. Verify exact original severity, stable IDs and NF-12/E-03 associations; E-03 DEPTH not ERROR despite runner B01. Shared explicit locale policy, distinct packages, full en_US/tr_TR UTF-8 runs independently; do not alter expected output blindly. Prepare B4a and B4b briefs and send separate address(es) to 00; bounded subcheckpoint if needed. Recheck live main/HEAD before writing, synchronize planning branch on changed main per coordinator without losing evidence. Remaining D stages afterwards. No teaching/CI/status edits, no merge/C/CON.
