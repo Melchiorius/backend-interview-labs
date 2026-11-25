@@ -5,13 +5,13 @@
 - [CORE-ENUMS](../../../knowledge/01-java-core/enums.md) — перечисления как закрытые типы с именованными экземплярами, identity, конструкторами, поведением, EnumSet и EnumMap.
 - [CORE-CONTROL](../../../knowledge/01-java-core/control-flow.md) — условия, циклы, метки, switch statement, switch expression и yield.
 
-Исходники воспроизводят полные положительные программы из принятого исследовательского плана G1, §7. Они показывают совместную работу enum и `switch`, но не заменяют теорию и не превращают наблюдения в независимые модульные тесты.
+Исходники основаны на полных положительных программах принятого исследовательского плана G1, §7. В B4b исправлено техническое форматирование enum: вместо преобразования регистра с локалью по умолчанию используется Locale.ROOT; оба эталона сохранены. Они показывают совместную работу enum и `switch`, но не заменяют теорию и не превращают наблюдения в независимые модульные тесты.
 
 ## Состав пакета
 
 | Файл | Назначение |
 |---|---|
-| [src/EnumProbe.java](src/EnumProbe.java) | Полная программа G1 E01–E30; 30 подписанных строк stdout. |
+| [src/EnumProbe.java](src/EnumProbe.java) | Программа E01–E30 на основе G1 с исправлением B4b; 30 подписанных строк stdout. |
 | [src/ControlProbe.java](src/ControlProbe.java) | Полная программа G1 C01–C21; 21 подписанная строка stdout. |
 | [enum.expected.stdout](enum.expected.stdout) | Точный независимый эталон первого JVM-процесса. |
 | [control.expected.stdout](control.expected.stdout) | Точный независимый эталон второго JVM-процесса. |
@@ -58,6 +58,22 @@ CORE-ENUMS + CORE-CONTROL: PASS (30 + 21 stdout lines; 2 JVM processes)
 - C14–C15: Java 21 допускает case null в данном switch; без такой ветки null-selector вызывает runtime NullPointerException.
 - C18: изменение локальной переменной enhanced-for не заменяет элементы массива.
 - C19: selector switch вычисляется один раз.
+
+## B4b — нейтральное техническое форматирование
+
+В E01 метод toString() формирует строку status-paid с помощью name().toLowerCase(Locale.ROOT). Метод [name()](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html#name()) возвращает точное имя текущего объявления; toString() можно переопределить, а valueOf ищет имя, не отображаемую строку. No-arg [toLowerCase()](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toLowerCase()) использует локаль по умолчанию: при tr_TR слово PAID даёт paıd (U+0131 вместо U+0069). Явный [Locale.ROOT](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Locale.html#ROOT) в [toLowerCase(Locale)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toLowerCase(java.util.Locale)) подходит для нейтрального технического формата, но не обязательно для текста, предназначенного пользователю. Ни ordinal(), ни произвольный toString() не являются стабильным бизнес-идентификатором; явный код или сопоставление требуют собственного контракта совместимости. Локаль JVM не меняется и не фиксируется в программе или runner.
+
+Историческое наблюдение и исходный G1-вариант зафиксированы в [A17.2](https://github.com/Melchiorius/backend-interview-labs/blob/3f5648eddc98f0308328224d840e9d3933c6bb3a/docs/audits/java-core-full-2026-11-24/A17.2-CORE-CONTROL.md#L71-L72); [согласованный контракт B4b](https://github.com/Melchiorius/backend-interview-labs/issues/289#issuecomment-7163012185) сохраняет оба эталона, ControlProbe и runner. Исторические планы/аудит не переписаны.
+
+**Фактическая локальная проверка 03:** Debian OpenJDK/javac 21.0.12.1, LC_ALL=C, временные PATH-local java wrappers с одним абсолютным бинарником java и явным -Dstdout.encoding=UTF-8. Для en_US/tr_TR дополнительно заданы user.language и user.country; default без этих флагов. Переменные JAVA_TOOL_OPTIONS, JDK_JAVA_OPTIONS, _JAVA_OPTIONS сняты. Отдельная Java-проба подтвердила фактические Locale.getDefault() en_US/en_US/tr_TR, System.out.charset() и stdout.encoding UTF-8 во всех трёх, file.encoding и default charset UTF-8, native.encoding ANSI_X3.4-1968. Это три конфигурации JVM, не матрица локалей ОС.
+
+| JVM config | Baseline runner | Final runner |
+|---|---|---|
+| Default (en_US) | exit 0 | exit 0 |
+| en_US | exit 0 | exit 0 |
+| tr_TR | exit 1, E01 status-paıd | exit 0 |
+
+Все шесть runner stderr пусты. Исходный tr_TR отказал на первом enum diff: оба JVM-процесса уже завершились, но сравнение control fixture не достигнуто, финального маркера нет. В исправленном варианте все три запуска печатают исходный маркер после обоих строгих сравнений. Runner удаляет временные файлы через trap, поэтому полный stdout E/C дополнительно сохранён **в отдельных прямых запусках**, не извлечён из runner: совместная javac --release 21 -Xlint:all компиляция каждой версии и два java процесса для каждой конфигурации (12 запусков, все exit 0, stderr пуст). Все 21 строки control совпали с эталоном в шести конфигурациях; единственный исходный enum diff в tr_TR — E01. Все три final вывода 30+21 совпали побайтно с эталонами и между конфигурациями. 29 остальных E-строк неизменны. Команда `bash examples/core/enums-control/verify.sh` из корня репозитория без locale flags также прошла. Сверены 5/5 исходных и 5/5 итоговых исполняемых/input Git blob SHA и modes; runner 100755 и оба эталона побайтно сохранены. Подробные команды, результаты и точные SHA приведены в [фактическом отчёте 03 #7163131359](https://github.com/Melchiorius/backend-interview-labs/pull/290#issuecomment-7163131359) по [Issue #289](https://github.com/Melchiorius/backend-interview-labs/issues/289). Первоначально проверенная версия — `40c177925e8babfb14ed204bda21cdf76767ec55`; при последующих правках только README все пять проверенных входных и исполняемых файлов сохранили Git blob SHA и режимы. Повторный запуск Java из-за этих правок не выполнялся. Обычный CI выводит только маркер, не 51 сырую строку. Полный Gradle/JUnit/clean clone/GUI локально не выполнялись; не заявляется универсальная переносимость на все JDK/ОС/локали.
 
 ## Границы проверки
 
