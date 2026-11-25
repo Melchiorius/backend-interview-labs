@@ -61,11 +61,11 @@ P17=68
 | `P13–P14` | Приведение lambda к `IntUnaryOperator` разрешает перегрузку `choose`; `Checked.run()` объявляет `IOException`, поэтому соответствующая лямбда может бросить это checked exception. У `Runnable.run()` такого объявления нет. |
 | `P15–P17` | Локальный `record LocalRecord` не захватывает переменные метода (он implicitly static); anonymous/lambda оба читают effectively-final `captured`; переобъявленный публичный `equals(Object)` из `Object` не добавляет вторую функциональную операцию `Transform`. |
 
-## B4a — default locale и технический stdout
+## B4a — локаль по умолчанию и воспроизводимый вывод
 
-No-arg [String.toUpperCase()](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toUpperCase()) использует default locale при вызове метода, а не при создании bound reference. Исходное слово hi даёт HI при en_US, но Hİ (U+0048 U+0130) при tr_TR. Выбор abc сохраняет bound reference с SAM Supplier<String> без аргументов и даёт ABC в проверенных конфигурациях. Это не превращает toUpperCase() в locale-independent API.
+Метод без параметров [`String.toUpperCase()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toUpperCase()) использует локаль по умолчанию при вызове метода, а не при создании ссылки на метод конкретного объекта (bound). Исходное слово `hi` даёт `HI` при `en_US`, но `Hİ` (U+0048 U+0130) при `tr_TR`. Причина — разные правила преобразования регистра, а не кодировка. Выбор `abc` сохраняет ссылку на метод с целевым типом `Supplier<String>`, чей метод `get()` не принимает аргументов, и даёт `ABC` в проверенных конфигурациях. Сам метод `toUpperCase()` остаётся зависимым от локали по умолчанию.
 
-Для нейтрального технического преобразования произвольной строки явно передавайте [Locale.ROOT](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Locale.html#ROOT) в [toUpperCase(Locale)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toUpperCase(java.util.Locale)). Сравните SAM-арности:
+Для нейтрального технического преобразования регистра строки явно передавайте [`Locale.ROOT`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Locale.html#ROOT) в [`toUpperCase(Locale)`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toUpperCase(java.util.Locale)). Сравните число параметров единственного абстрактного метода (SAM) целевого интерфейса:
 
 ~~~java
 String text = "hi";
@@ -76,17 +76,27 @@ BiFunction<String, Locale, String> unboundWithLocale = String::toUpperCase;
 // и unboundWithLocale.apply(text, Locale.ROOT) дают HI.
 ~~~
 
-Это альтернативы с import java.util.Locale и java.util.function.*: первая — lambda, вторая — bound reference с одним аргументом SAM, третья — unbound с receiver и locale. Для человекочитаемого текста выбор локали определяется языком пользователя, а не обязательно ROOT. Никакой глобальной смены или фиксации локали в runnable/runner нет.
+Для этих вариантов нужны импорты `java.util.Locale` и `java.util.function.*`. В первом случае используется лямбда, а не ссылка на метод: `get()` принимает ноль аргументов. Во втором — ссылка на метод конкретного объекта (bound): `apply(Locale)` принимает один аргумент, локаль. В третьем — ссылка с передаваемым получателем (unbound): `apply` принимает два аргумента, строку и локаль. Для текста, предназначенного человеку, локаль выбирают с учётом языка пользователя, не обязательно `Locale.ROOT`. Ни программа, ни проверочный скрипт не меняют и не фиксируют глобальную локаль.
 
-**Фактическая локальная проверка 03:** Debian OpenJDK/javac 21.0.12.1, LC_ALL=C; шесть полных запусков baseline/final с временными PATH-local java wrappers (один абсолютный java, флаги JVM перед аргументами), без JAVA_TOOL_OPTIONS/JDK_JAVA_OPTIONS/_JAVA_OPTIONS. Default — только -Dstdout.encoding=UTF-8, en_US и tr_TR дополнительно -Duser.language=en/tr -Duser.country=US/TR. Отдельная Java probe под теми же wrappers подтвердила actual Locale.getDefault() = en_US/en_US/tr_TR, System.out.charset() и stdout.encoding = UTF-8 во всех трёх. file.encoding и default charset UTF-8, native.encoding ANSI_X3.4-1968 (LC_ALL=C). Это JVM-конфигурации, не проверка всех OS/locales.
+**Фактическая локальная проверка роли 03.** [Отчёт о шести полных запусках](https://github.com/Melchiorius/backend-interview-labs/pull/285#issuecomment-7160192368) относится к технической версии `c2c7f0e1b8a0ccb6bb8b07ab78a4dd56dd3c5f02`. Исходную и исправленную версии проверили на Debian OpenJDK/javac 21.0.12.1 при `LC_ALL=C`, каждую в трёх конфигурациях JVM.
 
-| JVM config | Baseline exit / P10 | Final exit / P10 |
+Для испытаний временную обёртку команды `java` помещали первой в `PATH`. Она передавала параметры JVM одному и тому же исполняемому файлу по абсолютному пути `/usr/lib/jvm/java-21-openjdk-amd64/bin/java` перед остальными аргументами команды. Во всех случаях задавали `-Dstdout.encoding=UTF-8`. Для запуска с локалью по умолчанию других параметров локали не было; для `en_US` добавляли `-Duser.language=en -Duser.country=US`, для `tr_TR` — `-Duser.language=tr -Duser.country=TR`. Переменные `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS` и `_JAVA_OPTIONS` были сняты. Обёртки находились вне репозитория.
+
+Отдельная программа, запущенная в тех же условиях, подтвердила значения `Locale.getDefault()`: `en_US`, `en_US`, `tr_TR` соответственно. Во всех трёх конфигурациях `System.out.charset()`, `stdout.encoding`, `file.encoding` и кодировка по умолчанию JVM — `UTF-8`; `native.encoding` — `ANSI_X3.4-1968` при `LC_ALL=C`. Это проверка конфигураций JVM, а не системных локалей разных ОС.
+
+В таблице указан код завершения проверочного скрипта и значение P10, полученное из сохранённого вывода самой Java-программы (`build/actual.stdout`), в том числе при неуспешном сравнении.
+
+| Конфигурация JVM | Исходная версия: код завершения / P10 | Исправленная версия: код завершения / P10 |
 |---|---|---|
-| Default (actual en_US) | 0 / 67,HI,2,67 | 0 / 67,ABC,2,67 |
-| en_US | 0 / 67,HI,2,67 | 0 / 67,ABC,2,67 |
-| tr_TR | 1 / 67,Hİ,2,67 | 0 / 67,ABC,2,67 |
+| По умолчанию (фактически `en_US`) | 0 / `67,HI,2,67` | 0 / `67,ABC,2,67` |
+| `en_US` | 0 / `67,HI,2,67` | 0 / `67,ABC,2,67` |
+| `tr_TR` | 1 / `67,Hİ,2,67` | 0 / `67,ABC,2,67` |
 
-Во всех шести запусках stderr пуст; baseline tr_TR завершился на diff (без CHECK PASSED), все final stdout содержат точные 17 строк expected.stdout и исходный финальный маркер, побайтно одинаковы. 16 non-P10 lines и другие поля P10 сохранены, P11/P12 неизменны. Исходный runner mode100755 и blob сохранены; source/fixture/runner blobs сверены (3/3 baseline, 3/3 final). Прямые команды compile/run без JVM locale flags также дали точный final fixture. Команды, параметры wrappers и хэши — в technical PR. Full Gradle/JUnit/clean clone/GUI locally NOT RUN; exact CI отдельно. Не утверждаем инвариантность произвольного Unicode или всех локалей/JDK.
+Во всех шести запусках поток ошибок (`stderr`) был пуст, а вывод Java-программы состоял из 17 строк. В исходной версии при `tr_TR` команда `diff -u` обнаружила единственное расхождение в P10 (`HI` вместо фактического `Hİ`); скрипт завершился с кодом 1, напечатав 11 строк отчёта о различии, без маркера успеха. Во всех трёх запусках исправленной версии сравнение завершилось с кодом 0. Скрипт напечатал 18 строк: ровно 17 строк из `expected.stdout` и исходный маркер `CHECK PASSED: stdout matches expected.stdout`. Эти три вывода совпали побайтно.
+
+Остальные 16 строк, другие поля P10 и результаты P11/P12 сохранены. Проверочный скрипт не изменился: режим Git `100755` и хэш содержимого прежние. Хэши трёх файлов (исходник Java, эталон вывода и скрипт) сверены для каждой версии — 3 из 3. Прямые команды компиляции и запуска без параметров локали JVM также дали точный эталон исправленной версии. Команды, хэши и результаты измерений приведены в [отчёте 03](https://github.com/Melchiorius/backend-interview-labs/pull/285#issuecomment-7160192368).
+
+Полная сборка Gradle, тесты JUnit, проверка в заново клонированном репозитории и графическом интерфейсе локально ролью 03 не выполнялись. Отдельное свидетельство — [интеграционный CI #45599538553](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45599538553) для прежнего HEAD `98084b761925636a0db23637f89a105793304b93`: все 34 шага успешны, в том числе проверка этого скрипта. Это не отдельный прогон в трёх локалях и не результат CI для последующих версий. Проверки не доказывают инвариантность произвольных строк Unicode для всех локалей, ОС или версий JDK.
 
 ## Негативные случаи и границы
 
