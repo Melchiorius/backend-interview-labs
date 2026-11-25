@@ -1,6 +1,6 @@
 # Java Core remediation — R0 planning index
 
-Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-07 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
+Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-08 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
 
 ## Checkpoint R0-01 (historical)
 
@@ -83,6 +83,18 @@ Coordinator [B4a/B4b ACCEPTED / QUEUED](https://github.com/Melchiorius/backend-i
 
 Cumulative **298/499** findings (7 BLOCKER/237 P1/54 P2); **494/925** rows (144 OK/266 DEPTH/12 ERROR/72 BOUND). Remaining 201 findings (173 P1/28 P2), 431 rows (121 OK/240 DEPTH/13 ERROR/57 BOUND). All OPEN. Exact HEAD/CI in checkpoint.
 
-## Next cursor — R0-08
+## Historical cursor — R0-08
 
 A18/A19/A20 by authoritative A25.2, split by budget, then A21–A24. Use exact original line ranges/priority and final matrices, preserve primary stable IDs/acceptance, explicit row-only gaps, no technical probe/finding conflation. ERROR and P0 DEPTH mandatory. Prepare bounded D scope(s) and dependencies, 00 decides execution. Recheck live main/HEAD; no historical/teaching/status/CI edits, merge, C/CON. After all remaining stages, explicitly reconcile D subscopes for prior B groups A02/A05/A06/A07/A09/A10/A17, residual findings/rows, cross-topic clusters and Q/C gates under #255; do not confuse ledger completeness with approval or repair. 
+
+## Checkpoint R0-08 — fourth D wave planned
+
+Incoming B4 decision #7149447446 and R0-07 #7149456963 already accounted for; B4b clarification in R0-07 controls. New [D-WAVE-01 ACCEPTED / QUEUED decision](https://github.com/Melchiorius/backend-interview-labs/pull/256#issuecomment-7149479380) recorded: A01→A03→A04→A08a (N01–06)→A08b (N07–15) proposed internal sequence, separate G2–G6, shared ValuesAndReferencesDemo read-only unless 00 assigns single owner. A04 after B2/B3, A08 after appropriate numeric/access/init and A01/A04. Actual final D scheduling after R0 reconciliation: confirmed ERROR and mandatory P0 first subject to dependencies, no absolute D-WAVE-01 priority. B sequence remains gate, no D execution authorized. Accepted pinned briefs unchanged.
+
+[D-WAVE-04](D-WAVE-04-A18-A19-A20.md): A18 [27 findings](findings-A18.md) / [56 rows](requirements-A18.md) (12 OK/33 DEPTH/4 ERROR/7 BOUND); A19 [22](findings-A19.md) / [49](requirements-A19.md) (16/25/0/8); A20 [27](findings-A20.md) / [53](requirements-A20.md) (13/30/2/8). Primary .1/.2 matrices, .3 evidence only; A20 P0 inferred from section heading and checked report priority, original ID/priority/line matched. Six mandatory ERROR: SY-10, SY-21, OP-06, OP-10, AN-05, RF-15. N03 A19.3 unresolved normative/observed boundary retained, no new finding. 76 new findings (64 P1/12 P2), 158 rows (41 OK/88 DEPTH/6 ERROR/23 BOUND), all OPEN. Actual scope requires 00 decision.
+
+Cumulative **374/499** findings (7 BLOCKER/301 P1/66 P2); **652/925** requirements (185 OK/354 DEPTH/18 ERROR/95 BOUND). Remaining 125 findings (109 P1/16 P2), 273 rows (80 OK/152 DEPTH/7 ERROR/34 BOUND). Local tests NOT RUN, exact HEAD/CI in checkpoint.
+
+## Next cursor — R0-09
+
+A21 modules/classloader and A22 numbers/datetime by A25.2; then A23/A24 in bounded batches. A21 JM/CL 53 rows L67–83,91–106,114–133 (P0 section heading, CL distinct from A04); A22 NM/DT 61 rows L75–96,103–122,400–418, original correction in A25.2/primary report. Check authoritative reports, exact priority/ID/line, no duplicate .3 evidence, ERROR/P0 DEPTH mandatory. Then A23 82 rows and A24 77 rows with exact tail spelling. Reconcile D subscopes for earlier B groups, all 499/925, individual ownership, cross-topic dependencies, priority schedule and Q/C gates; no claim R0 complete by counts alone. Recheck live HEAD/main, no historical/teaching/status/CI edits, merge, C/CON.
