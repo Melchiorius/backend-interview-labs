@@ -64,9 +64,11 @@ class OrderLifecycle {
 
 ## 3. name, ordinal, toString и опасность «сохранить ordinal в БД» (E-02–E-04, E-13, E-14)
 
-Три внешне похожих API означают разные вещи. `name()` возвращает **точное имя** в исходном объявлении и не может быть переопределён. `ordinal()` возвращает индекс этой константы в порядке объявлений **с нуля**; он также не переопределяется. `toString()` изначально возвращает имя, но может быть переопределён для отображения человеку. Эти строки могут намеренно отличаться.
+Три внешне похожих API означают разные вещи. `name()` возвращает **точное имя** в исходном объявлении и не может быть переопределён. `ordinal()` возвращает индекс этой константы в порядке объявлений **с нуля**; он также не переопределяется. `toString()` по умолчанию возвращает имя, но его можно переопределить, например для удобного чтения диагностических сообщений или отображения человеку. Эти строки могут намеренно отличаться. См. [Enum API Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html) и [JLS §8.9.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.9.3).
 
 ~~~java
+import java.util.Locale;
+
 enum DisplayState {
     NEW(67), PAID(80);
     private final int code;
@@ -74,7 +76,7 @@ enum DisplayState {
     int code() { return code; }
 
     @Override public String toString() {
-        return "status-" + name().toLowerCase();
+        return "status-" + name().toLowerCase(Locale.ROOT);
     }
 }
 
@@ -89,9 +91,69 @@ class EnumNameDemo {
 }
 ~~~
 
-Последняя строка особенно показательна: `valueOf("NEW")` нашёл enum-константу по имени, а печать **найденного объекта** вызвала её переопределённый `toString()`. Поэтому `DisplayState.valueOf("status-new")` не сработает: Java ищет имя `NEW`, а не UI-представление. Неизвестное имя вызывает **IllegalArgumentException**, `valueOf(null)` — **NullPointerException**, уже *при выполнении*. Они не являются compiler-negative.
+Последняя строка особенно показательна: `valueOf("NEW")` нашёл enum-константу по имени, а печать **найденного объекта** вызвала её переопределённый `toString()`. Поэтому `DisplayState.valueOf("status-new")` не сработает: Java ищет имя `NEW`, а не строку, которую возвращает `toString()`. Неизвестное имя вызывает **IllegalArgumentException**, `valueOf(null)` — **NullPointerException**, уже *при выполнении*. Они не являются compiler-negative.
 
-**Почему ordinal не business ID:** если вставить новую константу перед PAID, `ordinal()` PAID изменится. Нельзя считать ordinal стабильным идентификатором хранения/интеграционного API. Для бизнес-кода используйте явное поле, как `code=67`, либо отдельное документированное сопоставление. `name()` точен для *текущего* объявления, но переименование значения в новом релизе тоже требует миграции совместимости клиентов — не объявляйте даже name вечным внешним протоколом без отдельного контракта.
+**Почему ordinal не business ID:** если вставить новую константу перед PAID, `ordinal()` PAID изменится. Нельзя считать ordinal стабильным идентификатором хранения/интеграционного API. Для бизнес-кода используйте явное поле, как `code=67`, либо отдельное документированное сопоставление с правилами уникальности и совместимости при изменениях. Переопределённый `toString()` сам по себе не является таким контрактом. `name()` точен для *текущего* объявления, но переименование значения в новом релизе тоже требует миграции совместимости клиентов — не объявляйте даже name вечным внешним протоколом без отдельного контракта.
+
+### Техническое представление и локаль
+
+В примере `status-new` и `status-paid` — технические строки. Метод [`String.toLowerCase()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toLowerCase()) без параметров применяет правила `Locale.getDefault()`. Для `NEW` это не выявляет проблему, но для `PAID` при `en_US` получается `paid`, а при `tr_TR` — `paıd` (U+0131, строчная i без точки). Различие возникает при преобразовании регистра, а не из-за кодировки вывода. Перегрузка [`toLowerCase(Locale)`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#toLowerCase(java.util.Locale)) с явно заданной [`Locale.ROOT`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Locale.html#ROOT) использует нейтральные языковые правила вместо локали по умолчанию. Именно поэтому в листинге и [запускаемом примере CORE-ENUMS](../../examples/core/enums-control/README.md) выбран `name().toLowerCase(Locale.ROOT)`.
+
+Это решение для технического формата, а не для перевода пользовательского интерфейса. Если пользователю нужна локализованная подпись состояния, её выбирают по требуемому языку (например, из ресурсов переводов). Даже нейтральное форматирование не делает `toString()` постоянным бизнес-идентификатором: изменение реализации или переименование константы может изменить строку. Для внешнего протокола нужен отдельный контракт кодов. `Locale.ROOT` также не обещает неизменность всех преобразований произвольного Unicode между версиями JDK.
+
+Чтобы воспроизвести различие, сохраните предыдущий листинг как `EnumNameDemo.java`, а следующую программу — как `EnumLocaleProbe.java` в том же каталоге:
+
+~~~java
+import java.util.Locale;
+import java.nio.charset.Charset;
+
+class EnumLocaleProbe {
+    public static void main(String[] args) {
+        DisplayState paid = DisplayState.PAID;
+        System.out.println("locale=" + Locale.getDefault());
+        for (String key : new String[]{"user.language", "user.country",
+                "stdout.encoding", "file.encoding", "native.encoding"}) {
+            System.out.println(key + "=" + System.getProperty(key));
+        }
+        System.out.println("stdout.charset=" + System.out.charset());
+        System.out.println("default.charset=" + Charset.defaultCharset());
+        System.out.println("name=" + paid.name());
+        System.out.println("ordinal=" + paid.ordinal());
+        System.out.println("code=" + paid.code());
+        System.out.println("valueOf=" + (DisplayState.valueOf("PAID") == paid));
+        System.out.println("default=" + "status-" + paid.name().toLowerCase());
+        System.out.println("root=" + "status-" + paid.name().toLowerCase(Locale.ROOT));
+        System.out.println("toString=" + paid);
+    }
+}
+~~~
+
+Для сравнения подготовьте два отдельных каталога: исходную версию листинга (без импорта `java.util.Locale`, с `name().toLowerCase()`) и исправленную (как напечатано выше). В каждом используйте одну и ту же программу `EnumLocaleProbe.java`. Команды Bash для каждого каталога:
+
+~~~sh
+export LC_ALL=C
+unset JAVA_TOOL_OPTIONS JDK_JAVA_OPTIONS _JAVA_OPTIONS
+mkdir -p out
+javac --release 21 -encoding UTF-8 -Xlint:all -d out EnumNameDemo.java
+javac --release 21 -encoding UTF-8 -d out -cp out EnumLocaleProbe.java
+for cls in EnumNameDemo EnumLocaleProbe; do
+    java -Dstdout.encoding=UTF-8 -cp out "$cls"
+    java -Duser.language=en -Duser.country=US -Dstdout.encoding=UTF-8 -cp out "$cls"
+    java -Duser.language=tr -Duser.country=TR -Dstdout.encoding=UTF-8 -cp out "$cls"
+done
+~~~
+
+**Фактическая локальная проверка роли 02 ([#288](https://github.com/Melchiorius/backend-interview-labs/issues/288)):** Debian OpenJDK/javac 21.0.12.1, четыре компиляции и двенадцать запусков JVM завершились с кодом 0. Вывод компилятора и потоки ошибок всех процессов пусты. Фактические значения `Locale.getDefault()` — `en_US`, `en_US`, `tr_TR`; `user.language`/`user.country` — `en/US`, `en/US`, `tr/TR`. Во всех запусках проверочной программы `System.out.charset()`, `stdout.encoding`, `file.encoding` и кодировка по умолчанию равны `UTF-8`, а `native.encoding` — `ANSI_X3.4-1968` при `LC_ALL=C`. Здесь меняются параметры отдельных процессов JVM для эксперимента, а не глобальная локаль приложения.
+
+| Конфигурация JVM | Исходный `PAID.toString()` | Исправленный `PAID.toString()` | Явное преобразование с `Locale.ROOT` |
+|---|---|---|---|
+| По умолчанию (фактически `en_US`) | `status-paid` | `status-paid` | `status-paid` |
+| `en_US` | `status-paid` | `status-paid` | `status-paid` |
+| `tr_TR` | `status-paıd` | `status-paid` | `status-paid` |
+
+Пять строк исходного листинга с `NEW` совпали побайтно во всех шести запусках. Во всех запусках дополнительной программы сохранены `name=PAID`, `ordinal=1`, `code=80`, `valueOf=true`. Сравнение полного вывода дополнительной программы между версиями дало код 0 для локали по умолчанию и `en_US`, код 1 для `tr_TR`: единственное различие — `toString=status-paıd` вместо `toString=status-paid`. В UTF-8 кодовая точка U+0131 занимает байты `C4 B1`, а U+0069 (обычная i) — `69`. Отдельный вызов метода без локали по-прежнему даёт `status-paıd` при `tr_TR` даже после исправления `toString()`.
+
+Это проверки двух учебных файлов, а не полный запуск общего `verify.sh`. Они не доказывают переносимость для всех локалей, ОС и версий JDK.
 
 Нельзя написать собственный `values()` или `valueOf(String)` с конфликтующей сигнатурой в enum (N06/N07), а переопределение финальных `name()`/`ordinal()` компилятор отвергнет (N04/N05). Отдельный статический helper с другим именем допустим.
 
