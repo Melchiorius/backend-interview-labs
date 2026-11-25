@@ -1,18 +1,18 @@
 # CORE-INIT — Порядок инициализации в Java 21
 
-**Версия:** Java SE 21. **Исследовательская спецификация:** принятый 00 план `docs/plans/CORE-INIT.md` из PR #50, HEAD `0614e5722f5f89cbaa4425fc707f1a3aa192368d`. **Задача:** [Issue #51](https://github.com/Melchiorius/backend-interview-labs/issues/51).
+**Версия:** Java SE 21. **Исследовательская спецификация:** принятый 00 план [CORE-INIT.md](../../docs/plans/CORE-INIT.md) из PR #50, HEAD `0614e5722f5f89cbaa4425fc707f1a3aa192368d`. **Задача:** [Issue #51](https://github.com/Melchiorius/backend-interview-labs/issues/51).
 
 ## Главная идея
 
-Между `new Child()` и возвратом ссылки на готовый объект Java выполняет несколько разных процессов. Их нельзя называть одним словом «загрузка» или «инициализация»:
+При первом обычном обращении извне, например `new Child()`, Java инициализирует класс перед созданием экземпляра. Если тот же поток уже инициализирует этот класс, повторный запрос может завершиться раньше всей процедуры (см. раздел «Рекурсивная инициализация в одном потоке»).
 
-1. **Loading (загрузка)** — JVM получает бинарное представление класса и создаёт runtime-представление типа.
+1. **Loading (загрузка)** — JVM получает бинарное представление класса и создаёт его представление во время выполнения.
 2. **Linking (связывание)** — проверка бинарного представления, подготовка статических полей, разрешение символических ссылок. Разрешение может быть отложенным.
-3. **Class initialization (инициализация класса)** — исполнение инициализаторов `static`-полей и `static`-блоков класса; у интерфейса — инициализаторов его полей.
+3. **Class initialization (инициализация класса)** — выполнение инициализаторов статических полей и статических блоков класса; у интерфейса — инициализаторов его полей.
 4. **Создание экземпляра** — выделение памяти под объект и присвоение **всем** его полям, включая поля подкласса, значений по умолчанию.
-5. **Instance initialization и constructor body** — цепочка вызовов конструкторов от суперкласса к подклассу; после возврата конструктора суперкласса выполняются инициализаторы текущего класса в текстовом порядке, затем оставшаяся часть его конструктора.
+5. **Инициализация экземпляра (instance initialization) и тело конструктора (constructor body)** — после вычисления аргументов вызова выполняется цепочка конструкторов. После нормального возврата конструктора суперкласса выполняются инициализаторы экземпляра текущего класса в порядке их объявления, затем оставшаяся часть тела конструктора.
 
-Инициализация класса отвечает за статическое состояние типа. Создание экземпляра — за состояние конкретного объекта. Важнейшее следствие: конструктор родителя может вызвать переопределённый метод подкласса, когда поля подкласса ещё содержат default values.
+Инициализация класса подготавливает статическое состояние типа, а создание экземпляра — состояние конкретного объекта. Конструктор суперкласса может вызвать переопределённый метод подкласса до выполнения его инициализаторов. Поля подкласса могут ещё содержать значения по умолчанию, но ранее выполненный код мог их изменить.
 
 Нормативная основа — [JLS 21, глава 12: Execution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html), прежде всего §§12.2–12.5. В статье используются только правила Java SE 21.
 
@@ -202,7 +202,7 @@ state=67/68/ready
 
 **1. `Child.CONSTANT` читается без инициализации ни `Parent`, ни `Child`.**
 
-Поле `CONSTANT` объявлено в `Parent` как `static final int` и инициализировано constant expression `67`. `Child` наследует это поле, поэтому обращение `Child.CONSTANT` допустимо. Это constant variable по [JLS 21 §4.12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4); значение может быть встроено в клиентский код. Поэтому сначала появляется только `Child.CONSTANT = 67` — ни один инициализатор родителя или подкласса ещё не запускался.
+Поле `CONSTANT` объявлено в `Parent` как `static final int` и инициализировано constant expression `67`. `Child` наследует это поле, поэтому обращение `Child.CONSTANT` допустимо. Это constant variable по [JLS 21 §4.12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4); ссылка на такое поле разрешается при компиляции Java-клиента в значение (JLS §13.1). Поэтому сначала появляется только `Child.CONSTANT = 67` — ни один инициализатор родителя или подкласса ещё не запускался.
 
 **2. `Child.BOXED` запускает именно `Parent`.**
 
@@ -216,7 +216,7 @@ state=67/68/ready
 
 **4. Прямое чтение `QuietChild.MARK` инициализирует `QuietChild`, но не `QuietParent`.**
 
-Это отдельное active use поля интерфейса. Инициализация интерфейса сама по себе не инициирует его superinterfaces. Поэтому появляется `QuietChild.<clinit>`, но не `QuietParent.<clinit>`.
+Это отдельное active use поля интерфейса. Инициализация интерфейса сама по себе не инициирует его superinterfaces. Поэтому появляется `QuietChild.<clinit>`, но не `QuietParent.<clinit>`. Это отсутствие автоматической инициализации предков: код самого инициализатора может явно обратиться к другому типу и запустить его инициализацию.
 
 **5. Перед конструкторами все instance fields уже имеют default values.**
 
@@ -232,7 +232,7 @@ state=67/68/ready
 
 **8. Конструктор `Parent()` вызывает виртуальный метод, и срабатывает override `Child.observe()`.**
 
-Динамическая диспетчеризация не отключается во время создания объекта. Фактический объект — `Child`, поэтому вызывается его реализация. Но инициализаторы `Child` ещё не выполнялись: override видит `childValue=0` и `childLabel=null`. Это обычный виртуальный вызов на частично сконструированном объекте, а не специальный режим конструкторов.
+Динамическая диспетчеризация не отключается во время создания объекта. Фактический объект — `Child`, поэтому вызывается его реализация. Но инициализаторы `Child` ещё не выполнялись: override видит `childValue=0` и `childLabel=null`. Это обычный виртуальный вызов на частично сконструированном объекте, а не специальный режим конструкторов. Здесь до вызова никто не присваивал этим полям другие значения; это не гарантия сохранения нуля и null для любого конструктора.
 
 **9. После возврата `Parent()` выполняются инициализаторы `Child`.**
 
@@ -266,27 +266,27 @@ state=67/68/ready
 
 ## Когда класс инициализируется
 
-[JLS 21 §12.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1) требует инициализировать класс непосредственно перед первым из соответствующих активных использований:
+[JLS 21 §12.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1) требует инициализировать класс непосредственно перед первым из следующих активных использований (active use):
 
 - создание экземпляра `new C(...)`;
-- вызов static-метода, объявленного в `C`;
-- присваивание static-полю, объявленному в `C`;
-- чтение static-поля, объявленного в `C`, если оно не является constant variable;
-- некоторые reflective operations.
+- вызов статического метода, объявленного в `C`;
+- присваивание статическому полю, объявленному в `C`;
+- чтение статического поля, объявленного в `C`, если оно не является константной переменной (constant variable);
+- некоторые операции рефлексии.
 
-При инициализации класса также инициализируются его суперклассы и подходящие superinterfaces. Подробный порядок приведён ниже.
+При инициализации класса Java также инициализирует его суперкласс и суперинтерфейсы, объявляющие методы по умолчанию, если они ещё не инициализированы. Подробный рекурсивный порядок приведён ниже.
 
 ### Что само по себе не запускает инициализацию
 
 - объявление переменной типа `C` или получение `C.class`;
 - создание массива ссылок `new C[10]` — создаётся массив, а не экземпляр `C`;
-- чтение constant variable;
-- вызов `ClassLoader.loadClass(name)`;
+- чтение константной переменной (constant variable);
+- стандартная реализация `ClassLoader.loadClass(name)`, эквивалентная `loadClass(name, false)`;
 - вызов `Class.forName(name, false, loader)`.
 
-Класс при этом может быть загружен; важно не смешивать loading и initialization.
+При этих операциях класс может быть загружен, но сама операция не требует его инициализации. Это не исключает побочных эффектов: вычисление квалификатора или аргумента может вызвать метод либо обратиться к статическому полю другого типа. Стандартный `loadClass` сам по себе не требует инициализации, но пользовательский загрузчик может переопределить этот метод и, например, явно вызвать `Class.forName` с `true`.
 
-Для контраста, `Class.forName(name)` инициирует инициализацию. Вариант с флагом позволяет отделить загрузку от инициализации. Ниже фрагмент: предполагается, что переменная `loader` уже содержит нужный `ClassLoader`; обработка `ClassNotFoundException` опущена.
+Для контраста, `Class.forName(name)` с обычным бинарным именем класса или интерфейса требует инициализации этого типа. Вариант с флагом позволяет отделить загрузку от инициализации. Во фрагменте ниже предполагается, что переменная `loader` содержит нужный `ClassLoader`; обработка `ClassNotFoundException` опущена.
 
 ```java
 Class<?> first = Class.forName("example.SomeType", false, loader);
@@ -297,6 +297,37 @@ Class<?> second = Class.forName("example.SomeType", true, loader);
 ```
 
 Это контракт Java SE 21 API: [Class.forName(String)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html#forName(java.lang.String)), [Class.forName(String, boolean, ClassLoader)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html#forName(java.lang.String,boolean,java.lang.ClassLoader)) и [ClassLoader.loadClass(String)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html#loadClass(java.lang.String)).
+
+Имя массива для `Class.forName` задаётся в форме `Class.getName()`, например `[Ljava.lang.String;`; загрузка массива не инициализирует тип его элементов даже при `initialize=true`. Получение метаданных (`getDeclaredField`, `getDeclaredMethod`) не равнозначно чтению значения поля или вызову метода. Когда допустимый вызов `Field.get(null)` читает статическое поле или `Method.invoke(null)` вызывает статический метод, Java инициализирует тип, объявивший соответствующий член, если он ещё не инициализирован. См. [Field.get](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/reflect/Field.html#get(java.lang.Object)), [Method.invoke](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/reflect/Method.html#invoke(java.lang.Object,java.lang.Object...)), [CORE-CLASSLOADER](classloaders.md).
+
+Сохраните `LoaderReflection.java` в отдельном каталоге. Это три разных типа, чтобы первое активное обращение к одному не скрывало эффект следующего.
+
+~~~java
+class LoaderReflection {
+    public static class F { public static int x = mark("F"); }
+    public static class M { static int x = mark("M"); public static int call() { return x; } }
+    public static class L { static int x = mark("L"); }
+    static int mark(String s) { System.out.println(s); return 67; }
+    public static void main(String[] args) throws Exception {
+        ClassLoader loader = LoaderReflection.class.getClassLoader();
+        Class<?> f = loader.loadClass(F.class.getName());
+        var field = f.getDeclaredField("x");
+        var method = Class.forName(M.class.getName(), false, loader).getDeclaredMethod("call");
+        Class.forName(L[].class.getName(), true, loader);
+        System.out.println("metadata/array");
+        System.out.println(field.get(null));
+        System.out.println(method.invoke(null));
+        ClassLoader custom = new ClassLoader(loader) {
+            @Override public Class<?> loadClass(String name) throws ClassNotFoundException {
+                return Class.forName(name, true, getParent());
+            }
+        };
+        custom.loadClass(L.class.getName());
+    }
+}
+~~~
+
+Вывод: `metadata/array`, `F`, `67`, `M`, `67`, `L` (каждая запись на отдельной строке). Получение метаданных и класса массива не запустило инициализаторы; чтение поля и вызов метода запустили разные типы. Последний маркер появляется потому, что переопределённый `loadClass` явно вызвал `Class.forName` с `true` через родительский загрузчик; пример не определяет новые классы и не проверяет изоляцию пространств имён.
 
 ### Инициализируется тип, который объявил static-член
 
@@ -331,6 +362,30 @@ Base initialized
 
 Поле `VALUE` объявлено в `Base`. Выражение `Sub.VALUE` использует имя подкласса как квалификатор, но разрешённое поле принадлежит `Base`; поэтому инициализируется `Base`, а не `Sub`. Квалификатор выражения сам по себе не определяет инициализируемый тип. Это показано в [JLS 21 §12.4.1, Example 12.4.1-2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1).
 
+То же правило относится к вызову статического метода: инициализируется объявивший его класс. В `ActiveUse.java` выражение с квалификатором и аргументом вычисляет их до вызова метода.
+
+~~~java
+class ActiveUse {
+    static class Base {
+        static int value = mark("Base", 67);
+        static void call(int n) { System.out.println("call=" + n); }
+    }
+    static class Sub extends Base { static int own = mark("Sub", 68); }
+    static class Side { static int x = mark("Side", 67); }
+    static int mark(String s, int n) { System.out.println(s); return n; }
+    static Sub qualifier() { System.out.println("qualifier"); return null; }
+    public static void main(String[] args) {
+        Class<?> c = Sub.class;
+        Sub[] array = new Sub[1];
+        System.out.println("literal/array");
+        qualifier().call(Side.x);
+        System.out.println(Sub.own);
+    }
+}
+~~~
+
+Вывод: `literal/array`, `qualifier`, `Side`, `Base`, `call=67`, `Sub`, `68` — отдельные строки. Получение класса и создание массива не инициализируют `Sub`. Java выполняет `qualifier()`, хотя тот возвращает `null`: для вызова статического метода экземпляр не нужен. При вычислении аргумента чтение `Side.x` инициализирует `Side`, а затем вызов `call` инициализирует объявивший метод класс `Base`. В этом примере лишь чтение `Sub.own` требует инициализации `Sub`. Так различаются самостоятельная причина инициализации и побочный эффект вычисления выражения.
+
 ## Constant variables: почему `static final` недостаточно
 
 *Constant variable* — переменная примитивного типа или `String`, объявленная `final` и инициализированная constant expression ([JLS 21 §4.12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4)).
@@ -347,7 +402,7 @@ Base initialized
 
 В подробной процедуре [JLS 21 §12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2) есть тонкость: при инициализации класса его constant variables получают значения на отдельном раннем шаге **до инициализации суперкласса**. Обычные static field initializers выполняются позже — после суперкласса и нужных интерфейсов. В центральном примере `Child.CONSTANT` — constant variable, а `Child.BOXED` — нет.
 
-Значение constant variable может быть встроено компилятором в клиентский класс. Если библиотека изменит `public static final int LIMIT = 67` на `68`, старый клиентский `.class` может продолжить использовать `67`, пока его не перекомпилируют. Это тонкость бинарной совместимости, а не механизм обновления статического состояния во время выполнения ([JLS 21 §§13.1, 13.4.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html)).
+По [JLS 21 §13.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.1) ссылка на поле — константную переменную — разрешается при компиляции в значение её инициализатора; для статической константной переменной ссылка на поле в бинарном коде отсутствует. Это не факультативная оптимизация JIT. Если библиотека изменит `public static final int LIMIT = 67` на `68`, прежний Java-клиент, скомпилированный с прежним значением, не увидит новое значение при таком использовании до перекомпиляции ([§13.4.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.9)). Обычное неконстантное `static final` поле, например `Integer LIMIT`, читается как поле; правило подстановки к нему не применяется. Это нормативное объяснение; эксперимент с двумя версиями библиотеки здесь не выполнялся.
 
 ## Порядок class initialization
 
@@ -361,7 +416,7 @@ Base initialized
 4. Инициализирует superinterfaces `C`, объявляющие хотя бы один `default`-метод, в порядке специального рекурсивного обхода.
 5. Выполняет class variable initializers и static blocks самого `C` в текстовом порядке.
 
-Для обычного класса сначала идёт цепочка классов-суперклассов, затем нужные интерфейсы, затем собственные non-constant static initializers класса.
+Для обычного класса сначала идёт цепочка классов-суперклассов, затем нужные интерфейсы, затем собственные non-constant static initializers класса. Это нормальный порядок при завершении процедуры, а не утверждение о том, что рекурсивный запрос в том же потоке ждёт окончания всех инициализаторов.
 
 ### Почему интерфейсы обходятся в postorder
 
@@ -396,7 +451,7 @@ public class InterfaceInit {
 }
 ```
 
-Будет напечатано `ChildI`, затем `1`; `ParentI` не инициализируется. Это контрпример к фразе «инициализация интерфейса всегда сначала инициализирует его родителей». Исключение для superinterfaces с default methods относится к инициализации **класса**, а не к прямой инициализации интерфейса.
+Будет напечатано `ChildI`, затем `1`; `ParentI` не инициализируется. Это контрпример к фразе «инициализация интерфейса всегда сначала инициализирует его родителей». Исключение для superinterfaces с default methods относится к инициализации **класса**, а не к прямой инициализации интерфейса. Речь именно об автоматическом обходе: собственный код инициализатора может прочитать неконстантное поле предка и инициировать его явно.
 
 ### Static fields и blocks — одна последовательность
 
@@ -416,7 +471,7 @@ class Ordered {
 
 Порядок: `first field` → `first block` → `second field` → `second block`. Java не сортирует отдельно все поля и все блоки.
 
-Для простых имён действуют ограничения на *forward references* ([JLS 21 §8.3.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.3.3)):
+Правило [JLS 21 §8.3.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.3.3) ограничивает ссылку по простому имени на поле, объявленное в данном типе, в его собственном инициализаторе или раньше декларатора: для статического поля — в статическом инициализаторе поля или блоке, для экземплярного — в экземплярном инициализаторе поля или блоке. Ошибка возникает при выполнении всех условий правила, включая ближайший объемлющий тип (для статического — класс или интерфейс) и то, что ссылка не является левой частью присваивания. Простое имя может быть в области видимости и всё же быть запрещено.
 
 ```java
 class BadForwardReference {
@@ -440,6 +495,54 @@ public class QualifiedForwardReference {
 
 Этот вариант компилируется, но `first` получает `0`: при выполнении первого инициализатора `later` ещё содержит default value. Это показывает, почему наличие default value не отменяет правил текстового порядка и forward references.
 
+В `ForwardDemo.java` объединены допустимые контрасты: квалифицированное чтение, чтение в методе, присваивание по простому имени слева и экземплярное поле.
+
+~~~java
+class ForwardDemo {
+    static int qualified = ForwardDemo.later;
+    static int viaMethod = read();
+    static { later = 68; }
+    static int assigned = ForwardDemo.later;
+    static int later = 67;
+    int before = this.after;
+    int after = 67;
+    static int read() { return later; }
+    public static void main(String[] args) {
+        System.out.println("forward=" + qualified + ":" + viaMethod + ":" + new ForwardDemo().before + ":" + assigned + ":" + later);
+    }
+}
+~~~
+
+Вывод `forward=0:0:0:68:67`: первые два чтения видят 0 до присваивания, экземплярное `this.after` также видит 0; присваивание `later = 68` разрешено, затем объявленный инициализатор `later = 67` перезаписывает значение. Не следует переносить разрешённость квалификации на все поля: для blank final действует анализ определённого присваивания (definite assignment, DA), а локальная переменная вообще не получает автоматического начального значения.
+
+Сохраните каждый отрицательный контраст в отдельном файле, не объединяя классы:
+
+`BadStaticForward.java`:
+
+~~~java
+class BadStaticForward { static int a = b; static int b = 67; }
+~~~
+
+`BadInstanceForward.java`:
+
+~~~java
+class BadInstanceForward { int a = b; int b = 67; }
+~~~
+
+`BadBlankFinal.java`:
+
+~~~java
+class BadBlankFinal { final int n; BadBlankFinal() { System.out.println(this.n); n = 67; } }
+~~~
+
+`BadLocal.java`:
+
+~~~java
+class BadLocal { void f() { int n; System.out.println(n); } }
+~~~
+
+Первые два компилятор отвергает за `illegal.forward.ref`, остальные два — за `var.might.not.have.been.initialized`: квалификация `this.n` не отменяет проверку DA. См. [JLS 21 §16.8](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html#jls-16.8), [§16.9](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html#jls-16.9).
+
 ## Значения полей по умолчанию
 
 [JLS 21 §4.12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.5) определяет начальные значения полей и элементов массивов.
@@ -458,18 +561,52 @@ public class QualifiedForwardReference {
 
 ## Instance initialization и цепочка конструкторов
 
-Для `new Child(...)` после необходимой class initialization Java выполняет следующую последовательность:
+Для обычного неквалифицированного `new Child(...)` после необходимой инициализации класса при нормальном завершении Java выполняет следующую последовательность ([JLS 21 §15.9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.9.4), [§12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5)):
 
 1. Выделяет память под объект со всеми instance fields всех классов его иерархии.
 2. Присваивает каждому полю default value.
-3. Вызывает выбранный конструктор.
-4. Если конструктор начинает с `this(...)`, рекурсивно выполняет другой конструктор того же класса. Инициализаторы текущего класса на этом шаге ещё не выполняются.
-5. Конструктор, который не делегирует через `this(...)`, вызывает конструктор прямого суперкласса — явно через `super(...)` или неявно через `super()`.
+3. Вычисляет фактические аргументы `new` слева направо, затем вызывает выбранный конструктор.
+4. Если конструктор начинает с `this(...)`, сначала вычисляет аргументы этого вызова слева направо, затем рекурсивно выполняет другой конструктор того же класса. Инициализаторы текущего класса на этом шаге ещё не выполняются.
+5. Конструктор, который не делегирует через `this(...)`, вычисляет аргументы явного `super(...)` слева направо и вызывает конструктор прямого суперкласса либо выполняет неявный `super()`. У `Object` суперкласса нет; этот шаг для него отсутствует.
 6. Когда конструктор суперкласса и его цепочка завершились, выполняются instance field initializers и instance initializer blocks текущего класса в текстовом порядке.
 7. Выполняется оставшаяся часть тела текущего конструктора.
 8. Если текущий конструктор был вызван через `this(...)`, после его завершения продолжается оставшаяся часть тела делегирующего конструктора.
 
-Так повторяется для каждого класса от базового к производному.
+Так повторяется для каждого класса от базового к производному. Если вычисление аргумента завершается аварийно (abrupt completion), например из-за исключения, Java не вычисляет следующие аргументы и не выполняет соответствующий вызов. Если вызванный конструктор или инициализатор завершается аварийно, последующие стадии создания этого объекта пропускаются. Уже произошедшие побочные эффекты не откатываются автоматически. Для квалифицированного `new` сначала проверяется объемлющий экземпляр; квалифицированный `super` также имеет особые правила ([§8.8.7.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.7.1)). Специальные правила [enum](enums.md), [record](records.md), [вложенных классов](nested-classes.md), [клонирования](object.md) и [десериализации](serialization.md) нельзя выводить из этой последовательности.
+
+Сохраните `ArgumentOrder.java` отдельно:
+
+~~~java
+class ArgumentOrder {
+    static int arg(String label, int n) { System.out.println(label); return n; }
+    static int fail() { System.out.println("fail"); throw new IllegalArgumentException(); }
+    static class Parent { Parent(int n) { System.out.println("parent"); } }
+    static class Child extends Parent {
+        int x = arg("field", 67);
+        Child(int a, int b) { this(arg("this argument", a)); System.out.println("outer body"); }
+        Child(int a) { super(arg("super argument", a)); System.out.println("inner body"); }
+    }
+    public static void main(String[] args) {
+        new Child(arg("new left", 67), arg("new right", 68));
+        try { new Child(fail(), arg("skipped", 67)); }
+        catch (IllegalArgumentException e) { System.out.println("caught"); }
+    }
+}
+~~~
+
+Вывод по строкам: `new left`, `new right`, `this argument`, `super argument`, `parent`, `field`, `inner body`, `outer body`, `fail`, `caught`. При второй попытке исключение первого аргумента оставляет его маркер `fail`, но не выполняет `skipped` и не запускает конструкторы. Сам порядок выделения памяти и начальных значений перед аргументами установлен нормой, а не выводится из этих маркеров.
+
+Отдельный отрицательный пример `EarlyThis.java`:
+
+~~~java
+class EarlyThis {
+    EarlyThis() { this(read()); }
+    EarlyThis(int n) {}
+    int read() { return 67; }
+}
+~~~
+
+В Java 21 в аргументах явного вызова другого конструктора нельзя обращаться к экземплярному методу создаваемого объекта таким способом: `javac` отвергает вызов `read()` (`cant.ref.before.ctor.called`). Это не запрет всех вычислений аргументов: статические методы, как в `ArgumentOrder`, допустимы.
 
 ### `this(...)` выполняет инициализаторы класса один раз
 
@@ -679,12 +816,32 @@ Java не отключает динамическую диспетчеризац
 
 В этот момент:
 
-- все поля объекта уже имеют default values;
+- все поля объекта первоначально получили значения по умолчанию, но часть из них могла уже измениться;
 - инициализаторы и initializer blocks суперкласса уже выполнились;
 - выполняется тело конструктора суперкласса;
 - instance initializers и тело конструктора подкласса **ещё не выполнялись**.
 
 В центральном примере `Parent()` вызывает `observe()`. Фактический объект — `Child`, поэтому выполняется `Child.observe()`. `Parent.parentValue` к этому моменту уже равно `67`, но `Child.childValue` всё ещё равно `0`, а `Child.childLabel` — `null`. После возврата из `Parent()` инициализаторы подкласса присвоят этим полям `68` и `"ready"` соответственно.
+
+Контраст `ParentWrite.java`: суперкласс записывает поле подкласса перед виртуальным вызовом.
+
+~~~java
+class ParentWrite {
+    static class Parent {
+        Parent() { ((Child) this).value = 68; observe(); }
+        void observe() {}
+    }
+    static class Child extends Parent {
+        int value = 67;
+        @Override void observe() { System.out.println("during=" + value); }
+    }
+    public static void main(String[] args) {
+        System.out.println("after=" + new Child().value);
+    }
+}
+~~~
+
+Вывод `during=68`, затем `after=67`. Вызванный `observe()` видит значение, присвоенное в конструкторе родителя; позднее собственный инициализатор поля подкласса заменяет его. Это иллюстрация риска, а не рекомендация приводить `this` к типу подкласса.
 
 Это обычная динамическая диспетчеризация, применённая к объекту, который ещё создаётся. Общее правило overriding разобрано в [CORE-INHERITANCE](inheritance.md); здесь важен момент времени и доступное состояние объекта. См. [JLS 21 §12.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
 
@@ -713,7 +870,7 @@ class Child extends Parent {
 }
 ```
 
-При `new Child()` вызов `register()` из `Parent()` попадёт в `Child.register()`. В момент записи в `escaped` поле `Child.value` ещё содержит `0`; инициализатор `= 67` выполнится позже.
+При `new Child()` вызов `register()` из `Parent()` попадёт в `Child.register()`. В момент записи в `escaped` поле `Child.value` ещё содержит `0`; инициализатор `= 67` выполнится позже. Именно в этом примере иных записей до публикации нет.
 
 `volatile` здесь не «достраивает» объект. Запись ссылки в volatile-поле происходит **до** присваивания `Child.value = 67` и не публикует эту будущую запись как уже завершённую. Другой поток может получить ссылку на частично сконструированный объект. Точный результат конкурентного чтения зависит от синхронизации и момента чтения; нельзя обещать один детерминированный вывод.
 
@@ -721,7 +878,7 @@ Same-thread dispatch из конструктора и межпоточный `th
 
 ## Ошибка инициализации класса
 
-Если class initialization завершается ошибкой, JVM запоминает это состояние. При следующем обращении класс не запускает static initializers повторно.
+Если процедура инициализации типа завершается ошибкой, соответствующее runtime-определение класса или интерфейса помечается ошибочным. Следующий запрос на его инициализацию не запускает инициализаторы повторно.
 
 ```java
 class Broken {
@@ -764,17 +921,93 @@ first: ExceptionInInitializerError, cause=IllegalStateException
 second: NoClassDefFoundError
 ```
 
-Первое чтение `Broken.VALUE` — active use. Static block вызывает `fail()`, который выбрасывает `IllegalStateException`. Это исключение не является `Error`; JVM заменяет его на `ExceptionInInitializerError` с исходным исключением в качестве причины. Инициализация `Broken` завершается неуспешно, и тип помечается как *erroneous*.
+Первое чтение `Broken.VALUE` требует инициализации класса. Статический блок вызывает `fail()`, который выбрасывает `IllegalStateException`. По шагу 11 §12.4.2, если выброшенный объект не является экземпляром `Error` или его подкласса, JVM создаёт `ExceptionInInitializerError` с исходным исключением. Если создание этой обёртки само завершается с `OutOfMemoryError`, JVM использует этот `OutOfMemoryError` вместо обёртки. Это нормативная оговорка; принудительное исчерпание памяти не проверялось. В примере создаётся обёртка, а определение `Broken` помечается ошибочным (*erroneous*).
 
-При следующем active use JVM не выполняет static block повторно. Инициализация невозможна, поэтому возникает `NoClassDefFoundError`.
+Следующий запрос инициализации того же определения класса во время выполнения завершается `NoClassDefFoundError`. Это не запрет любого использования имени типа: литерал класса и чтение константной переменной сами по себе не требуют его инициализации. У `NoClassDefFoundError` есть и другие причины, например отсутствие определения класса при загрузке.
 
-Если из инициализатора выброшен объект класса `Error` или его подкласса, он передаётся без обязательной упаковки в `ExceptionInInitializerError`. Например, `AssertionError` остаётся `AssertionError` при первом неуспешном active use; последующее использование всё равно встретит erroneous state и приведёт к `NoClassDefFoundError`.
+Если инициализатор выбрасывает экземпляр `Error` или его подкласса, JVM передаёт его без обёртки `ExceptionInInitializerError`. Например, при первом неудачном запросе инициализации передаётся исходный `AssertionError`. При последующем запросе JVM обнаруживает ошибочное состояние определения класса и выбрасывает `NoClassDefFoundError`.
 
-Если инициализация суперкласса или требуемого superinterface завершилась ошибкой, инициализируемый класс также помечается erroneous. Сообщение `NoClassDefFoundError` и текст stack trace не являются надёжным способом определить первопричину: ищите исходную ошибку первой попытки.
+Если инициализация суперкласса или требуемого суперинтерфейса завершается аварийно, JVM также помечает инициализируемый класс ошибочным. Одного сообщения `NoClassDefFoundError` или текста трассировки стека недостаточно, чтобы установить первопричину: нужно искать исходную ошибку первой попытки.
+
+В отдельном `FailurePropagation.java` показаны сбой суперкласса и сбой требуемого интерфейса с методом по умолчанию:
+
+~~~java
+class FailurePropagation {
+    static int fail() { throw new IllegalStateException("boom"); }
+    static class Parent { static int x = fail(); }
+    static class Child extends Parent { static final int K = 67; static int own = 68; }
+    interface Required { int X = fail(); default void f() {} }
+    static class Impl implements Required { static int own = 67; }
+    static void request(String name, Runnable action) {
+        try { action.run(); throw new AssertionError("expected failure"); }
+        catch (LinkageError e) { System.out.println(name + "=" + e.getClass().getSimpleName()); }
+    }
+    public static void main(String[] args) {
+        request("child first", () -> System.out.println(Child.own));
+        request("parent later", () -> System.out.println(Parent.x));
+        request("child later", () -> System.out.println(Child.own));
+        System.out.println(Child.class.getSimpleName() + ":" + Child.K);
+        request("impl first", () -> System.out.println(Impl.own));
+        request("interface later", () -> System.out.println(Required.X));
+        request("impl later", () -> System.out.println(Impl.own));
+    }
+}
+~~~
+
+Фактические строки:
+
+~~~text
+child first=ExceptionInInitializerError
+parent later=NoClassDefFoundError
+child later=NoClassDefFoundError
+Child:67
+impl first=ExceptionInInitializerError
+interface later=NoClassDefFoundError
+impl later=NoClassDefFoundError
+~~~
+
+Ошибка зависимости распространяется в первую попытку и помечает также зависимый класс; повторные запросы завершаются отказом. `Child.class` и `Child.K` доступны без нового запроса инициализации. Отдельные определения того же бинарного имени у разных defining loaders имеют отдельное состояние.
 
 Это правило относится к class initialization. Оно не означает, что любое исключение из любого метода навсегда «ломает класс»: если класс уже успешно инициализирован, исключение из обычного static-метода не меняет его состояние инициализации.
 
 Нормативный алгоритм — [JLS 21 §12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2). API: [ExceptionInInitializerError](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ExceptionInInitializerError.html) и [NoClassDefFoundError](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/NoClassDefFoundError.html).
+
+### Проверяемые исключения и нормальное завершение блоков
+
+[JLS 21 §11.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.3) запрещает выход проверяемого исключения из статического инициализатора или инициализатора статического поля именованного класса: у блока нет `throws`. Исключение нужно обработать либо изменить контракт вызываемой операции. Для инициализатора экземпляра или его поля именованного класса проверяемое исключение допустимо, если есть хотя бы один явно объявленный конструктор и каждый конструктор объявляет это исключение или его суперкласс в `throws`. Для анонимных классов действует отдельное правило. Блоки по [§8.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.6) и [§8.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.7) должны быть способны завершиться нормально по правилам компилятора; это не гарантия отсутствия исключения в конкретном запуске. Поэтому вызов `fail()` с непроверяемым исключением в `Broken` допустим.
+
+Положительный `CheckedInstance.java`:
+
+~~~java
+class CheckedInstance {
+    { check(); }
+    CheckedInstance() throws java.io.IOException {}
+    static void check() throws java.io.IOException { System.out.println("checked"); }
+    public static void main(String[] args) throws java.io.IOException { new CheckedInstance(); }
+}
+~~~
+
+Вывод `checked`; вызывающий `main` тоже объявляет `IOException`. Отрицательные контрасты в разных файлах:
+
+`BadCheckedStatic.java`:
+
+~~~java
+class BadCheckedStatic { static { fail(); } static void fail() throws java.io.IOException {} }
+~~~
+
+`BadCheckedInstance.java`:
+
+~~~java
+class BadCheckedInstance { { check(); } static void check() throws java.io.IOException {} }
+~~~
+
+`BadCompletion.java`:
+
+~~~java
+class BadCompletion { static { throw new IllegalStateException(); } }
+~~~
+
+Первые два отвергаются из-за необработанного проверяемого исключения (второй класс не объявляет конструктора); третий — `initializer.must.be.able.to.complete.normally`. См. [CORE-EXCEPTIONS](exceptions.md).
 
 ## Исключение при создании экземпляра — другая ситуация
 
@@ -812,18 +1045,37 @@ first: first attempt
 second: success
 ```
 
-При первом `new` инициализация самого класса `Retryable` проходит успешно, затем instance initializer бросает исключение. Объект не возвращается вызывающему коду, но класс остаётся инициализированным. При втором `new` блок выполняется снова; счётчик уже равен двум, поэтому создание завершается успешно.
+При первом `new` класс `Retryable` успешно инициализируется, но инициализатор экземпляра выбрасывает исключение. Ссылка на объект не возвращается вызывающему коду, а класс остаётся инициализированным. При втором `new` блок выполняется снова; счётчик уже равен двум, поэтому создание объекта завершается успешно. Инкремент `attempts`, выполненный при неудачной попытке, не откатывается.
 
 | Где возникло исключение | Что не удалось | Что будет при следующем использовании |
 |---|---|---|
-| `static` field initializer / `static` block | Инициализация класса | Класс erroneous; active use приводит к `NoClassDefFoundError` |
-| Instance field initializer / instance block | Создание одного объекта | Класс не становится erroneous только из-за этой ошибки; следующий `new` может пройти |
-| Тело конструктора | Создание одного объекта | Класс не становится erroneous только из-за ошибки конструктора |
-| Обычный метод после успешной class initialization | Вызов метода | Состояние class initialization не меняется |
+| Инициализатор статического поля или статический блок | Инициализация класса | Соответствующее определение класса помечается ошибочным; последующий запрос его инициализации завершается `NoClassDefFoundError` |
+| Инициализатор поля экземпляра или блок инициализации экземпляра | Создание одного объекта | Класс не становится ошибочным только из-за этой ошибки; следующий `new` может завершиться успешно |
+| Тело конструктора | Создание одного объекта | Класс не становится ошибочным только из-за ошибки конструктора |
+| Обычный метод после успешной инициализации класса | Вызов метода | Состояние инициализации класса не меняется |
+
+Первая строка относится именно к последующему запросу инициализации: литерал класса и константная переменная сами по себе такого запроса не требуют. `NoClassDefFoundError` возможна и по другим причинам. Первая неудачная попытка инициализации отличается от последующих (см. выше шаг 11 §12.4.2, включая нормативную оговорку об `OutOfMemoryError`).
 
 ## Рекурсивная инициализация в одном потоке
 
-Инициализатор одного класса может обратиться к другому классу, а тот — снова к первому. Если повторный запрос приходит **из того же потока**, который уже инициализирует класс, JVM не запускает инициализатор повторно и не считает ситуацию ошибкой сама по себе.
+Инициализатор одного класса может обратиться к другому классу, а тот — снова к первому. Если повторный запрос приходит **из того же потока**, который уже инициализирует класс, JVM не запускает инициализатор повторно и не считает ситуацию ошибкой сама по себе. По шагу 3 §12.4.2 тот же поток освобождает блокировку и завершает рекурсивный запрос нормально, хотя первоначальная инициализация ещё идёт. Поэтому создание экземпляра внутри собственного статического инициализатора может опередить последующие присваивания.
+
+Отдельный `RecursiveNew.java`:
+
+~~~java
+class RecursiveNew {
+    static class C {
+        static C instance = new C();
+        static int value = 67;
+        C() { System.out.println("during=" + value); }
+    }
+    public static void main(String[] args) {
+        System.out.println("after=" + C.value);
+    }
+}
+~~~
+
+Вывод `during=0`, затем `after=67`: конструктор исполняется в ходе первого инициализатора, прежде чем `C.value` получит 67. Это исключение из обычной внешней последовательности, не повторная инициализация.
 
 ```java
 class A {
@@ -860,16 +1112,18 @@ public class RecursiveInitDemo {
 
 ## Синхронизация class initialization и безопасная публикация
 
-Для каждого класса или интерфейса JLS задаёт уникальную блокировку инициализации. Если один поток уже инициализирует тип, другой поток, которому требуется инициализировать тот же тип, ожидает завершения процедуры. Если тот же поток рекурсивно запрашивает инициализацию типа, который он уже инициализирует, повторный запуск не выполняется.
+Для каждого класса или интерфейса JLS задаёт уникальную блокировку инициализации `LC`. Если один поток уже инициализирует тип, другой поток при запросе инициализации того же типа ожидает завершения процедуры. Если запрос повторно поступает от самого инициализирующего потока, повторного выполнения инициализаторов не происходит.
 
-**Как JVM отображает тип на lock — деталь реализации.** JLS не требует, чтобы блокировкой был именно объект `C.class`. Нельзя считать, что JVM обязательно выполняет `synchronized (C.class)`. Реализация может оптимизировать проверки уже инициализированного класса, но должна сохранить требуемые happens-before отношения. См. [JLS 21 §12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2), [JVMS 21 §5.5](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.5) и [JLS 21 §17.4.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4.5).
+На шаге 6 §12.4.2 поток отмечает состояние «инициализируется этим потоком» и освобождает `LC` **до** инициализации зависимостей и выполнения собственных инициализаторов типа. Другой поток, обнаружив, что инициализация уже выполняется, освобождает `LC` и ждёт уведомления. При завершении процедуры инициализирующий поток вновь захватывает `LC`, меняет состояние и уведомляет ожидающих. Потоки ждут завершения процедуры, а не обязательно освобождения монитора, удерживаемого на протяжении всего выполнения инициализаторов.
+
+**Выбор блокировки `LC` для конкретного типа — деталь реализации.** JLS не требует, чтобы блокировкой был именно объект `C.class`. Нельзя считать, что JVM обязательно выполняет `synchronized (C.class)`. Реализация может оптимизировать проверки уже инициализированного класса, но должна сохранить требуемые отношения happens-before. См. [JLS 21 §12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2), [JVMS 21 §5.5](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.5) и [JLS 21 §17.4.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4.5).
 
 Из этого следуют две границы:
 
-- Успешная class initialization обеспечивает корректную публикацию статического состояния, созданного в инициализаторах, для последующего использования типа. Поэтому статическая инициализация часто применяется для создания неизменяемого singleton.
-- Это **не** означает, что все последующие операции с изменяемыми `static`-полями автоматически потокобезопасны. После завершения class initialization обычные записи/чтения должны использовать подходящую синхронизацию, `volatile`, атомарные классы и т. п.
+- Успешная инициализация обеспечивает необходимые отношения happens-before для последующего использования успешно инициализированного типа. JVM обязана сохранить их и при оптимизации проверки состояния. Эта гарантия сама по себе не распространяется на ссылку, которая стала доступна другому потоку через другой канал публикации до завершения процедуры. Статическую инициализацию часто используют для создания неизменяемого одиночного экземпляра (singleton).
+- Это **не** означает, что все последующие операции с изменяемыми статическими полями автоматически потокобезопасны. После завершения инициализации класса обычные чтения и записи требуют подходящего механизма синхронизации, например `volatile` или атомарных классов, в зависимости от операции.
 
-Не следует смешивать это с *final-field semantics*. Для `final`-полей объекта существуют отдельные гарантии Java Memory Model при корректном завершении конструктора ([JLS 21 §17.5.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.5.1)). Если `this` утекает из конструктора до завершения создания объекта, нельзя безоговорочно применять к такому объекту рассуждение о корректно сконструированном состоянии. Полная модель безопасной публикации, happens-before и data races относится к CON-JMM.
+Не следует смешивать эту гарантию с семантикой `final`-полей (final-field semantics). Для `final`-полей объекта существуют отдельные гарантии Java Memory Model при корректном завершении конструктора ([JLS 21 §17.5.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.5.1)). Если ссылка `this` становится доступной извне до завершения создания объекта, нельзя безоговорочно применять к такому объекту рассуждение о корректно сконструированном состоянии. Полная модель безопасной публикации, happens-before и гонок данных (data races) относится к CON-JMM.
 
 ## Что не следует смешивать с class initialization
 
@@ -890,13 +1144,15 @@ class B extends A { }
 
 ### Возможный deadlock между потоками — отдельный P2-случай
 
-Same-thread recursion распознаётся процедурой инициализации. Но теоретически два потока могут образовать цикл ожиданий:
+Процедура инициализации распознаёт повторный запрос из того же потока. Однако два разных потока могут образовать цикл ожиданий:
 
-- поток A начал инициализировать `ClassA` и в ходе `<clinit>` обращается к `ClassB`;
-- поток B начал инициализировать `ClassB` и в ходе `<clinit>` обращается к `ClassA`;
+- поток A начал инициализацию `ClassA` и в ходе `<clinit>` запрашивает инициализацию `ClassB`;
+- поток B начал инициализацию `ClassB` и в ходе `<clinit>` запрашивает инициализацию `ClassA`;
 - каждый ждёт завершения инициализации другого типа.
 
-Это может привести к взаимной блокировке. Нельзя обещать детерминированный вывод или точный тайминг: результат зависит от расписания потоков и конкретных зависимостей. Стресс-тест такого deadlock в рамках статьи не заявляется.
+Это может привести к взаимной блокировке (deadlock). Конкретный результат зависит от порядка выполнения потоков и зависимостей; детерминированный вывод и точное время возникновения не гарантируются. Стресс-тест и воспроизведение взаимной блокировки в рамках статьи не выполнялись.
+
+Историческое уточнение к [плану CORE-INIT, CI-18, L137](https://github.com/Melchiorius/backend-interview-labs/blob/f04f1eb5ee3a400a988757414bcae09113bd885b/docs/plans/CORE-INIT.md#L137): слова о том, что потоки «держат разные initialization locks», не описывают обязательный механизм JLS. Корректный цикл — A ждёт завершения инициализации B, B ждёт завершения A; `LC` освобождается до выполнения инициализаторов. Исторический план и аудит сохранены без изменений. Здесь нет утверждения о фактически выполненном тесте взаимной блокировки.
 
 ### Разные class loaders — разные определения классов
 
@@ -908,16 +1164,16 @@ Same-thread recursion распознаётся процедурой инициа
 
 | Ошибочно | Точнее |
 |---|---|
-| «Класс инициализируется при загрузке» | Loading, linking и class initialization — разные действия. Загрузка сама по себе не запускает static initializers. |
-| «Все static-поля выполняются до static-блоков» | Non-constant static field initializers и static blocks выполняются в общем текстовом порядке. Constant variables имеют отдельный ранний шаг. |
-| «При инициализации класса запускаются все его интерфейсы» | Для инициализации класса учитываются superinterfaces, объявляющие default methods, в рекурсивном postorder. |
-| «Если класс реализует интерфейс, интерфейс уже инициализирован» | Сам факт `implements` не запускает интерфейс без default methods. Прямое active use его поля/метода — отдельный триггер. |
-| «Подкласс начинает инициализировать свои поля до конструктора родителя» | Все поля сначала получают default values; инициализаторы подкласса выполняются после возврата конструктора суперкласса. |
-| «В конструкторе родителя вызывается версия метода родителя» | Переопределяемый метод использует обычную динамическую диспетчеризацию и может попасть в override подкласса. |
-| «`this(...)` повторно запускает все field initializers» | Инициализаторы класса выполняются один раз на цепочке делегирования; делегирующий конструктор продолжает тело после возврата `this(...)`. |
-| «Любое исключение из конструктора делает класс unusable» | Ошибка instance initializer/constructor прерывает создание объекта, но сама по себе не делает класс erroneous. |
-| «Рекурсия static initializers — это `ClassCircularityError`» | Same-thread recursive initialization и циклическая иерархия при загрузке — разные случаи. |
-| «Class init lock — это `synchronized (C.class)`» | JVM выбирает mapping типа на initialization lock; JLS не требует использовать монитор объекта `Class`. |
+| «Класс инициализируется при загрузке» | Загрузка, связывание и инициализация класса — разные действия. Загрузка сама по себе не запускает статические инициализаторы. |
+| «Все статические поля инициализируются до статических блоков» | Инициализаторы неконстантных статических полей и статические блоки выполняются в общем текстовом порядке. Для константных переменных предусмотрен отдельный ранний шаг. |
+| «При инициализации класса запускаются все его интерфейсы» | Java рекурсивно обходит суперинтерфейсы в порядке postorder и инициализирует те, которые объявляют методы по умолчанию. |
+| «Если класс реализует интерфейс, интерфейс уже инициализирован» | Само отношение `implements` не требует инициализации интерфейса без методов по умолчанию. Активное использование объявленного в нём поля или метода может стать самостоятельной причиной инициализации. |
+| «Подкласс начинает инициализировать свои поля до конструктора родителя» | Все поля сначала получают значения по умолчанию; собственные инициализаторы экземпляра подкласса выполняются после нормального возврата конструктора суперкласса. Предшествующий код уже мог изменить поля подкласса. |
+| «В конструкторе родителя вызывается версия метода родителя» | При обычном виртуальном вызове Java выбирает реализацию по фактическому классу объекта и может вызвать переопределение подкласса. |
+| «`this(...)` повторно запускает все инициализаторы полей» | Инициализаторы экземпляра текущего класса выполняются один раз в цепочке делегирования при нормальном создании объекта; делегирующий конструктор продолжает тело после нормального возврата `this(...)`. |
+| «Любое исключение из конструктора делает класс непригодным к использованию» | Ошибка инициализатора экземпляра или конструктора прерывает создание конкретного объекта, но сама по себе не переводит класс в ошибочное состояние. |
+| «Рекурсия статических инициализаторов — это `ClassCircularityError`» | Рекурсивная инициализация в одном потоке и циклическая иерархия типов при загрузке — разные случаи. |
+| «Блокировка инициализации — это `synchronized (C.class)`» | JVM выбирает блокировку `LC` для типа; JLS не требует использовать монитор объекта `Class`. |
 
 ## Карта обязательного покрытия CORE-INIT
 
@@ -925,13 +1181,13 @@ P0/P1/P2 — приоритеты исследовательского план�
 
 | ID плана | Приоритет | Где дан ответ |
 |---|---|---|
-| CI-01 | P0 | «Фазы жизненного цикла класса» |
+| CI-01 | P0 | «Loading, linking и class initialization — разные этапы» |
 | CI-02 | P0 | «Когда класс инициализируется» |
-| CI-03 | P0 | «Constant variables» и центральный пример |
+| CI-03 | P0 | «Constant variables: почему `static final` недостаточно» и центральный пример |
 | CI-04 | P0 | «Инициализируется тип, который объявил static-член» |
-| CI-05 | P0 | Центральный пример; порядок class initialization |
-| CI-06 | P0 | Центральный пример; интерфейсный postorder |
-| CI-07 | P0 | Default values и разбор центрального примера |
+| CI-05 | P0 | Центральный пример; «Порядок class initialization»; «Рекурсивная инициализация в одном потоке» |
+| CI-06 | P0 | Центральный пример; рекурсивный обход суперинтерфейсов в postorder |
+| CI-07 | P0 | «Значения полей по умолчанию» и разбор центрального примера |
 | CI-08 | P0 | Instance initialization и цепочка конструкторов |
 | CI-09 | P0 | Виртуальный вызов из конструктора |
 | CI-10 | P0 | Ошибка инициализации класса |
@@ -939,12 +1195,20 @@ P0/P1/P2 — приоритеты исследовательского план�
 | CI-12 | P1 | Синхронизация class initialization |
 | CI-13 | P1 | Исключение при создании экземпляра |
 | CI-14 | P1 | API `Class.forName` / `ClassLoader.loadClass` |
-| CI-15 | P1 | `this` escape во время construction |
-| CI-16 | P1 | Forward references |
+| CI-15 | P1 | «`this` escape во время construction» (публикация ссылки до завершения создания объекта) |
+| CI-16 | P1 | «Static fields и blocks — одна последовательность»: ссылки на поля до их объявления |
 | CI-17 | P2 | `ClassCircularityError` |
-| CI-18 | P2 | Deadlock между потоками |
-| CI-19 | P2 | Разные class loaders |
-| CI-20 | P2 | Constant variables и бинарная совместимость |
+| CI-18 | P2 | «Возможный deadlock между потоками — отдельный P2-случай» |
+| CI-19 | P2 | «Разные class loaders — разные определения классов» |
+| CI-20 | P2 | «Constant variables: почему `static final` недостаточно»: бинарная совместимость |
+
+## Проверка дополнительных примеров D-A07
+
+Роль 02 выполнила изолированные проверки для исходной редакции D-A07 на коммите `bacc13cbc5cc146ff3f2db126d68256b9aef55fa`: [адресный отчёт G2 #7166895195](https://github.com/Melchiorius/backend-interview-labs/pull/300#issuecomment-7166895195). Задание — [Issue #299](https://github.com/Melchiorius/backend-interview-labs/issues/299). Каждый новый файл компилировался отдельно во временном каталоге командой `javac --release 21 -XDrawDiagnostics -d out Имя.java`; положительные примеры запускались командой `java -cp out Имя`. Среда: Debian OpenJDK/javac 21.0.12.1, `LC_ALL=C`.
+
+Из 16 отдельных компиляций восемь завершились с кодом 0, восемь — с ожидаемым кодом 1; восемь запусков JVM завершились с кодом 0. У успешных компиляций stdout и stderr пусты, у успешных запусков stderr пуст; каждый отказ дал пустой stdout и одну указанную ошибку. Хеши всех 16 новых Java-листингов сверены с проверенными файлами; исходные тексты примеров приведены в статье на указанном коммите, а их Git-хеши, команды компиляции и запуска, коды завершения, фактический вывод и диагностические ключи — в отчёте роли 02. Это отдельные временные пробы, а не количество тестов общего скрипта и не повтор прежних проб B3. Файлы проб в проект не добавлены.
+
+[Интеграционный CI #45645117936](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45645117936) завершился успешно на указанном исходном HEAD D-A07; он не выполнял эту отдельную серию изолированных проб. Результаты общего скрипта до и после исходных правок D-A07 приведены в [README примера](../../examples/core/initialization/README.md). Принудительное воспроизведение `OutOfMemoryError`, взаимной блокировки, стресс-тесты и двухверсионный эксперимент с бинарной константой не выполнялись. Эта редакционная правка не является новым локальным запуском; для нового HEAD требуется отдельный интеграционный CI.
 
 ## Границы темы
 
@@ -953,7 +1217,7 @@ P0/P1/P2 — приоритеты исследовательского план�
 - **[CORE-INTERFACES](interfaces.md):** здесь рассматривается только инициализация суперинтерфейсов с `default`-методами; правила разрешения конфликтов таких методов вынесены в самостоятельную статью.
 - **JVM-LOADING:** loading/linking описаны ровно настолько, чтобы не путать их с initialization. Delegation, modules, bytecode, metaspace, unloading и особенности HotSpot не являются целью статьи.
 - **CON-JMM:** дано только необходимое объяснение синхронизации и escape при конструировании. Полная модель happens-before, data races, safe publication и final-field semantics требует отдельного материала.
-- **Не заявляется:** runtime воспроизведение `ClassCircularityError`, стресс-тест межпоточного deadlock, полная проверка разных class loaders и визуальная проверка Obsidian/IntelliJ.
+- **Не заявляется:** runtime воспроизведение `ClassCircularityError`, стресс-тест межпоточного deadlock, полная проверка разных class loaders и визуальная проверка Obsidian/IntelliJ. Двухверсионный эксперимент с бинарной константой и принудительный отказ выделения памяти под ExceptionInInitializerError не выполнялись.
 
 ## Источники
 
@@ -967,6 +1231,7 @@ P0/P1/P2 — приоритеты исследовательского план�
 - [JLS 21 §9.3 — interface fields](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.3), [§9.4.3 — interface default methods](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.3).
 - [JLS 21 §12.1.3 — initialize initial class](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.1.3); [§12.2 — loading](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2); [§12.2.1 — loading process](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2.1); [§12.3 — linking](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.3).
 - [JLS 21 §12.4.1 — when initialization occurs](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1), [§12.4.2 — detailed initialization procedure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2), [§12.5 — creation of new class instances](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.5).
+- [JLS 21 §15.9.4 — run-time evaluation of class instance creation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.9.4), [§11.2.3 — exception checking](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.3).
 - [JLS 21 §16.8 — Definite Assignment and Static Initializers](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html#jls-16.8) и [§16.9 — Definite Assignment, Constructors, and Instance Initializers](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html#jls-16.9).
 - [JLS 21 §17.4.5 — happens-before order](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4.5) и [§17.5.1 — final field semantics](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.5.1).
 - [JLS 21 §13.1 — binary form](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.1) и [§13.4.9 — final fields and constant variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.9).
@@ -984,8 +1249,11 @@ JLS определяет языковые гарантии; JVMS — требо�
 
 - [Baeldung — Java Class Structure and Initialization Interview Questions](https://www.baeldung.com/java-classes-initialization-questions): constructor chaining, instance/static initializer blocks, static-field Singleton. В тексте встречается упрощённое «during class loading»; в статье оно заменено точными терминами JLS loading и class initialization.
 - [Baeldung — Java Interview Questions](https://www.baeldung.com/java-interview-questions): смежные вопросы о ClassLoader и загрузке классов; не используется как нормативное объяснение инициализации.
-- [teamlead/java-interview-questions](https://github.com/teamlead/java-interview-questions): prompts об ошибках в class initialization block, исключениях конструктора, static blocks, порядке конструкторов и default values. Заявленная авторами статистика публичных интервью не считается независимо валидированной частотностью.
-- [Viacheslav Chernyshov — Java Interview Questions and Answers (RU)](https://github.com/ViacheslavChernyshov/java-interview-questions-and-answers/blob/master/ru/README.md): смежные prompts о Singleton, thread safety и double-checked locking; прямой вопрос о полном порядке class initialization в доступном списке не обнаружен.
+- [teamlead, зафиксированная версия](https://github.com/teamlead/java-interview-questions/blob/4c0784024412904625e1455189d3c05cba07bebf/README.md#L610): L610/715,657/730,736/739,777/782 — статическая/экземплярная инициализация, ошибки, порядок, значения по умолчанию. Историческая выборка A07; заявления о частоте не считаются независимо подтверждёнными.
+- [Chernyshov RU, зафиксированная версия](https://github.com/ViacheslavChernyshov/java-interview-questions-and-answers/blob/597e08112ab6a57d6eac8e3c70c070da606dae73/ru/README.md#L90): L90–93 Singleton и DCL, смежные вопросы, не полный порядок/ошибки инициализации.
+- [Hruday-Boppa, зафиксированная версия](https://github.com/Hruday-Boppa/Core-Java-Interview-Questions-List/blob/ced3cf4f91084e9b45366f7a81a70526e7a4be7d/README.md#L312): L312–317, в том числе вопрос о проверяемых исключениях статического блока (L316); L171,293,1604–1612,1933,2820 — дополнительные вопросы. Исторические локаторы взяты из [A07, раздел источников](../../docs/audits/java-core-full-2026-11-24/A07-CORE-INIT.md); новый поиск банков вопросов не заявляется.
+
+**Историческая опечатка индекса A07.** [Строка 163 индекса](https://github.com/Melchiorius/backend-interview-labs/blob/d088d4cf4155414b2b519111a3664125783188b4/docs/audits/java-core-full-2026-11-24/README.md#L163) ссылается на README примера, но содержит blob `a6af428dcee3ff7e4c7c794ce080055ab7f76ee9` исторического `verify.sh`, а не README (его исторический blob `22c3ec516a4a35af14f4da55997726080a96f791`). См. A07, раздел 1. Это уточнение исторического указателя, не изменение замороженного аудита.
 
 ## Что статья не утверждает
 
