@@ -47,6 +47,7 @@ public final class InheritanceDemo {
         System.out.println("field: " + ref.code + " / " + derived.code + " / " + derived.parentCode());
         System.out.println("covariant + throws: " + ref.result() + " / " + ref.read());
         System.out.println("private/package: " + ref.callPrivate() + " / " + ref.callPackageOnly());
+        IndependentDeclarationsDemo.verify();
         System.out.println("CHECK PASSED");
     }
 }
