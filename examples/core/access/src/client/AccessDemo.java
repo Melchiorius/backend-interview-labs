@@ -1,5 +1,6 @@
 package client;
 
+import api.Exported;
 import api.InterfaceTypes;
 import api.Neighbor;
 import api.Parent;
@@ -38,6 +39,15 @@ public final class AccessDemo {
 
         InterfaceTypes.Member member = new InterfaceTypes.Member();
         check(member != null, "interface member class is implicitly public static");
+        // Public inherited members can be selected through an accessible subclass.
+        Exported e = new Exported();
+        check(e.value == 67, "public inherited field");
+        check(e.read() == 67, "public inherited method");
+        Exported.Visible visible = new Exported.Visible();
+        check(visible instanceof Exported.Visible && "Visible".equals(visible.label()),
+                "public inherited member type");
+        System.out.println("public_inherited=" + e.value + ":" + e.read() + ":"
+                + visible.label());
         System.out.println("CHECK PASSED");
     }
 }

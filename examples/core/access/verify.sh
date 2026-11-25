@@ -18,7 +18,8 @@ printf '%s\n' '== Independent negative compilation cases =='
 for name in \
     BadParentValue BadParentCast BadSibling BadPackageValue \
     BadNewParent BadStaticUnrelated \
-    BadPrivateInterfaceMember BadProtectedInterfaceMember; do
+    BadPrivateInterfaceMember BadProtectedInterfaceMember \
+    BadHiddenName BadHiddenVisible; do
     mkdir -p "$build/negative/$name"
     if javac --release 21 -cp "$classes" -d "$build/negative/$name" \
         "$example/negative/$name.java" >"$build/negative/$name.stdout" 2>"$build/negative/$name.stderr"; then
