@@ -1,6 +1,6 @@
 # Java Core remediation — R0 planning index
 
-Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-03 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
+Issue [#255](https://github.com/Melchiorius/backend-interview-labs/issues/255), program [#254](https://github.com/Melchiorius/backend-interview-labs/issues/254). R0-04 checkpoint, IN PROGRESS. BASE c7e223fd2230a776921fa142fab39ff7fbc019f2; frozen source f04f1eb5ee3a400a988757414bcae09113bd885b. Historical [audit summary](../../audits/java-core-full-2026-11-24/summary.md), [A25.1](../../audits/java-core-full-2026-11-24/A25.1-REGISTER-HISTORY-CI.md), [A25.2](../../audits/java-core-full-2026-11-24/A25.2-MATRIX-CROSS-TOPIC.md). Exact branch HEAD/CI in published checkpoint, not self-referential SHA in file.
 
 ## Checkpoint R0-01 (historical)
 
@@ -41,6 +41,16 @@ A07 B3: primary A07-CORE-INIT.md, original CORE-INIT.md L120–139, canonical JC
 
 Cumulative **59/499** findings (7 BLOCKER/40 P1/12 P2); **106/925** requirements (39 OK/42 DEPTH/7 ERROR/18 BOUND). Remaining 440 findings (370 P1/70 P2), 819 requirements (226 OK/464 DEPTH/18 ERROR/111 BOUND). All registered findings OPEN. Exact HEAD/CI in checkpoint. No new local runtime evidence.
 
-## Next cursor — R0-04
+## Historical cursor — R0-04
 
 B4a/b: A10.1 CORE-NESTED and A10.2 CORE-FUNCTIONS (authoritative combined NF matrix in A10.2; original CORE-NESTED-FUNCTIONS.md L54–83, NFxx alias normalization, priority embedded in second column); A17.1 CORE-ENUMS and A17.2 CORE-CONTROL (original CORE-ENUMS-CONTROL.md L74–90,96–114,122–139; 54 rows once); A17.3 cross-topic/technical closure, check for unique additional findings vs duplicates, see A25.2. Verify exact original severity, stable IDs and NF-12/E-03 associations; E-03 DEPTH not ERROR despite runner B01. Shared explicit locale policy, distinct packages, full en_US/tr_TR UTF-8 runs independently; do not alter expected output blindly. Prepare B4a and B4b briefs and send separate address(es) to 00; bounded subcheckpoint if needed. Recheck live main/HEAD before writing, synchronize planning branch on changed main per coordinator without losing evidence. Remaining D stages afterwards. No teaching/CI/status edits, no merge/C/CON.
+
+## Checkpoint R0-04 — B4 planning complete
+
+Coordinator [B2 ACCEPTED / QUEUED](https://github.com/Melchiorius/backend-interview-labs/pull/256#issuecomment-7149281567) on pinned R0-02; B2a→B2b→B2c each independent G2–G6, after B1 G6. No execution authorized by 01. [A10 findings](findings-A10.md) / [requirements](requirements-A10.md) 17 (14 P1/3 P2), 30 rows (8 OK/15 DEPTH/1 ERROR/6 BOUND); [B4a](B4a-NESTED-FUNCTIONS.md). [A17 findings](findings-A17.md) / [requirements](requirements-A17.md) 25 (21 P1/4 P2), 54 rows (15 OK/32 DEPTH/0 ERROR/7 BOUND); [B4b](B4b-ENUMS-CONTROL.md). Canonical B01 IDs unchanged, exact priority associations resolved (NF-12 P0 ERROR, E-03 P0 DEPTH). A17.3 consolidated only, no duplicate. Two separate runner acceptances, common proposed invariant locale policy, explicit UTF8 and full en_US/tr_TR regression; no local reruns. All seven blocker briefs prepared, B4 sequencing reserved to 00.
+
+Cumulative **101/499** findings (7 BLOCKER/75 P1/19 P2), **190/925** requirements (62 OK/89 DEPTH/8 ERROR/31 BOUND). Remaining 398 findings (335 P1/63 P2), 735 rows (203 OK/417 DEPTH/17 ERROR/98 BOUND). All OPEN; neither R0 nor repair complete. Exact HEAD/CI in published checkpoint.
+
+## Next cursor — R0-05
+
+Continue D ledgers: A01/A03/A04/A08 then A11/A12/A13/A14/A15/A16/A18–A24 in bounded batches. Use A25.2 authoritative matrix/ranges, actual original priority/ID and primary finding acceptance. Prioritize ERROR and P0 DEPTH within coherent file-owned packages; map each finding once, distinguish technical N-case labels from finding IDs, explicit row-only gaps, BOUND not automatic acceptance. Prepare bounded D briefs, only 00 decides authorized execution and dependencies (avoid same-file collision with B packages). Reconcile counts, cross-topic clusters, mandatory deficits and dispositions; final R0 review before merge decision. Recheck live BASE/head, preserve immutable historical source and all existing files. No teaching edits, CI changes, merge, C/CON.
