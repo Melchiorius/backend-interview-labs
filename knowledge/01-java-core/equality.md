@@ -19,13 +19,13 @@
 
 ## 1. Что в действительности сравнивает ==
 
-**Числа.** Для совместимых числовых примитивов действует *binary numeric promotion*; типы могут быть расширены до общего числового типа. Например, `67 == 67L` — `true`. Для `float/double` действует численная семантика: `Double.NaN == Double.NaN` — `false`, `+0.0 == -0.0` — `true`. Это сравнение не устанавливает объектную эквивалентность `Double.equals`.
+**Числа.** Если оба операнда числовых примитивных типов или один — числового примитивного типа, а другой допускает распаковку в числовой тип, применяется *binary numeric promotion*: распаковка при необходимости, затем приведение к общему типу (`double`, иначе `float`, иначе `long`, иначе `int`). Например, `67 == 67L` — `true`. Для `float/double` действует численная семантика: `Double.NaN == Double.NaN` — `false`, `+0.0 == -0.0` — `true`. Это не устанавливает объектную эквивалентность `Double.equals`.
 
-**Boolean.** `true == true` — `true`, но `int` с `boolean` сравнивать нельзя.
+**Boolean.** Если оба операнда имеют тип `boolean` либо один — `boolean`, другой — `Boolean`, сравниваются логические значения (при смешанном сравнении `Boolean` распаковывается). `true == true` — `true`, но `int` с `boolean` сравнивать нельзя.
 
-**Ссылки.** Две ссылки равны через `==`, если обе равны `null` либо обозначают один и тот же объект. Компилятор дополнительно требует допустимости сравниваемых ссылочных типов; нельзя сравнивать произвольные несовместимые ссылочные типы. `new String("java") == new String("java")` — `false`, а их `equals` возвращает `true`.
+**Ссылки.** При ссылочном `==` результат `true`, если обе ссылки равны `null` либо обозначают один объект. Для двух ссылочных типов сравнение допустимо, если существует casting conversion хотя бы в одном направлении; операнд специального типа `null` можно сравнивать со ссылочным операндом или другим операндом типа `null`. Две переменные несовместимых типов, например `Integer` и `Long`, нельзя сравнить через `==`, даже когда обе содержат `null`. `new String("java") == new String("java")` — `false`, а их `equals` возвращает `true`.
 
-**Boxing/unboxing влияет на выбор операции.** Сравнение `Integer` с `int` обычно требует *unboxing*; если ссылка `null`, появляется `NullPointerException`. Если сравниваются две ссылки типа `Integer`, `==` проверяет identity, а не число. Не выводите из отдельных примеров кеширования обёрток универсальное свойство числового `==`.
+**Boxing/unboxing влияет на выбор операции.** Сравнение `Integer` с `int` требует распаковки; если ссылка `null`, возникает `NullPointerException`. Аналогично для `Boolean` и `boolean`. Две обёртки без примитивного операнда сравниваются как ссылки, если их статические типы допускают сравнение; `Integer` с `Integer` или `Boolean` с `Boolean` — не сравнение значений. Не выводите из отдельных примеров кеширования обёрток универсальное свойство числового `==`.
 
 ```java
 int primitive = 67;
@@ -37,7 +37,21 @@ System.out.println(boxed.equals(primitive)); // true: Integer.equals
 // System.out.println(missing == primitive); // NullPointerException при исполнении
 ```
 
-Эти строки — фрагмент внутри метода. У следующих **отдельных** фрагментов — ошибки компиляции:
+```java
+Boolean flag = true;
+Boolean missingFlag = null, absentFlag = null;
+System.out.println(flag == true);                 // true: unboxing
+System.out.println(missingFlag == absentFlag);    // true: reference ==
+// System.out.println(missingFlag == true);        // NPE при исполнении
+System.out.println(16777217 == 16777216f);         // true: int → float
+Integer i = 67;
+Long l = 67L;
+// System.out.println(i == l);                     // ошибка компиляции
+```
+
+Расширение числового типа не всегда сохраняет точность: 16777217 округляется до 16777216 при приведении к `float`. Поэтому результат смешанного сравнения может отличаться от точного сравнения исходных математических чисел. См. [CORE-OBJECT](object.md) для отдельного вопроса о `null`-получателе вызова метода.
+
+Оба предыдущих блока — отдельные фрагменты внутри метода. У следующих **отдельных** фрагментов — ошибки компиляции:
 
 ```java
 String s = "67";
@@ -169,7 +183,19 @@ class WrongKey {
 }
 ```
 
-Если сравнивать через `Object` или вызвать `Objects.equals`, работает унаследованный `Object.equals(Object)`, то есть identity. Для пользовательского равенства нужна **точная** сигнатура `public boolean equals(Object other)` и `@Override`. Аннотация помогает компилятору ловить ошибку; она не меняет сами правила dispatch. См. [JLS 21 §8.4.8.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.1) и [§9.6.4.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.6.4.4), [Object.equals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)).
+Если сравнивать два разных экземпляра `WrongKey` через `Object` или `Objects.equals`, работает унаследованный `Object.equals(Object)`, то есть identity. Для пользовательского равенства нужна подходящая реализация `public boolean equals(Object other)`, которая может быть унаследована. `@Override` рекомендуется, но не обязательна для переопределения: компилятор отклоняет её на методе, который ничего не переопределяет; наличие аннотации не меняет правила диспетчеризации. См. [JLS 21 §8.4.8.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.1) и [§9.6.4.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.6.4.4), [Object.equals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)).
+
+Используя объявление `WrongKey` выше, внутри метода:
+
+```java
+WrongKey a = new WrongKey(67), b = new WrongKey(67);
+Object wide = a;
+System.out.println(a.equals(b));                   // true: equals(WrongKey)
+System.out.println(wide.equals(b));                // false: equals(Object)
+System.out.println(java.util.Objects.equals(a,b)); // false: equals(Object)
+```
+
+При выборе перегрузки компилятор учитывает статические типы. Виртуальный вызов затем выбирает реализацию уже выбранной сигнатуры, а не переключается на более узкий overload.
 
 ## 4. hashCode: обязательная связь, но не идентификатор
 
@@ -206,7 +232,9 @@ set.add(new CollisionKey(68));
 System.out.println(set.size()); // 2
 ```
 
-Два ключа остаются разными, поскольку их `equals` возвращает `false`. Последние три строки здесь — фрагмент внутри метода. Константный hash даёт множество коллизий и обычно ухудшает эффективность, но **не** делает сравниваемые объекты равными.
+Два ключа остаются разными, поскольку их `equals` возвращает `false`. Четыре выполняемые строки после объявления класса — фрагмент внутри метода. Константный hash даёт множество коллизий и обычно ухудшает эффективность, но **не** делает сравниваемые объекты равными.
+
+Не обязательно включать в `hashCode()` все поля, участвующие в `equals`. Например, для показанного `AccountKey` законен и `return Long.hashCode(number);`: равные по паре `tenant, number` ключи имеют один номер и одинаковый хеш-код. Другие организации с тем же номером будут давать коллизии. Константный и такой частичный хеш соблюдают импликацию при стабильных данных, но не гарантируют хорошее распределение или производительность. Напротив, добавление независимого поля, не участвующего в равенстве (например, случайного `salt`), способно дать разные хеши равным объектам. Законная коллизия и нарушение обязательной импликации — разные случаи.
 
 ### Контрпример: equals переопределён, hashCode унаследован
 
@@ -228,11 +256,11 @@ final class BrokenKey {
 
 Два разных `new BrokenKey(67)` будут равны по `equals`, однако исходная реализация `Object.hashCode` **не обязана** присваивать им одинаковый hash. Это и есть несоблюдение обязательного контракта. Если в данном запуске хеши случайно совпали, тип не стал корректным: равенство всё ещё не обеспечено реализацией hash.
 
-**Почему ломается поиск в HashMap?** Hash-based map может сначала учитывать hash для поиска кандидатов и только затем равенство. При разных хешах двух равных ключей поиск по новому экземпляру способен не найти существующую запись. Это объяснение причины, но **не обещание**, что `map.get(new BrokenKey(67))` всегда вернёт `null` на каждой JVM. `Map.containsKey` API вообще не требует вызывать `equals` физически при каждом поиске. Источники: [Map](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html), [HashMap](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html), [Object.hashCode](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()). Устройство бакетов, коллизий, изменения ёмкости и деревьев в конкретном OpenJDK 21 подробно разобрано в опубликованной в этой авторской ветке статье [COL-HASH](../02-collections/hash-collections.md). Эти детали реализации не становятся гарантией языка Java.
+**Почему ломается поиск в HashMap?** Hash-based map может сначала учитывать hash для поиска кандидатов и только затем равенство. При разных хешах двух равных ключей поиск по новому экземпляру способен не найти существующую запись. Это объяснение причины, но **не обещание**, что `map.get(new BrokenKey(67))` всегда вернёт `null` на каждой JVM. `Map.containsKey` API вообще не требует вызывать `equals` физически при каждом поиске. Источники: [Map](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html), [HashMap](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html), [Object.hashCode](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()). Устройство бакетов, коллизий, изменения ёмкости и деревьев в конкретном OpenJDK 21 подробно разобрано в опубликованной статье [COL-HASH](../02-collections/hash-collections.md). Эти детали реализации не становятся гарантией языка Java.
 
 ## 5. null-safe сравнение: Objects.equals
 
-Вызов `reference.equals(other)` требует ненулевой ссылки `reference`. Если она равна `null`, JVM бросит `NullPointerException`. `Objects.equals(a,b)` обрабатывает `null`, используя обычный `equals` при ненулевом первом аргументе:
+Вызов `reference.equals(other)` требует ссылки `reference`, отличной от `null`. Если она равна `null`, JVM бросит `NullPointerException`. `Objects.equals(a,b)` задаёт null-safe отношение: две ссылки со значением `null` дают `true`, первый аргумент `null` и второй отличный от `null` — `false`, иначе результат соответствует корректному `equals` первого объекта. Это описание семантики, а не обещание физического вызова метода во всех случаях:
 
 ```java
 Object a = null;
@@ -246,7 +274,9 @@ System.out.println(java.util.Objects.equals(c, d)); // true
 System.out.println(c == d); // false: два разных new String
 ```
 
-Последние результаты следуют из `String.equals`, а не из какого-то особого «глубокого» сравнения `Objects.equals`. Этот helper **не исправляет** неправильный `equals`, асимметрию или плохой hash-контракт. Для вложенных массивов есть **другая** операция `Objects.deepEquals`; см. раздел о массивах. Источник: [Objects.equals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html#equals(java.lang.Object,java.lang.Object)).
+Равенство двух разных строк следует из `String.equals`, а их различие по `==` — из идентичности ссылок, не из «глубокого» сравнения. Этот helper **не исправляет** неправильный `equals`, асимметрию или плохой hash-контракт. Для вложенных массивов есть **другая** операция `Objects.deepEquals`; см. раздел о массивах. Источник: [Objects.equals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html#equals(java.lang.Object,java.lang.Object)).
+
+**Наблюдение реализации (I):** на Debian OpenJDK 21.0.12.1 `javap -c java.util.Objects` показывает быстрый путь: при одинаковых ссылках `Objects.equals` сразу возвращает `true`. В отдельной временной пробе класс с намеренно сломанным `equals(Object)` (всегда `false`, увеличивает счётчик вызовов) дал `true` и 0 вызовов для одной ссылки, затем `false` и 1 вызов для двух разных экземпляров. Это не гарантия числа вызовов для иных реализаций, не разрешение нарушать рефлексивность и не исправление некорректного `equals`. Для корректных объектов результат согласуется с контрактом API; побочные эффекты и число вызовов нельзя выводить из одной формулы null-safe равенства.
 
 ## 6. Наследование: симметрия и транзитивность не возникают автоматически
 
@@ -270,7 +300,7 @@ class ChildTag extends ParentTag {
 
     ChildTag(int id, String color) {
         super(id);
-        this.color = color;
+        this.color = java.util.Objects.requireNonNull(color);
     }
 
     @Override public boolean equals(Object other) {
@@ -286,9 +316,12 @@ ParentTag parent = new ParentTag(67);
 ChildTag child = new ChildTag(67, "red");
 System.out.println(parent.equals(child)); // true
 System.out.println(child.equals(parent)); // false
+// new ChildTag(67, null); // NPE при создании, а не при последующем equals
 ```
 
 Один и тот же «факт равенства» зависит от направления вызова, значит **симметрия нарушена**. Вызов `parent.equals(child)` попадает в реализацию `ParentTag.equals`; `child.equals(parent)` — в реализацию `ChildTag.equals`. Это прямо связано с виртуальной диспетчеризацией, разобранной в [CORE-INHERITANCE](inheritance.md). Код компилируется: это **нарушение контракта API**, а не ошибка синтаксиса.
+
+Конструктор `ChildTag` требует `color`, отличный от `null`: иначе `color.equals(...)` мог бы выбросить исключение даже при сравнении экземпляра с собой. Отказ теперь происходит при создании. Это устраняет отдельный дефект обработки `null`, но сохраняет намеренное нарушение симметрии для пары с `"red"`. Одинаковый `hashCode` у показанных родителя и потомка не исправляет асимметрию. Для соответствующего репозиторного `ChildKey` выбрана та же политика относительно `label`; её реализация и проверка в существующем runner относятся к отдельному подэтапу практики D-A08b.
 
 Транзитивность можно нарушить и без наследования. Например, равенство «числа отличаются не более чем на один» кажется симметричным, но не транзитивно:
 
@@ -312,6 +345,8 @@ System.out.println(x.equals(z)); // false
 ```
 
 Одинаковый hash здесь намеренно устраняет вторую независимую ошибку, чтобы было видно именно **нарушение транзитивности**.
+
+**Граница исторической проверки E06.** В принятом G1-плане [CORE-OBJECT-EQUALITY](../../docs/plans/CORE-OBJECT-EQUALITY.md) проба использовала `Math.abs(n-z.n)<=1` для `int` и фиксированные числа 67, 68, 69; вывод `true,true,false` остаётся корректным для них. Но вычитание `int` может переполниться, а `Math.abs(Integer.MIN_VALUE)` остаётся отрицательным. Например, при `n = Integer.MIN_VALUE`, `z.n = 0` старая формула даёт `true`, хотя расстояние значительно больше единицы. В текущем `Near` расширение до `long` происходит **до** вычитания: `Math.abs((long) number - that.number) <= 1` даёт `false` для этих же входов. Оба результата подтверждены отдельной пробой Java 21. Это документальное уточнение, а не изменение исторической пробы или утверждение, что G1 проверил весь диапазон `int`.
 
 ### getClass() или instanceof — что «правильнее»?
 
@@ -350,7 +385,28 @@ System.out.println(map.get(key)); // наблюдение зависит от JD
 
 `Comparable<T>.compareTo(other)` определяет **естественный порядок**, а `Comparator<T>.compare(a,b)` — отдельное явно переданное правило. Результат имеет смысл **знака**: отрицательное, ноль или положительное число. Он не обязан быть ровно `-1` или `1`.
 
-Контракт сравнения требует согласованности знаков, транзитивности и правильной эквивалентности относительно третьего элемента. Например, если `a > b` и `b > c`, порядок не должен внезапно сделать `a < c`. Нельзя бездумно писать `return a - b` для произвольных `int`: переполнение может исказить порядок; безопаснее `Integer.compare(a,b)`.
+Для сравниваемых элементов из области допустимых аргументов обозначим `c(x,y) = comparator.compare(x,y)` и `sgn` — знак результата. Контракт требует:
+
+- `sgn(c(x,y)) == -sgn(c(y,x))`; исключение при сравнении `x,y` должно возникать тогда и только тогда, когда оно возникает при сравнении `y,x` (не обязательно тот же объект исключения).
+- Если `c(x,y) > 0` и `c(y,z) > 0`, то `c(x,z) > 0`.
+- Если `c(x,y) == 0`, то для любого допустимого `z` знаки `c(x,z)` и `c(y,z)` совпадают.
+
+Для естественного порядка `Comparable` действуют аналогичные требования. `x.compareTo(null)` должен выбросить `NullPointerException`; отдельный `Comparator` может поддерживать `null`. Например, `Comparator.nullsFirst(Integer::compare)` ставит `null` перед значениями, отличными от `null`.
+
+Вычитание для произвольных `int` опасно из-за переполнения. В отдельном фрагменте внутри метода:
+
+```java
+int min = Integer.MIN_VALUE;
+java.util.Comparator<Integer> bad = (x,y) -> x - y;
+java.util.Comparator<Integer> safe = Integer::compare;
+System.out.println(bad.compare(min,0) < 0); // true
+System.out.println(bad.compare(0,min) < 0); // true: нарушена симметрия знаков
+System.out.println(safe.compare(min,0) < 0); // true
+System.out.println(safe.compare(0,min) > 0); // true
+System.out.println(java.util.Comparator.nullsFirst(safe).compare(null,67) < 0); // true
+```
+
+Сортировка может обнаружить нарушение контракта и выбросить `IllegalArgumentException`, но эта диагностика не гарантирована. Не путайте неправильный компаратор с корректным порядком, не согласованным с `equals`.
 
 **Consistent with equals** — отдельное понятие: `compare(a,b) == 0` тогда и только тогда, когда `a.equals(b)` (для сравниваемых элементов данного типа). Для `Comparable` такая согласованность настоятельно рекомендуется, но **не является обязательным универсальным законом**: важное исключение — `BigDecimal`. `Comparator`, не согласованный с `equals`, способен задавать корректный порядок сам по себе, но сортированная коллекция тогда иначе понимает дубликаты.
 
@@ -396,6 +452,23 @@ System.out.println(treeSet.size()); // 1
 
 Это **не** поломка `BigDecimal`: его природный порядок документирован как несогласованный с `equals`. `HashSet` видит два неравных по `equals` значения, `TreeSet` — один класс эквивалентности по `compareTo==0`. Если бизнес-модель считает масштаб частью значения, следует явно обосновать тип коллекции или правило нормализации, а не просто заменить любую карту на TreeMap.
 
+**Что происходит с отображениями?** Используя `a` и `b` из фрагмента BigDecimal выше, в том же методе:
+
+```java
+var tree = new java.util.TreeMap<java.math.BigDecimal,String>();
+tree.put(a, "a");
+System.out.println(tree.put(b, "b")); // a: прежнее значение
+System.out.println(tree.size());      // 1
+System.out.println(tree.get(a));       // b
+System.out.println(tree.containsKey(a) && tree.containsKey(b)); // true
+var hash = new java.util.HashMap<java.math.BigDecimal,String>();
+hash.put(a, "a");
+hash.put(b, "b");
+System.out.println(hash.size());      // 2
+```
+
+Для `TreeMap` ключи эквивалентны по сравнению, поэтому второе `put` заменяет значение, а `get` и `containsKey` используют эту же эквивалентность. Это не обещание того, какая именно ссылка на объект ключа сохранится внутри дерева. `HashMap` различает ключи по `equals`. См. [COL-SORTED](../02-collections/sorted.md).
+
 Нормативно: [BigDecimal.equals / compareTo](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html), [Comparable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html), [TreeSet](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html). **Отдельная [CORE-NUMBERS](numbers.md)** продолжает этот контрпример до scale/precision/unscaled, `BigDecimal(String)` vs `(double)` vs `valueOf`, деления и округления; правило равенства коллекции не задаёт правила денежной шкалы.
 
 ## 10. Массивы: Object.equals, Arrays.equals, Arrays.deepEquals
@@ -417,16 +490,30 @@ System.out.println(java.util.Arrays.deepEquals(nestedA, nestedB)); // true
 System.out.println(java.util.Objects.deepEquals(nestedA, nestedB)); // true
 ```
 
-`Arrays.equals` у одномерных примитивных массивов сравнивает элементы соответствующей перегрузкой. Для `Object[]` сравнивает соответствующие элементы, используя их `equals`, поэтому два внутренних массива (сами отдельные объекты) дают `false`. `Arrays.deepEquals(Object[],Object[])` рекурсивно сравнивает вложенные массивы; `Objects.deepEquals` применяет подходящую проверку и допускает `null`. `Arrays.deepEquals` нельзя вызвать с одиночным `int[]`: соответствующий метод принимает `Object[]`.
+`Arrays.equals` выбирается по типам массивов: для одномерных примитивных массивов — соответствующая перегрузка и сравнение элементов; для `float[]`/`double[]` равенство элементов соответствует `Float.equals`/`Double.equals`: NaN равны, `+0.0` и `-0.0` различаются. Для `Object[]` сравниваются соответствующие элементы по их равенству, с обработкой `null`; два различных внутренних массива поэтому дают `false`. Длины должны совпадать, две ссылки на `null`-массивы равны, ровно одна — нет.
 
-**Ограничения:** «глубокое» сравнение — не произвольный обход объектных графов. Внутренние обычные объекты всё равно сравниваются согласно своим `equals`; сложные циклические самоссылочные массивы могут приводить к особым рискам, поэтому не используйте этот метод как универсальный графовый алгоритм. Для массивов-ключей HashMap обычная объектная identity остаётся существенной; без value wrapper содержимое `byte[]` само по себе не определяет равенство ключей.
+`Arrays.deepEquals(Object[], Object[])` рекурсивно сопоставляет вложенные ссылочные массивы и применяет соответствующие примитивные перегрузки к паре вложенных примитивных массивов одного типа. Вложенные `int[]` и `long[]` не равны друг другу, даже с одинаковыми числовыми элементами. Верхнеуровневый `int[]` не подходит к сигнатуре `Arrays.deepEquals(Object[],Object[])`; `Objects.deepEquals(Object,Object)` допускает и такие массивы, и `null`. Например, отдельный фрагмент:
+
+```java
+System.out.println(java.util.Arrays.equals(new double[]{Double.NaN}, new double[]{Double.NaN})); // true
+System.out.println(java.util.Arrays.equals(new float[]{0f}, new float[]{-0f})); // false
+Object[] x = {new int[]{67}}, y = {new int[]{67}}, z = {new long[]{67}};
+System.out.println(java.util.Arrays.deepEquals(x,y)); // true
+System.out.println(java.util.Arrays.deepEquals(x,z)); // false
+System.out.println(java.util.Objects.deepEquals(new int[]{67}, new int[]{67})); // true
+// java.util.Arrays.deepEquals(new int[]{67}, new int[]{67}); // ошибка компиляции
+```
+
+**Ограничения:** «глубокое» сравнение — не произвольный обход объектных графов. Обычные вложенные объекты сравниваются согласно своему `equals`; для непосредственно или косвенно содержащих себя массивов поведение `Arrays.deepEquals` не определено API (циклическую пробу не выполняем). Для массивов-ключей `HashMap` обычная объектная идентичность остаётся существенной.
+
+Если нужен ключ по содержимому, задайте отдельный value wrapper: для `byte[]` сделайте защитную копию при получении массива, не отдавайте изменяемую внутреннюю ссылку, реализуйте `equals` через `Arrays.equals`, `hashCode` через соответствующий `Arrays.hashCode`. Для вложенных массивов выбирайте согласованную пару `Arrays.deepEquals`/`Arrays.deepHashCode` и копирование всех значимых изменяемых частей, а не только внешнего массива. Обычные вложенные объекты должны соблюдать свои контракты и оставаться стабильными для равенства. Для этих пар helpers две ссылки `null` равны, одна `null` — нет, хеш-код массива `null` равен 0; явная политика wrapper может запретить `null` в конструкторе. См. [CORE-ARRAYS](arrays.md), [CORE-IMMUTABLE](immutability.md).
 
 Источники: [Arrays.equals/deepEquals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html), [Objects.deepEquals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html#deepEquals(java.lang.Object,java.lang.Object)), [Object.equals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)).
 
 ## 11. Точные границы P2: что здесь не обещается
 
 - **Числа с плавающей точкой (OE-21):** примитивное `NaN == NaN` ложно, но `Double.equals` рассматривает канонизованные NaN как равные; примитивные `+0.0 == -0.0` истинно, а `Double.equals` их различает. Это поведение стандартизовано [JLS §15.21](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.21) и [Double API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html#equals(java.lang.Object)); подробный разбор NaN, знакового нуля и числового сравнения — в [CORE-NUMBERS](numbers.md).
-- **Record (OE-22):** `record Payload(byte[] value) {}` получает автоматически реализованные `equals/hashCode`, но массивный компонент сравнивается по собственному правилу массива (identity), не «deep». Например, два `new Payload(new byte[]{67})` не обязаны быть равны по содержимому вложенных массивов. Полный контракт record — [JLS 21 §8.10](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10) и [Record API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html); подробный читательский разбор — [CORE-RECORDS](records.md), а владение mutable ссылками и defensive copying — в [CORE-IMMUTABLE](immutability.md).
+- **Record (OE-22):** `record Payload(byte[] value) {}` при отсутствии явных переопределений получает неявно реализованные `equals/hashCode`; массивный компонент сравнивается по идентичности, не «deep». В данном record два `new Payload(new byte[]{67})` с разными ссылками на массивы не равны по неявному `equals`. Полный контракт record — [JLS 21 §8.10](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10) и [Record API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html); подробный читательский разбор — [CORE-RECORDS](records.md), а владение mutable ссылками и defensive copying — в [CORE-IMMUTABLE](immutability.md).
 - **IdentityHashMap и массивные ключи (OE-23):** [IdentityHashMap](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/IdentityHashMap.html) сравнивает ссылки по `==` даже для типов с value `equals`; обычный `HashMap<byte[],V>` также видит два разных массива как неравных по их унаследованному `equals`. Это разные причины схожего результата, их не следует смешивать. Практический выбор IdentityHashMap для сохранения идентичности узлов графа и контраст с обычным равенством разобраны в [COL-HASH](../02-collections/hash-collections.md).
 - **Изменяемые коллекции и concurrency (OE-24):** mutable-key проблема возникает и в одном потоке; data race или небезопасная публикация — **другая** проблема Java Memory Model. Не доказано, что `equals` потокобезопасен, лишь потому что один поток успешно выполнил тест. См. [JLS 21 §17](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html); дальнейшая тема `CON-JMM`.
 - **ORM/proxy (OE-25):** замена runtime-типа на proxy может иметь последствия для `getClass`/`instanceof`, но ни JLS, ни Object API не определяют правила идентичности сущности БД. Конкретные Hibernate/Spring версии и жизненный цикл ORM — отдельная будущая тема `DB-JPA`, здесь не проверено.
@@ -451,7 +538,7 @@ System.out.println(java.util.Objects.deepEquals(nestedA, nestedB)); // true
 | OE-05 | P0 | §4: почему поиск равного broken key может не сработать |
 | OE-06 | P0 | §6: Parent/Child asymmetry и Near transitivity |
 | OE-07 | P0 | §5: null safety через Objects.equals |
-| OE-08 | P0 | §4: два неравных элемента с одной hash |
+| OE-08 | P0 | §4: два неравных элемента с одинаковым хеш-кодом |
 | OE-09 | P0 | §7: mutable Map key, unspecified behavior |
 | OE-10 | P0 | §8: Comparable/Comparator vs equals, sorted collections |
 | OE-11 | P0 | §9: BigDecimal scale, HashSet=2, TreeSet=1 |
@@ -480,5 +567,7 @@ System.out.println(java.util.Objects.deepEquals(nestedA, nestedB)); // true
 **Источники для аудита интервью-пробелов, не нормы:** [SOURCE_REGISTRY](../../docs/SOURCE_REGISTRY.md), Q-HRUDAY, Q-CHERNYSHOV, Q-TEAMLEAD, Q-IN28 и Q-BAELDUNG-COL из [принятого исследовательского плана](../../docs/plans/CORE-OBJECT-EQUALITY.md). Дополнительное внешнее сравнение: [DevsCampus Java 21 interview questions](https://devscampus.com/interview-questions/java-21), где прямо поставлен вопрос о consistency between equality, hash and Comparable. Вопросники помогают найти пробел, но не устанавливают требования языка.
 
 **Фактическая проверка и публикация:** автономный пример роли 03 из [Issue #63](https://github.com/Melchiorius/backend-interview-labs/issues/63) объединён со статьями в единый [PR #67](https://github.com/Melchiorius/backend-interview-labs/pull/67), squash-merged в `main` как `4680b057aeabcd3e4d36e15b13b4db0d032c944c`. Исторически [CI #44793763051](https://github.com/Melchiorius/backend-interview-labs/actions/runs/44793763051) был `completed/success` на раннем интегрированном SHA `aeebd6b4940d99076d3d6caaa0be94ea7dda3c2e` (17 строк stdout). Более поздний [CI #44806711116](https://github.com/Melchiorius/backend-interview-labs/actions/runs/44806711116) — `completed/success` на **финальном предmerge HEAD** `7a7413163d0438fdb3afdbd05ceafe7fb35aaf16`, также включая `verify.sh`. G3 PASS роли 05 относится к предыдущему HEAD; после одной нормативной строковой правки `object.md` роль 04 проверила переносимость и выдала G4 PASS на финальном HEAD, а 00 отдельно принял G5-решение, **не объявляя нового G3 PASS роли 05**. Другие реализации JVM/Map, property-based contracts, ORM/JPA и визуальные переходы Obsidian/IntelliJ — `not run`; полный контекст и пределы доказательств отражены в [COVERAGE](../../docs/COVERAGE.md).
+
+**Проверка D-A08b:** ожидаемые выводы дополнительных фрагментов — пояснения контрактов; отдельные временные пробы Java 21 проверили смешанные сравнения, перегрузку, хеширование, политику null, `Objects.equals`, компаратор, массивы, карты, E06 и record. Фактические исходники, диагностики и ограничения фиксируются в отчёте PR. Это не новые репозиторные тесты, не запуск всех фрагментов дословно и не расширение исторических проверок G1/G4.
 
 **Продолжение про стандартные helpers:** [CORE-UTIL](utilities.md) показывает разницу `Objects.equals/deepEquals`, согласованности `Comparator` с `equals`, `HashSet` против `TreeSet` и null-policy на реальных примерах; это не заменяет отдельный полный раздел Collections.
