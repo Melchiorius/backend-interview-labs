@@ -114,7 +114,7 @@ public final class EqualityDemo {
 
         private ChildKey(int id, String label) {
             super(id);
-            this.label = label;
+            this.label = Objects.requireNonNull(label);
         }
 
         @Override
@@ -175,6 +175,14 @@ public final class EqualityDemo {
         boolean parentToChild = parent.equals(child);
         boolean childToParent = child.equals(parent);
         check(parentToChild && !childToParent, "deliberate symmetry violation");
+        check(parent.hashCode() == child.hashCode(), "asymmetric pair has matching hashes");
+        boolean nullLabelRejected = false;
+        try {
+            new ChildKey(67, null);
+        } catch (NullPointerException expected) {
+            nullLabelRejected = true;
+        }
+        check(nullLabelRejected, "ChildKey must reject null label at construction");
 
         MutableKey mutable = new MutableKey(67);
         Map<MutableKey, String> mutableMap = new HashMap<>();
