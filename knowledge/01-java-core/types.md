@@ -34,13 +34,47 @@ System.out.println(first);                     // AB, ссылка first не и
 | `int` | 32 бита | −2 147 483 648…2 147 483 647 |
 | `long` | 64 бита | −2⁶³…2⁶³−1 |
 | `char` | 16 бит | 0…65 535; **одна кодовая единица UTF-16** |
-| `float` | 32 бита | Число с плавающей точкой, примерно 6–9 значащих десятичных цифр |
-| `double` | 64 бита | Число с плавающей точкой, примерно 15–17 значащих десятичных цифр |
+| `float` | 32 бита | IEEE 754 binary32; точность нормальных значений — 24 бита значащей части |
+| `double` | 64 бита | IEEE 754 binary64; точность нормальных значений — 53 бита значащей части |
 | `boolean` | Не задана спецификацией как размер ячейки памяти | Только `true` и `false` |
+
+`boolean` — логический, а не числовой тип: `if (count != 0)` допустимо, но преобразования `int` в `boolean` и обратно, в том числе явным приведением, запрещены. Для числового условия используют `count != 0` ([JLS §4.2.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.2.5)).
 
 В Java нет `unsigned int` или `unsigned long` как отдельных примитивных типов. `char` — особый **беззнаковый** целочисленный тип. Для работы с битами и беззнаковым представлением отдельных целых существуют операции и методы JDK, но это не создаёт новый unsigned-примитив.
 
 **Размер типа не равен размеру переменной в памяти.** Например, из «`int` — 32 бита» нельзя заключить, что любая локальная переменная занимает ровно четыре байта стека в конкретной JVM. Внутреннее размещение и оптимизации — другая тема (`JVM-MEMORY`, `JVM-JIT`).
+
+### Два направления десятичного round-trip
+
+`float` и `double` — двоичные форматы IEEE 754 binary32 и binary64, а не десятичные типы. Для них важно различать два направления преобразования:
+
+- **Десятичное → двоичное → десятичное (`digits10`).** При подходящем диапазоне конечных нормальных значений до 6 значащих десятичных цифр для `float` и до 15 для `double` можно преобразовать в двоичный формат, а затем восстановить как десятичное значение при выводе с той же значащей точностью. Это не означает, что десятичная дробь точно представима в двоичном виде.
+- **Двоичное → десятичное → двоичное (`max_digits10`).** До 9 значащих десятичных цифр для `float` и до 17 для `double` достаточно, чтобы записать любое конечное двоичное значение, включая субнормальные, и при обратном разборе получить исходное значение `float` или `double`. `Float.toString` и `Double.toString` обычно выбирают кратчайшую десятичную запись, которая округляется обратно к исходному двоичному значению; поэтому фактически цифр часто меньше.
+
+Эти оценки следуют из точности форматов: для binary32 `p = 24`, для binary64 `p = 53`; `digits10 = floor((p − 1) × log10 2)` даёт 6/15, а `max_digits10 = ceil(1 + p × log10 2)` — 9/17. Это общепринятые численные обозначения, а не имена Java API.
+
+Гарантия 6/15 не распространяется на любой порядок величины. В области субнормальных (subnormal) значений относительная точность постепенно снижается; около границ диапазона преобразование может дать ноль или бесконечность. Для Java 21 округление к ближайшему при равной дистанции выбирает значение с нулевым младшим битом значащей части (`roundTiesToEven`). Поэтому `2^24 + 1` и `2^53 + 1` округляются соответственно к `2^24` и `2^53`: в этих точках расстояние между соседними представимыми числами уже равно двум.
+
+```java
+float fromSix = Float.parseFloat("1.23456");
+double fromFifteen = Double.parseDouble("1.23456789012345");
+System.out.println(String.format(java.util.Locale.ROOT, "%.6g", fromSix));        // 1.23456
+System.out.println(String.format(java.util.Locale.ROOT, "%.15g", fromFifteen)); // 1.23456789012345
+
+float nextFloat = Math.nextUp(1.0f);
+String floatText = String.format(java.util.Locale.ROOT, "%.9g", nextFloat); // 1.00000012
+double nextDouble = Math.nextUp(1.0d);
+String doubleText = String.format(java.util.Locale.ROOT, "%.17g", nextDouble); // 1.0000000000000002
+System.out.println(Float.parseFloat(floatText) == nextFloat);     // true
+System.out.println(Double.parseDouble(doubleText) == nextDouble); // true
+
+float at24 = 16_777_216f;              // 2^24
+double at53 = 9_007_199_254_740_992d;  // 2^53
+System.out.println(at24 + 1 == at24);   // true
+System.out.println(at53 + 1 == at53);   // true
+```
+
+Универсального `epsilon` для всех сравнений с плавающей точкой нет: допустимая погрешность зависит от масштаба и задачи. Если требуется точная десятичная арифметика, используйте подходящую модель из [CORE-NUMBERS](numbers.md), а не произвольный допуск. Форматы и субнормальные значения определены в [JLS §4.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.2.3), правила округления — в [JLS §15.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.4).
 
 ### Переполнение, точность и Unicode
 
@@ -64,7 +98,15 @@ System.out.println(symbol.length());                           // 2 кодовы
 System.out.println(symbol.codePointCount(0, symbol.length())); // 1 кодовая точка Unicode
 ```
 
-Здесь одна кодовая точка представлена парой `char`. Кроме того, одна видимая графема может состоять из нескольких кодовых точек. Строки, UTF-16 и обход кодовых точек подробно разобраны в [CORE-STRINGS](strings.md); работа с байтовыми потоками и кодировками на границе ввода-вывода остаётся будущей темой `IO-BYTES`.
+Здесь одна кодовая точка представлена парой `char`. Кроме того, одна видимая графема может состоять из нескольких кодовых точек. Сам `char` может содержать и изолированную суррогатную кодовую единицу: тип не проверяет, образует ли она корректную пару UTF-16. `String.codePointCount` учитывает такую единицу как один элемент подсчёта, но не проверяет корректность UTF-16 и не считает графемы:
+
+```java
+String loneSurrogate = "\uD800"; // изолированный старший суррогат
+System.out.println(loneSurrogate.length()); // 1 кодовая единица UTF-16
+System.out.println(loneSurrogate.codePointCount(0, loneSurrogate.length())); // 1
+```
+
+Строки, UTF-16 и обход кодовых точек подробно разобраны в [CORE-STRINGS](strings.md); работа с байтовыми потоками и кодировками на границе ввода-вывода остаётся будущей темой `IO-BYTES` ([JLS §3.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.1), [String.codePointCount](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#codePointCount%28int%2Cint%29)).
 
 ## Литералы: как компилятор понимает записанное число
 
@@ -99,11 +141,33 @@ float okFraction = 1.5F;
 
 Тонкость: `-2147483648` допустимо как особый случай записи минимального `int` — здесь литерал `2147483648` стоит непосредственно под унарным минусом. Но `2147483648` **сам по себе** не является допустимым положительным значением `int`.
 
+### Знаковые значения в шестнадцатеричных, восьмеричных и двоичных литералах
+
+Для не-десятичных целочисленных литералов без суффикса `L` используется 32-битный тип `int`, с суффиксом `L` — 64-битный `long`. Их значащие биты интерпретируются как знаковое значение в дополнительном коде. Поэтому `0xffff_ffff` — это `int` со значением `-1`. При расширении такого `int` до `long` знак сохраняется (sign extension), тогда как суффикс `L` задаёт 64-битный тип самому литералу:
+
+```java
+int allBits = 0xffff_ffff;            // -1
+long signExtended = allBits;          // -1L: знаковое расширение
+long positive = 0xffff_ffffL;         // 4294967295L
+long minHex = 0x8000_0000_0000_0000L; // Long.MIN_VALUE
+long minDecimal = -9_223_372_036_854_775_808L; // тот же Long.MIN_VALUE
+
+int octalSeparated = 0_103;           // допустимо: восьмеричное 67
+// int badHex = 0x_43;                // ошибка: подчёркивание после префикса
+// int badTail = 67_;                 // ошибка: подчёркивание в конце
+```
+
+Здесь `L` меняет тип и ширину литерала, а не превращает `int` в беззнаковый тип. Правила разрядности, знакового представления и подчёркиваний заданы в [JLS §3.10.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.10.1).
+
 Всё это **правила компиляции**, а не результаты выполнения. Другие важные случаи — сужение константных выражений, преобразования `byte + byte` и выбор перегрузки — рассматриваются в [CORE-CONVERSIONS](conversions.md).
 
 ## Ссылочные типы, объекты и `null`
 
-Ссылочные типы включают **классы, интерфейсы, массивы и обобщённые варианты ссылочных типов**. Например, `String`, `StringBuilder`, `int[]` и `List<String>` — ссылочные типы, а `int` — примитив.
+JLS выделяет четыре формы ссылочных типов: **классы, интерфейсы, переменные типов и массивы**. Параметризованный тип вроде `List<String>` — это тип интерфейса с аргументами типа, а не отдельная пятая категория. Например, `String`, `StringBuilder`, `int[]`, `List<String>` и переменная типа `T` являются ссылочными типами, а `int` — примитивным ([JLS §4.3–4.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.3)).
+
+`null` имеет специальный тип без имени: нельзя объявить переменную этого типа или выполнить cast к нему; единственное его значение — null-ссылка, которую можно присвоить любой ссылочной переменной. Это не третья категория объявляемых типов ([JLS §4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.1)).
+
+`void` — не девятый примитивный тип: в объявлении метода это ключевое слово, указывающее на отсутствие возвращаемого значения ([JLS §8.4.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.5)). `java.lang.Void` — отдельный `final`-класс-заполнитель с закрытым конструктором для представления `void` в API; это не обёртка с экземплярами значения `void` ([Void, Java SE 21 API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html)).
 
 ```java
 CharSequence text = new StringBuilder("Java");
@@ -124,7 +188,7 @@ System.out.println(missing == null); // true
 // int impossible = null; // ошибка компиляции
 ```
 
-Вызов **метода экземпляра** через `null` приводит к `NullPointerException`. В то же время само сравнение с `null` допустимо. Особые нюансы обращения к `static`-членам через выражение и совместимости типов разобраны в [CORE-CLASSES](classes.md), а не превращать это в ошибочное правило «любое обращение через null обязательно падает».
+Вызов **метода экземпляра** через `null` приводит к `NullPointerException`. В то же время само сравнение с `null` допустимо. Особые нюансы обращения к `static`-членам через выражение, в том числе через `null`, разобраны в [CORE-CLASSES](classes.md). Поэтому неверно обобщать это до правила «любое обращение через null обязательно падает».
 
 ### `==` — две разные ситуации
 
@@ -138,9 +202,27 @@ System.out.println(first == second);      // false: два объекта
 System.out.println(first.equals(second)); // true: одинаковое содержимое
 ```
 
-Для совместимых примитивных значений `==` сравнивает значения с учётом применимых преобразований; для двух ссылок — **идентичность объектов**, не содержимое. `equals()` — метод, семантика которого задаётся контрактом класса; подробный разбор — [CORE-EQUALITY](equality.md), а исходное identity-сравнение — в [CORE-OBJECT](object.md).
+Для совместимых примитивных значений `==` сравнивает значения с учётом применимых преобразований; для двух ссылок — **идентичность объектов**, не содержимое. Для ссылок компилятор также проверяет совместимость их статических типов: две переменные `String` можно сравнить, даже если обе содержат `null`, но `String` и `Integer` напрямую сравнить нельзя — это ошибка компиляции, а не результат `false`. Если ссылку-обёртку сравнить с примитивом, может выполняться распаковка (unboxing); распаковка `null` приводит к `NullPointerException`.
 
-**Интервью-ловушки:** кэш `Integer` (−128…127), сравнение `Integer == int`, строковые литералы, String Pool и `intern()` объясняются в [CORE-CONVERSIONS](conversions.md). Не пытайтесь вывести поведение `==` из одного запуска для `Integer`.
+```java
+String absentText = null;
+String anotherText = null;
+System.out.println(absentText == anotherText); // true
+Integer absentNumber = null;
+// System.out.println(absentText == absentNumber); // ошибка компиляции: типы несовместимы
+// System.out.println(absentNumber == 0);           // NullPointerException при распаковке
+
+Integer smallA = 127;
+Integer smallB = 127;
+System.out.println(smallA == smallB); // true: гарантия JLS
+Integer outsideA = 128;
+Integer outsideB = 128;
+// Для outsideA == outsideB переносимой гарантии нет.
+```
+
+Для boxing константных выражений типа `byte`, `short`, `char` или `int` со значениями от `-128` до `127` включительно JLS гарантирует идентичность результатов двух преобразований boxing; для `128` и других значений вне диапазона такой гарантии нет. Реализация может кэшировать и более широкий диапазон, но код не должен зависеть от этого ([JLS §5.1.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7)). `equals()` — метод, семантика которого задаётся контрактом класса; подробный разбор — [CORE-EQUALITY](equality.md), а исходное identity-сравнение — в [CORE-OBJECT](object.md).
+
+**Интервью-ловушки:** сравнение `Integer == int`, строковые литералы, String Pool и `intern()` дополнительно разобраны в [CORE-CONVERSIONS](conversions.md). Для `Integer` не переносите наблюдаемое поведение конкретной реализации за пределы гарантированного диапазона `-128…127` и не используйте `==` вместо сравнения значений.
 
 ## Какие бывают переменные и почему это важно
 
@@ -180,26 +262,56 @@ String[] names = new String[2]; // names[0] == null
 // System.out.println(inside); // ошибка: имя вне своей области видимости
 ```
 
+Параметр `value` в `update(int value)` затеняет одноимённое поле; `this.value` явно выбирает поле. Затенение поля параметром или локальной переменной допустимо, но локальную переменную нельзя повторно объявить с тем же именем внутри её области видимости. **Область видимости** отвечает на вопрос, где доступно имя; **определённое присваивание (definite assignment)** — доказал ли компилятор, что переменная получает значение на каждом возможном пути до чтения ([JLS §6.3–6.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.3), [JLS §16](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html)).
+
+```java
+boolean condition = true; // не константная переменная: текущее значение само по себе не доказательство
+int result;
+// if (condition) result = 67; // чтение после такого if не будет определённо присвоено
+if (condition) result = 67;
+else result = 68;
+System.out.println(result); // 67 или 68: присваивание есть на обеих ветвях
+
+final boolean always = true; // константная переменная
+int known;
+if (always) known = 67;
+System.out.println(known); // допустимо: условие — константное выражение true
+```
+
 ## `var`: тип выводится, но не меняется
 
 В Java 21 `var` позволяет компилятору **вывести тип локальной переменной из инициализатора**. Это **не динамическая типизация** и не переменная «любого типа».
 
 ```java
-var count = 67;                      // фактически int
+var count = 67;                       // фактически int
 var builder = new StringBuilder("A"); // фактически StringBuilder
+var array = new int[]{67, 68};         // допустимое явное создание массива
 builder.append("B");
-// count = "text";                   // ошибка: count имеет тип int
-// var unknown = null;               // ошибка: невозможно вывести тип из null
-// var absent;                       // ошибка: нет инициализатора
+// count = "text";                    // ошибка: count имеет тип int
+// var unknown = null;                // ошибка: невозможно вывести тип из null
+// var absent;                        // ошибка: нет инициализатора
+// var bareArray = {67, 68};          // ошибка: инициализатор массива без new int[]
+// var first = 67, second = 68;       // ошибка: несколько переменных в объявлении
+// var values[] = new int[2];         // ошибка: скобки после имени
+// var self = (self = 67);            // ошибка: ссылка на переменную в собственном инициализаторе
 ```
 
-`var` нельзя использовать для объявления **полей** и обычных формальных параметров методов. В Java 21 `var` также допускается в некоторых объявлениях **параметров лямбд**, а его ограничения разобраны в [CORE-FUNCTIONS](functions.md). Удачное применение `var` делает тип понятным из выражения, а не скрывает его от читателя.
+Для локального `var` требуется одна объявляемая переменная с инициализатором; нельзя использовать непосредственный инициализатор массива `{...}`, добавлять `[]` после имени или ссылаться на переменную в её собственном инициализаторе. `new int[]{67, 68}` допустим, потому что это выражение создания массива. `var` также используется в расширенном `for` и объявлениях ресурсов `try`-с-ресурсами; это отдельные контексты объявления. Для полей и обычных параметров методов/конструкторов `var` не допускается ([JLS §14.4.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.4.1), [§14.14.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.14.2), [§14.20.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3)).
+
+`var` не предоставляет инициализатору целевой тип: выражение рассматривается как самостоятельное (standalone). Поэтому лямбда или ссылка на метод не могут непосредственно инициализировать локальный `var`. У параметра лямбды `var` другая роль: его тип выводится из целевого функционального интерфейса. Это не специальное ограничение локального `var`:
+
+```java
+java.util.function.Function<String, Integer> length = (var text) -> text.length();
+// var lengthWithoutTarget = (var text) -> text.length(); // ошибка: у лямбды нет целевого типа
+```
+
+Удачное применение `var` делает тип понятным из выражения, а не скрывает его от читателя. Дополнительные примеры целевого типа — [CORE-FUNCTIONS](functions.md), формальные правила параметров лямбд — [JLS §15.27.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27.1).
 
 ## `final`: значение нельзя переназначить, объект может меняться
 
 ```java
 final int limit = 67;
-// limit = 68; // ошибка компиляции
+// limit = 67; // ошибка компиляции даже при повторном присваивании того же значения
 
 final StringBuilder message = new StringBuilder("A");
 message.append("B");             // допустимо: объект изменился
@@ -207,10 +319,12 @@ message.append("B");             // допустимо: объект измен�
 
 final int computed;
 computed = 67;                  // допустимо: первое присваивание
-// computed = 68;               // ошибка: второе присваивание
+// computed = 67;               // ошибка: второе присваивание даже того же значения
 ```
 
-У `final` для **переменной** смысл один: после допустимого присваивания нельзя присвоить ей другое значение. Это не обещание, что ссылочный объект неизменяем. `final` у **метода** и **класса** означает другое (запрет переопределения и наследования соответственно): см. [CORE-CLASSES](classes.md) и [CORE-INHERITANCE](inheritance.md). Отдельная [CORE-IMMUTABLE](immutability.md) объясняет наблюдаемую неизменяемость, владение состоянием и защитное копирование.
+Переменная `final` может быть присвоена **не более одного раза**; совпадение нового значения с прежним ничего не меняет. Неинициализированную `final`-переменную (blank `final`) можно присвоить только тогда, когда по правилам определённого присваивания она ещё не присвоена. **Константная переменная (constant variable)** — более узкое понятие: это `final`-переменная примитивного типа или `String`, инициализированная константным выражением (constant expression). Поэтому `final StringBuilder` не является константной переменной. **Effectively final** — отдельное свойство не объявленных как `final` локальных переменных и параметров, используемое, в частности, при захвате лямбдами ([JLS §4.12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4); см. также [CORE-FUNCTIONS](functions.md)).
+
+Это не обещание, что ссылочный объект неизменяем. `final` у **метода** и **класса** означает другое (запрет переопределения и наследования соответственно): см. [CORE-CLASSES](classes.md) и [CORE-INHERITANCE](inheritance.md). Отдельная [CORE-IMMUTABLE](immutability.md) объясняет наблюдаемую неизменяемость, владение состоянием и защитное копирование.
 
 ## Проверь понимание на вопросах собеседования
 
@@ -223,7 +337,15 @@ computed = 67;                  // допустимо: первое присва
 | Почему `final StringBuilder` можно изменить методом `append()`? | Различие переменной и объекта |
 | Почему `Integer.MAX_VALUE + 1` отрицателен? | Переполнение и тип вычисления |
 | Почему `"😀".length()` может вернуть 2? | Кодовые единицы UTF-16 |
-| Почему `Integer a = 127; Integer b = 127; a == b` ведёт себя иначе, чем для 128? | [Кэширование обёрток в CORE-CONVERSIONS](conversions.md) |
+| Чем отличаются decimal→binary→decimal и binary→decimal→binary для `float` / `double`? | 6/15 и 9/17 значащих цифр; диапазон и subnormal |
+| Почему `2^24 + 1` и `2^53 + 1` округляются к исходным степеням двойки? | Разрядность значащей части и roundTiesToEven |
+| Почему `var array = new int[]{67, 68}` допустимо, а непосредственный инициализатор массива и несколько переменных в одном объявлении — нет? | Ограничения `var` и отсутствие целевого типа |
+| Почему `if (condition)` при `condition = true` не всегда доказывает определённое присваивание? | Потоковый анализ и константные выражения |
+| Почему `String` и `Integer`, оба равные `null`, нельзя сравнить через `==`? А `Integer null == 0`? | Сопоставимость ссылочных типов и распаковка |
+| Почему boxing `127` гарантирует идентичную ссылку, а для `128` такой гарантии нет? | Гарантии JLS и кэширование обёрток в CORE-CONVERSIONS |
+| Почему `final int x = 67; x = 67;` — ошибка, хотя значение не изменилось? | Присваивание `final` и константная переменная |
+| Почему `0xffff_ffff` имеет значение `-1`, а `0xffff_ffffL` — `4294967295L`? | Знаковые не-десятичные литералы и расширение знака |
+| Что вернёт `codePointCount` для изолированного суррогата? Почему `void` не примитив? | Границы `char`, UTF-16 и `Void` |
 
 Эта статья объясняет основы **типа, значения и переменной**. Углубления о перегрузке, присваивании, `BigDecimal`, mutable keys и объектной модели следует раскрывать в своих предметных статьях, а не подменять одним длинным перечнем «вопросов на интервью».
 
@@ -243,9 +365,15 @@ java examples/core/TypesAndVariablesDemo.java
 
 ## Первоисточники
 
-- [JLS 21 §3.10 — Literals](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.10)
-- [JLS 21 §4.2 — Primitive Types and Values](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.2)
-- [JLS 21 §4.3 — Reference Types and Values](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.3)
-- [JLS 21 §4.12 — Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12)
-- [JLS 21 §14.4 — Local Variable Declarations / var](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.4)
+- [JLS 21 §3.1 — Unicode](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.1) и [§3.10.1 — Integer Literals](https://docs.oracle.com/javase/specs/jls/se21/html/jls-3.html#jls-3.10.1)
+- [JLS 21 §4.1 — Kinds of Types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.1), [§4.3 — Reference Types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.3), [§4.4 — Type Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.4) и [§4.5 — Parameterized Types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.5)
+- [JLS 21 §4.2.3 — Floating-Point Types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.2.3) и [§4.2.5 — boolean](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.2.5)
+- [JLS 21 §4.12.4 — final Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4)
+- [JLS 21 §5.1.7 — Boxing](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7) и [§5.1.8 — Unboxing](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.8)
+- [JLS 21 §6.3 — Scope](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.3) и [§6.4 — Shadowing](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.4)
+- [JLS 21 §8.4.5 — Method Result / `void`](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.5)
+- [JLS 21 §14.4.1 — Local Variable Declarators and Types / `var`](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.4.1)
+- [JLS 21 §15.4 — Floating-Point Operations](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.4), [§15.21.3 — Reference Equality](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.21.3) и [§15.27.1 — Lambda Parameters](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27.1)
 - [JLS 21 §16 — Definite Assignment](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html)
+- [Float.toString](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html#toString%28float%29) и [Double.toString](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html#toString%28double%29) — десятичная запись двоичного значения
+- [String.codePointCount](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#codePointCount%28int%2Cint%29) и [Void](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html) — UTF-16 и представление `void`
