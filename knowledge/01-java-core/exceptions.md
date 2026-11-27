@@ -34,17 +34,17 @@ class ReaderService {
 Все значения, которые разрешено бросать выражением `throw`, принадлежат классу `Throwable` или его подклассам. Существенная часть иерархии:
 
 ~~~text
-Throwable
+Throwable                         checked
 ├── Error                         unchecked
 │   └── AssertionError
-└── Exception                     не обязательно checked!
+└── Exception                     checked (сам класс)
     ├── IOException               checked
     └── RuntimeException          unchecked
         ├── IllegalArgumentException
         └── NullPointerException
 ~~~
 
-**Checked** — наследники `Throwable`, **за исключением** `RuntimeException`, `Error` и их наследников. Поэтому предложение «любой `Exception` checked» ложно: `RuntimeException extends Exception`, но является unchecked. И `Error` — тоже throwable: выражение `catch (Error e)` *синтаксически и семантически допустимо*, хотя восстановление после многих системных ошибок не является разумной общей стратегией.
+**Checked** — сам `Throwable` и все его подклассы, кроме `RuntimeException`, `Error` и их подклассов. Сам класс Exception checked, но его потомки могут быть unchecked. `catch (Exception e)` не перехватывает Error и прямого потомка Throwable вне ветви Exception. Классификация относится к классам, а выбор обработчика при выполнении зависит от фактического класса объекта. Error можно поймать, но не всякая ошибка допускает восстановление.
 
 ~~~java
 static void sample() {
@@ -56,12 +56,30 @@ static void sample() {
 }
 ~~~
 
+~~~java
+class Direct extends Throwable {
+    private static final long serialVersionUID = 1L;
+}
+class Hierarchy {
+    static void demo() {
+        try {
+            try { throw new Direct(); }
+            catch (Exception e) { throw new AssertionError(e); }
+        } catch (Direct e) {
+            System.out.println("Direct bypasses Exception");
+        }
+    }
+}
+~~~
+
+В двух отдельных исходниках `void f() { throw new Throwable(); }` и `void f() { throw new Exception(); }` без обработки или throws javac диагностировал неперехваченный checked-тип. Внешний catch в примере выше необходим; AssertionError также минует catch(Exception), но не создаёт checked-обязанности.
+
 Необязательность `throws RuntimeException` **не означает**, что исключение безвредно, что метод гарантирует корректный результат или что вызывающий не должен учитывать ошибку. Язык отвечает за проверяемость типов; бизнес-контракт определяет политику обработки. Нормы: [JLS §11.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.1), [Throwable API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html), [Exception API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Exception.html).
 
 ## Три разных действия: throw, throws и catch (ER-02, ER-03)
 
 - `throw expression;` **создаёт abrupt completion** с полученным throwable-значением.
-- `throws IOException` в сигнатуре метода или конструктора **объявляет** возможность распространения исключения и участвует в статической проверке, но ничего не бросает самостоятельно.
+- `throws IOException` в объявлении метода или конструктора **объявляет** возможность распространения исключения и участвует в статической проверке, но ничего не бросает самостоятельно.
 - `catch (IOException e)` получает управление, если из соответствующего `try` распространяется совместимый по типу объект. Это не перечень всех возможных ошибок метода.
 
 Рассмотрим минимальный пример с зависимостью API:
@@ -87,7 +105,7 @@ class Client {
 }
 ~~~
 
-**Почему ошибка возможна, несмотря на пустое тело?** Компилятор клиента исходит из **объявленной сигнатуры вызываемого метода**, а не доказывает, что его реализация всегда безопасна. Библиотека может поменять тело без изменения контракта. Если вызывающий метод тоже объявляет `throws IOException`, он передаёт обязанность обработки следующему уровню; это не устранение ошибки.
+**Почему ошибка возможна, несмотря на пустое тело?** Компилятор клиента исходит из **статически выбранного объявления вызываемого метода**, а не доказывает, что его реализация всегда безопасна. Библиотека может поменять тело без изменения контракта. Если вызывающий метод тоже объявляет `throws IOException`, он передаёт обязанность обработки следующему уровню; это не устранение ошибки.
 
 Аналогично компилятор анализирует checked-исключения **конструкторов**, **инициализаторов** и **операций закрытия ресурсов**. Объект с `AutoCloseable.close() throws Exception` может создать checked-обязанность даже если тело `try` безобидно — конкретная механика в [CORE-RESOURCES](resources.md).
 
@@ -99,6 +117,24 @@ class Bad {
 ~~~
 
 `throw null;` — особый случай: выражение допустимо по правилам типов, но при выполнении приводит к `NullPointerException`; оно не создаёт исключение «с типом null». Подробнее в разделе P1 ниже. Нормы: [JLS §11.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2), [§14.18](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.18), [§8.4.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.6).
+
+**Статический тип и фактическое значение.** `throw null;` не требует checked-объявления; `IOException x = null; throw x;` требует обработать или объявить IOException, хотя при выполнении тоже возникает NullPointerException. Для обычного throw проверяются статический тип выражения и исключения его вычисления (особое правило precise rethrow отмечено ниже).
+
+~~~java
+import java.io.IOException;
+class TypedNull {
+    static void raise(IOException x) throws IOException { throw x; }
+    static void demo() {
+        try { raise(null); }
+        catch (IOException e) { throw new AssertionError(e); }
+        catch (NullPointerException e) {
+            System.out.println("typed NPE");
+        }
+    }
+}
+~~~
+
+Если вычисление выражения само завершилось исключением, до бросания его результата дело не доходит: метод `IOException make()` может сам бросить IllegalArgumentException, и именно она распространится при `throw make();`. Новый объект не обязателен: `throw saved;` бросает существующий Throwable. См. JLS §11.2.2 и §14.18.
 
 ## Распространение по цепочке вызовов (ER-04)
 
@@ -128,6 +164,34 @@ class Layers {
 
 Последовательность: `storage()` создаёт `IOException("disk")` → `storageValue()` не перехватывает → `service()` не перехватывает → `controller()` получает объект в `catch`. Java при этом выполняет соответствующие `finally` при выходе из активных защищённых областей, если исполнение продолжается по стандартному пути unwinding. Ресурсы TWR закрываются по своим правилам **до** передачи ошибки внешнему обработчику. Ни один промежуточный метод не «возвращает исключение вместо String».
 
+Обработчики одного обычного try защищают его блок, а не соседние catch или finally. Если catch бросает новый объект, поиск продолжается с внешних защищённых областей.
+
+~~~java
+try {
+    try { throw new java.io.IOException(); }
+    catch (java.io.IOException e) {
+        throw new IllegalStateException("catch");
+    } catch (RuntimeException e) {
+        throw new AssertionError("не этот обработчик");
+    }
+} catch (IllegalStateException e) {
+    System.out.println(e.getMessage()); // catch
+}
+~~~
+
+Исключение из finally также минует catch этого же try. Для TWR есть дополнительные правила инициализации и закрытия ресурсов — см. CORE-RESOURCES. Когда обработчика нет, исключение достигает границы конкретного потока; при обычном завершении по исключению вызывается его uncaught exception handler. Пример внутри метода, объявляющего InterruptedException:
+
+~~~java
+Thread worker = new Thread(() -> { throw new AssertionError("worker"); });
+worker.setUncaughtExceptionHandler((t, e) ->
+        System.out.println("handler:" + e.getMessage()));
+worker.start();
+worker.join();
+System.out.println("main continues");
+~~~
+
+Наблюдаем handler:worker, затем main continues после join. Завершение одного потока не означает автоматической остановки всех потоков. Это конечный пример с заданным обработчиком, не обещание формата stack trace или кода завершения процесса. [Thread API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html), JLS §11.3.
+
 **Практический вывод:** перехватывайте ошибку там, где можно принять осмысленное решение: восстановиться, повторить операцию при подходящих условиях, преобразовать её в контракт верхнего слоя или завершить запрос. Широкий `catch (Exception ignored) {}` скрывает причину и не превращает неудачное действие в успешное.
 
 ## Почему порядок catch имеет значение (ER-05)
@@ -150,11 +214,37 @@ class Handlers {
 }
 ~~~
 
-Если переставить `catch (Exception)` перед `catch (IOException)`, компилятор отвергнет недостижимый второй обработчик. Есть и другой отказ: `catch (IOException e)` для блока, который статически не может выбросить checked `IOException` (при отсутствии иных допустимых оснований), обычно отвергается с категорией **exception is never thrown**. Не сводите это правило к «catch можно написать для любого класса Throwable на всякий случай»: отдельные исключения из анализа, например unchecked, рассматриваются иначе. [JLS §14.20.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.1), [§11.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.3).
+Если переставить `catch (Exception)` перед `catch (IOException)`, второй обработчик запрещён: его тип уже покрыт первым. Отдельно проверяется возможность checked-исключения. По JLS §11.2.3 для checked-типа catch нужен хотя бы один статически возможный checked-тип из try, являющийся его подтипом или надтипом (включая тот же тип), **кроме Exception и надтипов Exception**. Пустой try с catch(Exception), catch(Throwable) или catch(Error) по отдельности допустим (Error unchecked), с catch(IOException) — ошибка. Учитываются также предыдущие обработчики и каждая альтернатива multi-catch. [JLS §14.20.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.1), [§11.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.3).
+
+| Статически возможный checked-тип | Порядок catch | Результат |
+|---|---|---|
+| IOException | FileNotFoundException, IOException | допустимо: возможны разные подтипы IOException |
+| FileNotFoundException | FileNotFoundException, IOException | допустимо; javac предупредил о более широком catch |
+| FileNotFoundException | IOException, FileNotFoundException | ошибка: подтип уже перехвачен |
+
+~~~java
+import java.io.*;
+class CatchCases {
+    static void broad() throws IOException { throw new FileNotFoundException(); }
+    static void narrow() throws FileNotFoundException { throw new FileNotFoundException(); }
+    static void legal() {
+        try { broad(); }
+        catch (FileNotFoundException e) { System.out.println("specific"); }
+        catch (IOException e) { System.out.println("other io"); }
+    }
+    static void warning() {
+        try { narrow(); }
+        catch (FileNotFoundException e) { System.out.println("specific"); }
+        catch (IOException e) { System.out.println("other io"); }
+    }
+}
+~~~
+
+Вторая функция с таким порядком принята javac 21 с `compiler.warn.unreachable.catch`; обратный порядок отвергнут с `compiler.err.except.already.caught`. Предупреждение не является запретом языка; -Werror может превратить предупреждение в отказ конкретной сборки.
 
 ## Multi-catch и запрет изменять параметр (ER-06)
 
-Если разные **несвязанные** типы исключений приводят к одной обработке, их можно объединить через `|`:
+Если разные типы исключений (ни один не подтип другого) приводят к одной обработке, их можно объединить через `|`:
 
 ~~~java
 import java.io.IOException;
@@ -171,7 +261,31 @@ class Multi {
 }
 ~~~
 
-Здесь у двух альтернатив нет отношения подтипов. Вариант `catch (IOException | Exception e)` недопустим: первая альтернатива уже является подтипом второй, поэтому их перечисление неоднозначно и избыточно. Параметр multi-catch **не разрешается переназначать** (в отличие от некоторых параметров обычного catch); это ограничение не мешает вызвать метод на пойманном объекте. Не путайте `|` с логическим `||` и не оставляйте символ Markdown `\|` в копируемом Java-файле (табличное экранирование существует только в G1-плане). [JLS §14.20](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20).
+Для каждой альтернативы отдельно проверяются допустимость и предыдущие обработчики. `catch (IOException | Exception e)` запрещён из-за отношения подтипов. Объявленный тип параметра — наименьшая общая верхняя граница типов альтернатив (LUB), не обязательно просто Exception: может быть доступен метод общего интерфейса. Параметр multi-catch неявно final по объявлению, а не effectively final по использованию (JLS различает категории). Его нельзя переназначить, но объект не становится неизменяемым. Обычный catch без final допускает переназначение; это может изменить условия precise rethrow. [JLS §14.20](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20), [CORE-FUNCTIONS](functions.md).
+
+~~~java
+interface Coded { int code(); }
+class A extends Exception implements Coded {
+    private static final long serialVersionUID = 1L;
+    public int code() { return 67; }
+}
+class B extends Exception implements Coded {
+    private static final long serialVersionUID = 1L;
+    public int code() { return 68; }
+}
+class Common {
+    static void run(boolean first) {
+        try {
+            if (first) throw new A();
+            throw new B();
+        } catch (A | B e) {
+            System.out.println(e.code()); // 67 или 68
+        }
+    }
+}
+~~~
+
+В отдельной пробе присваивание e = new A() в обычном catch(A e) допустимо. Присваивание multi-catch отклонено с multicatch.parameter.may.not.be.assigned, альтернативы IOException и Exception — с multicatch.types.must.be.disjoint.
 
 ## Причина ошибки и оборачивание на границе слоя (ER-07, ER-08, ER-19)
 
@@ -204,12 +318,67 @@ class PaymentService {
 
 `IllegalStateException` — **новый Throwable**, а `IOException` сохранён через `getCause()`. Это **цепочка причин**, не список suppressed. У TWR исключения от `close()` связываются иначе: `primary.getSuppressed()`, а не автоматически `getCause()`. См. [разбор в CORE-RESOURCES](resources.md).
 
+### Повторный throw, stack trace и initCause
+
+При обычном создании Throwable сохраняется информация о стеке в момент создания, а не обязательно в момент throw. Повторный throw того же объекта не обновляет trace автоматически; явный fillInStackTrace или setStackTrace может изменить его при разрешённой записи. Оборачивание создаёт другой объект с собственным контекстом и сохраняет ссылку на исходную причину.
+
+~~~java
+import java.io.IOException;
+import java.util.Arrays;
+class TraceExample {
+    static IOException make() { return new IOException("source"); }
+    static void relay(IOException e) throws IOException { throw e; }
+    static void demo() {
+        IOException saved = make();
+        StackTraceElement[] trace = saved.getStackTrace();
+        try { relay(saved); }
+        catch (IOException e) {
+            System.out.println(e == saved);
+            System.out.println(Arrays.equals(trace, e.getStackTrace()));
+            Throwable wrapped = new IllegalStateException("context", e);
+            System.out.println(wrapped.getCause() == saved);
+        }
+    }
+}
+~~~
+
+В конечной пробе сохранённый IOException после relay(saved) имел ту же идентичность и равный массив stack frames; наблюдаемый верхний метод — make, не relay. Это не гарантия полного стека или конкретных строк для всех JVM.
+
+`initCause(cause)` разрешён не более одного раза для объекта с ещё не установленной причиной (например, созданного через Throwable() или Throwable(String)). Если конструктор уже принимает причину, даже null, либо initCause уже успешно вызван, повторное задание запрещено (IllegalStateException). Причина может быть null, но не сам объект (IllegalArgumentException для self-cause при доступной операции). Не определяем порядок ошибок при нескольких нарушенных предусловиях. Защищённый конструктор с writableStackTrace=false отключает запись стека: getStackTrace возвращает пустой массив, fillInStackTrace и setStackTrace не записывают стек. Это отдельная настройка от suppression. [Throwable API — initCause](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html#initCause(java.lang.Throwable)).
+
 **Custom exception:** создание `class MissingOrderException extends RuntimeException` или `extends Exception` выбирает *статический контракт для клиентов*, а не просто уровень серьёзности. Checked может быть полезен, если вызывающий ожидаемо умеет устранить ситуацию и контракт явно требует обработку. Unchecked часто описывает нарушение предусловия или невозможность продолжить конкретную операцию, но само по себе **не является указанием игнорировать** её. Слишком широкая checked-иерархия на границе модулей усложняет изменение API; безусловное превращение всех проблем в `RuntimeException` стирает различие решений.
 
 **Инженерная практика, не норма JLS:** логировать исключение на уровне, где известны пользовательская операция, идентификатор запроса и политика ответа; избегать нескольких одинаковых stacktrace на каждом промежуточном уровне; не добавлять секреты в сообщения. Перехват ради логирования с `throw e;` допустим, но не всегда полезен. При восстановлении следует учитывать идемпотентность операции, иначе повтор при частичном успехе может навредить.
 
 > [!note]- Ручное suppressed и отключение suppression (ER-19)
-> `Throwable.addSuppressed(other)` добавляет отдельное исключение, наблюдаемое в `getSuppressed()`, но не изменяет `getCause()`. Исключение нельзя подавить само собой; конструктор `Throwable(String, Throwable, boolean, boolean)` позволяет подклассу отключить suppression. Тогда `getSuppressed()` не показывает переданные значения. Это **не** способ автоматически восстановить работу после сбоя; [Throwable API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html) определяет точный контракт.
+> `Throwable.addSuppressed(other)` добавляет отдельное исключение к списку, не изменяя cause. Даже если suppression отключён, null запрещён (NullPointerException), собственный объект запрещён (IllegalArgumentException); только корректный отличный от себя объект игнорируется при отключении. `getSuppressed()` возвращает массив, изменение которого не влияет на последующие вызовы; это не глубокое копирование Throwable. Причина и suppressed могут сосуществовать, suppressed причины автоматически не наследуются. См. [Throwable API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html).
+
+~~~java
+class Quiet extends Exception {
+    private static final long serialVersionUID = 1L;
+    Quiet(Throwable cause) { super("quiet", cause, false, false); }
+}
+class Suppression {
+    static void demo() {
+        Throwable cause = new Exception("cause");
+        Throwable other = new Exception("other");
+        cause.addSuppressed(other);
+        Throwable outer = new Exception("outer", cause);
+        System.out.println(outer.getSuppressed().length); // 0
+        outer.addSuppressed(other);
+        Throwable[] copy = outer.getSuppressed();
+        copy[0] = cause;
+        System.out.println(outer.getSuppressed()[0] == other); // true
+        System.out.println(outer.getCause() == cause); // true
+        Quiet quiet = new Quiet(cause);
+        quiet.addSuppressed(other);
+        System.out.println(quiet.getSuppressed().length); // 0
+        System.out.println(quiet.getStackTrace().length); // 0
+    }
+}
+~~~
+
+В отдельной проверке quiet.addSuppressed(quiet) вызвал IllegalArgumentException, quiet.addSuppressed(null) — NullPointerException. Границы автоматического подавления, включая self-suppression при TWR, рассматриваются отдельно в CORE-RESOURCES; здесь проверяется ручной API.
 
 ## Почему finally может изменить уже принятый результат (ER-09, ER-10)
 
@@ -246,6 +415,48 @@ class FinallyCases {
 
 Для `value()` результат **67**, для `overrideReturn()` — **68**. Для `overrideException()` наружу уходит `IllegalStateException("new")`. Исходная `IllegalArgumentException("original")` **не добавляется автоматически** в `getSuppressed()` новой ошибки. Обычный `finally` не обеспечивает TWR-механику сохранения primary/suppressed — именно ради этой разницы сравните [CORE-RESOURCES](resources.md).
 
+### Возврат ссылки и изменение объекта
+
+~~~java
+static StringBuilder valueRef() {
+    StringBuilder b = new StringBuilder("67");
+    try { return b; }
+    finally {
+        b.append("68");
+        b = new StringBuilder("other");
+    }
+}
+~~~
+
+При нормальном завершении finally вызывающий получает ранее вычисленную ссылку, а не текущее значение локальной переменной b. Объект изменился, поэтому valueRef().toString() даёт 6768, не other. Если finally завершится резко, возврат может вообще не состояться. Связанный принцип — [CORE-PARAMS](parameters.md).
+
+### Замещение причины и статическая проверка checked
+
+Если try/catch завершился резко с причиной R, нормальное завершение finally сохраняет R; резкое завершение finally с причиной S заменяет R на S. Причиной может быть return, throw, break, continue и другие допустимые abrupt completions, а не только исключение. Если finally не завершится, прежняя передача управления тоже не продолжится.
+
+~~~java
+static int swallow() {
+    try { throw new java.io.IOException(); }
+    finally { return 67; }
+}
+static int breakReturn() {
+    while (true) {
+        try { return 67; }
+        finally { break; }
+    }
+    return 68;
+}
+static int continueReturn() {
+    for (int i = 0; i < 1; i++) {
+        try { return 67; }
+        finally { continue; }
+    }
+    return 68;
+}
+~~~
+
+Намеренно плохие учебные примеры, не совет по обработке ошибок. Они компилируются с предупреждением javac `finally.cannot.complete` при -Xlint:all; результаты 67, 68, 68. По JLS §11.2.2 при **статически** невозможном нормальном завершении finally checked-исключения из try/catch не входят в множество исключений, распространяемых всем try statement. При условном `finally { if (b) throw new IllegalStateException(); }` нормальное завершение возможно: неперехваченный IOException из try всё ещё требует обработки/throws. Checked-исключения, возможные из самого finally, не исчезают: `try { throw new Exception(); } finally { throw new IOException(); }` требует обработать или объявить IOException, а не исходный Exception. Это статический анализ, не доказательство поведения конкретного входа.
+
 **Два важных ограничения.** Во-первых, `return`/`throw` в `finally` практически всегда затрудняет диагностику и считается опасным инженерным приёмом. Во-вторых, `finally` не обещает исполнения **после прекращения JVM или процесса** (например, `Runtime.halt`, принудительного завершения ОС, аппаратного сбоя). Он описывает поток управления **в продолжающей исполняться программе**, а не гарантию сохранения данных. Норма: [JLS §14.20.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.2).
 
 ## Checked исключения в наследовании и функциональных контрактах (ER-20, ER-26)
@@ -263,9 +474,33 @@ class Child extends Parent {
 }
 ~~~
 
+Для проверки неверного override замените существующий Child.run на закомментированную строку, а не добавляйте второй метод; иначе возникнет также ошибка дублирования. В отдельном исходнике с единственным неверным override javac выдал `compiler.err.override.meth.doesnt.throw`. В строгом смысле [JLS §8.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.2) throws clause не является частью сигнатуры метода: две декларации f() с разными throws не образуют перегрузку. Это подтверждено отдельной ошибкой already.defined.
+
 При вызове `Parent p = new Child(); p.run();` компилятор рассматривает статически выбранный `Parent.run() throws IOException`, даже если реальная реализация `Child.run()` не объявляет checked-исключений. Подробный overriding: [CORE-INHERITANCE](inheritance.md), правила [JLS §8.4.8.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.3).
 
-Конструктор с `throws IOException` тоже создаёт статическую обязанность на месте `new`. В `finally` checked-исключение учитывается при анализе вызывающего метода; `try` не «аннулирует» объявление только из-за того, что работа завершилась. Функциональный интерфейс задаёт контракт checked-исключений лямбды:
+Конструктор с `throws IOException` тоже создаёт статическую обязанность на месте new. Для именованного класса checked-исключение не может покинуть статический инициализатор или инициализатор статического поля. Для инициализатора экземпляра (блока или поля) такое исключение допустимо только если есть хотя бы один явно объявленный конструктор и **каждый** конструктор явно объявляет этот checked-тип или его надтип. Для анонимного класса компилятор выводит подходящий throws генерируемого конструктора; вызов new всё равно требует обработки. См. JLS §11.2.3, [CORE-CLASSES](classes.md), [CORE-INIT](initialization.md).
+
+~~~java
+import java.io.IOException;
+class InitExample {
+    static int fail() throws IOException { throw new IOException("init"); }
+    static class Named {
+        int n = fail();
+        Named() throws IOException {}
+        Named(int x) throws Exception {}
+    }
+    static void demo() {
+        try { new Named(); }
+        catch (IOException e) { System.out.println("named:" + e.getMessage()); }
+        try { new Object() { int n = fail(); }; }
+        catch (IOException e) { System.out.println("anonymous:" + e.getMessage()); }
+    }
+}
+~~~
+
+Отдельные отрицательные исходники: static int x=fail() в именованном классе; instance int x=fail() без явного конструктора; второй явный конструктор без подходящего throws — все отклонены с unreported.exception.need.to.catch.or.throw. Это не повтор полной модели инициализации CORE-INIT.
+
+Функциональный интерфейс задаёт контракт checked-исключений тела лямбды:
 
 ~~~java
 import java.io.IOException;
@@ -282,7 +517,21 @@ class Lambdas {
 }
 ~~~
 
-Это не означает, что лямбда **вообще не может** бросать checked: подходящий функциональный метод может объявлять нужный `throws`. См. [CORE-FUNCTIONS](functions.md), [JLS §15.27](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27).
+Лямбда может бросать checked. Например, стандартный [Callable<V>](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Callable.html) объявляет call() throws Exception, в отличие от Runnable.run(). Вызов проверяется по статическому функциональному типу, не по конкретному телу.
+
+~~~java
+import java.io.IOException;
+import java.util.concurrent.Callable;
+class CheckedTask {
+    static void demo() throws Exception {
+        Callable<String> task = () -> { throw new IOException("call"); };
+        try { task.call(); }
+        catch (IOException e) { System.out.println(e.getMessage()); }
+    }
+}
+~~~
+
+Другие checked Exception здесь могут распространиться из demo по его объявлению. Создание lambda не исполняет её тело; проверка throws тела производится относительно целевого функционального типа. Однако вычисление receiver у связанной method reference, например `makeReceiver()::run`, происходит при создании ссылки и может само бросить checked IOException, даже если run() его не объявляет. Отдельная проба подтвердила IOException("creation") до вызова Runnable.run; Runnable с телом, бросающим IOException без обработки, отвергнут javac. См. [CORE-FUNCTIONS](functions.md), [CORE-GENERICS](generics.md) и [CORE-ERASURE](erasure.md) для ограничений типовых параметров, [JLS §15.27](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27), [JLS §11.2.1–11.2.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.1).
 
 ## Почему throw null не эквивалентен throw new Object() (ER-21)
 
@@ -305,6 +554,30 @@ class ThrowNull {
 `Error` можно поймать, однако это не даёт разумного универсального способа продолжить работу после `OutOfMemoryError` или `StackOverflowError`. При встрече с системной ошибкой прежде всего анализируют возможность безопасной диагностики и остановки, а не добавляют глобальный `catch(Throwable)`. Это **рекомендация**, не запрет языка.
 
 `InterruptedException` — checked и относится к политике отмены/прерывания. Если слой не может продолжить работу и вправе объявить `throws InterruptedException`, распространение исключения обычно сохраняет сигнал вызывающему. Если код **перехватывает и не пробрасывает** его, часто нужно восстановить флаг прерывания через `Thread.currentThread().interrupt()`, если это согласуется с контрактом. Нельзя советовать безусловное восстановление флага в любой точке, не учитывая, что прерываемые методы могут очищать его при бросании исключения и что вызывающий слой может иметь собственную политику. Подробная модель — будущая тема CON-INTERRUPT, пока без локальной ссылки. [Thread.interrupt API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupt()).
+
+Минимальная локальная проба, предполагающая изначально непрерванный текущий поток и отсутствие внешних прерываний:
+
+~~~java
+Thread t = Thread.currentThread();
+try {
+    t.interrupt();
+    System.out.println(t.isInterrupted()); // true
+    try { Thread.sleep(0); }
+    catch (InterruptedException e) {
+        System.out.println(t.isInterrupted()); // false
+        t.interrupt();
+        System.out.println(t.isInterrupted()); // true
+    }
+    try { throw new InterruptedException("manual"); }
+    catch (InterruptedException e) {
+        System.out.println(t.isInterrupted()); // true
+    }
+} finally {
+    Thread.interrupted(); // очищаем собственный флаг только в этой пробе
+}
+~~~
+
+`sleep` по своему [контракту](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#sleep(long)) при InterruptedException очищает interrupt status. Само бросание нового InterruptedException не является операцией очистки флага; в примере вручную брошенное исключение оставило true. isInterrupted читает флаг без очистки, статический interrupted читает и очищает. Если можно пробросить InterruptedException, часто это предпочтительнее поглощения; восстановление при переводе ошибки или невозможности пробросить согласуется с политикой вызывающего. Очистка в демонстрации нужна лишь для изоляции теста, не рецепт производственной обработки. Никаких предположений о задержке sleep(0) или планировщике.
 
 **Границы исполнения:** `System.exit`, `Runtime.halt`, завершение процесса ОС, аппаратные аварии и некоторые фатальные ошибки не дают универсальной гарантии выполнить `finally` и `AutoCloseable.close()`. Даже если cleanup выполнен, это не обещает завершения внешнего IO или транзакции. См. [CORE-RESOURCES](resources.md).
 
@@ -346,6 +619,10 @@ class ThrowNull {
 **Нормативные источники:** [JLS 21 Chapter 11](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html), [§14.18–14.20](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html), [§8.4.8.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8.3); [Throwable API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html), [Exception API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Exception.html). Классификация независимых интервью-источников — [SOURCE_REGISTRY](../../docs/SOURCE_REGISTRY.md): формулировки вопросов не доказывают гарантии Java.
 
 Приведённые в статье маленькие исходники — **отдельные фрагменты**, их нельзя без подготовки вставлять в один файл из-за объявлений классов и импортов. Комментированные compile-negative строки поясняют **ожидаемую категорию ошибки**. Полный G1 включает **20 независимых negative N01–N20**; документ [плана](../../docs/plans/CORE-EXCEPTIONS-RESOURCES.md) записывает отдельные реальные проверки роли 01, но это **не означает**, что эти фрагменты были исполнены из данной статьи или CI. **Общий проверяемый пример Java 21:** [CORE-EXCEPTIONS + CORE-RESOURCES — запуск, полный stdout и объяснение P01–P20](../../examples/core/exceptions-resources/README.md). Исполняемый `ExceptionResourceProbes.java` объединяет `getCause()`, обычный `finally` с замещением причины, порядок закрытия TWR, primary/suppressed и ручное `addSuppressed()`; **20 строк — один запуск одной программы**, а не двадцать отдельных тестов. [Роль 03, Issue #104](https://github.com/Melchiorius/backend-interview-labs/issues/104) отдельно проверила `javac --release 21`, `java` и полный `diff -u` на OpenJDK 21.0.12.1; общий CI на интегрированном HEAD проверяется отдельно. Отдельные негативные N01–N20 не исполняются этим runnable. **Авторская проверка роли 02 на OpenJDK/javac 21.0.12.1 (Linux):** заново созданы 20 **отдельных** Java-исходников N01–N20 из §6 G1, с удалением только табличного экранирования `\|` там, где нужен multi-catch `|`. Для каждого отдельно выполнен `javac --release 21 -d ...`: **20/20** завершились с ожидаемой **категорией диагностической ошибки** (не просто nonzero exit), включая catch ordering, checked throws, multi-catch, effectively-final и generic Throwable. Это локальный авторский эксперимент, **не GitHub CI**. Также отдельно скомпонован и запущен один **авторский smoke** ключевых механизмов `finally`/TWR (10 строк наблюдений) с `javac --release 21` и `java`: нормальная компиляция и выполнение, в том числе `return 67→68` и `throw null→NullPointerException`. Это *не* извлечение всех фрагментов из Markdown и не §5 positive P01–P20. Пробный `javac -Xlint:all -Werror` для заведомо демонстрационных `return` в `finally` и неиспользуемых resource variables дал ожидаемые lint-warning и ошибку **warnings found and -Werror specified**; именно поэтому полный учебный сценарий нельзя объявлять совместимым с `-Werror` без изменения кода/подавления диагностики. **NOT RUN:** автоматическая компиляция всех inline-snippets обоих Markdown, GUI Obsidian/IntelliJ, другие JDK/JVM, байткод/JIT/performance.
+
+**Дополнительные проверки D-A12a.** [Задача #336](https://github.com/Melchiorius/backend-interview-labs/issues/336) содержит отчёт о новых пробах на Debian OpenJDK/javac 21.0.12.1. Probe.java: строгая компиляция --release 21 -encoding UTF-8 -Xlint:all -Werror и JVM с явным UTF-8, exit 0/0, stderr пуст, 29 строк вывода. WarningCases.java: та же версия и -Xlint:all, но без -Werror, exit 0/0, пять предупреждений (четыре finally.cannot.complete и одно unreachable.catch), три строки stdout. 15 отдельно скомпилированных отрицательных исходников дали exit 1 с ожидаемой категорией javac; один также дал предупреждение finally, которое не является причиной языкового запрета. Это не повтор исторических 20 исходников G1 и не исполнение всех блоков Markdown. Пробы проверяют отдельные контрасты N01–13; в статье используются читаемые фрагменты, а не их дословный полный исходник.
+
+Неизменённый общий runner выполнен на трёх точных восстановленных входных файлах (скрипт, Java-исходник и эталон), не на полном клоне. LC_ALL=C.UTF-8, exit 0, внешний stderr пуст, внутренний actual.stdout и эталон совпадают (20 строк, 539 байт, SHA-256 c52f0f1b8a79641887f362ae7abc311e41925cea1de404664fd0673bb1a8b9f8); stdout runner содержит эти 20 строк и маркер CHECK PASSED: stdout matches expected.stdout (21 строка, 584 байта). Скрипт делает javac --release 21, одну JVM и diff -u, не проверяет строго lint/stderr или хеши сам; хеши и stderr измерены снаружи. Новые временные пробы не входят в штатный CI. Не проверены другие JVM/ОС, тайминг и стресс потоков, принудительное завершение процесса, полная компиляция всех фрагментов, GUI и внешние ссылки. Полный разбор TWR остаётся в CORE-RESOURCES.
 
 **Порядок чтения:** [CORE-INHERITANCE](inheritance.md) → **эта статья** → [CORE-RESOURCES](resources.md) → [CORE-INIT](initialization.md).
 
