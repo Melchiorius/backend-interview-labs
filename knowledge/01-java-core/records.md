@@ -4,6 +4,8 @@
 
 **Исследовательская база:** [принятый G1-план CORE-RECORDS + CORE-IMMUTABLE](../../docs/plans/CORE-RECORDS-IMMUTABLE.md), матрица **R-01–R-23: 14 P0 / 6 P1 / 3 P2**. Нормативный источник — [JLS Java 21 §8.10](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10) и [java.lang.Record](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html). Примеры ниже — отдельные демонстрационные фрагменты; если не указано обратное, их не следует склеивать в один файл и считать результатом одного запуска. Для воспроизведения основных механизмов используйте [общий Java 21 runnable Records + Immutable](../../examples/core/records-immutability/README.md): два класса `RecordsProbe.java` (R01–R16) и `ImmutableProbe.java` (I01–I10), два независимых запуска и два точных эталона stdout. Это **26 подписанных наблюдений двух процессов**, не 26 отдельных unit-тестов.
 
+Record стал постоянной возможностью языка в Java 16; здесь целевая версия остаётся Java 21. Из корня репозитория: `bash examples/core/records-immutability/verify.sh`. Новые отдельные проверки описаны в [полных временных исходниках Probe.java, отрицательных файлах, командах и результатах](https://github.com/Melchiorius/backend-interview-labs/issues/363#issuecomment-7227809467); они не добавлены к общему runner. Номера R-xx карты вопросов и Rxx строк stdout различаются.
+
 ## 1. Что record обещает и зачем он нужен (R-01, R-02, R-13)
 
 Обычный класс сам решает, какие поля хранить, какие методы предоставлять и что считать равенством. **Record** заявляет, что основное состояние описывается *компонентами* в заголовке, а доступ к этому состоянию прозрачен: например, `record Point(int x, int y) {}` объявляет тип с двумя компонентами типа `int`. Record — особый вид **класса**, не новый примитивный тип, не интерфейс и не кортеж JVM.
@@ -32,6 +34,8 @@ Record **неявно `final`**, прямо наследует `java.lang.Record
 
 Заголовок record описывает **полный набор его полей экземпляра**, которые несут состояние компонентов. Нельзя дописать ещё одно не-`static` поле, объявить instance initializer или обычным методом заново присвоить компоненту. Однако статические константы и методы допустимы, равно как обычные методы экземпляра, использующие уже объявленные компоненты.
 
+Допустимы также изменяемые static-поля и static initializers. В фактическом Probe record State(int x) объявляет `static int count; static {count=67;} static void inc(){count++;}`; после inc() счётчик 68, отдельный метод x(int d) возвращает x+d. Это состояние класса, не дополнительное поле экземпляра. Методы abstract и native в теле record запрещены (§8.10.2); отдельные Abstract, Native и ExtraField отклонены. Record не обещает чистых функций, неизменяемого статического состояния или потокобезопасности.
+
 ~~~java
 record Temperature(int celsius) {
     static final String UNIT = "°C";     // статическое поле допустимо
@@ -45,13 +49,13 @@ record Temperature(int celsius) {
 }
 ~~~
 
-**Имена компонентов тоже ограничены.** Кроме обычных правил идентификаторов, для некоторых имён вроде `toString` есть специальный запрет: `record Broken(int toString) {}` некорректен. Два компонента с одинаковым именем также недопустимы. Явный accessor должен иметь **точное имя и возвращаемый тип** компонента, быть публичным и не пытаться подменить поле setter'ом: для `record Value(int n)` нельзя объявить `public long n()`. Это проверяется компилятором, не откладывается до runtime.
+**Имена компонентов тоже ограничены.** Кроме обычных правил идентификаторов, запрещены ровно следующие специальные имена компонентов: `clone`, `finalize`, `getClass`, `hashCode`, `notify`, `notifyAll`, `toString`, `wait`. Например, `record Broken(int toString) {}` некорректен; все восемь имён отдельно отклонены. Имя equals в списке отсутствует: `record Names(int equals) {}` с accessor equals() без параметров фактически допустим, new Names(67).equals() даёт 67. Два компонента с одинаковым именем также недопустимы. Явный accessor должен иметь **точное имя и возвращаемый тип** компонента, быть public instance-методом без параметров, собственных type parameters и любой throws clause, включая unchecked. Ковариантный возвращаемый тип также не подходит: для record с Number x нельзя объявить Integer x(). Отдельные AccessorThrows/Generic/Static/Private/Covariant отклонены. Одноимённая перегрузка с параметром допустима (State.x(int)), это не accessor. Это проверяется компилятором, не откладывается до runtime.
 
 **Чем это полезно:** класс с существенным дополнительным скрытым состоянием нельзя механически «переделать в record» без изменения модели. Выбирайте обычный класс, если у объекта больше собственного состояния, чем допускает контракт компонентов, или если вам необходимы специальные правила инкапсуляции.
 
 ## 3. Canonical и compact constructors: создание корректного значения (R-06, R-07, R-16)
 
-У каждого record есть **canonical constructor**: по одному параметру для каждого компонента, с совместимыми именами и типами. Когда мы его не пишем, компилятор предоставляет неявный конструктор. Если нужно валидировать параметры или нормализовать их, конструктор задают явно.
+У каждого record есть **canonical constructor**: по одному параметру для каждого компонента, с теми же именами и объявленными типами в порядке заголовка. Когда мы его не пишем, компилятор предоставляет неявный конструктор. Если нужно валидировать параметры или нормализовать их, конструктор задают явно.
 
 **Compact constructor** — сокращённая запись canonical constructor без списка параметров. Параметры доступны по именам компонентов; в теле **нормализуют параметр**, а после успешного выполнения тела компилятор обеспечивает неявное присваивание полям. Вручную писать `this.name = ...` внутри compact constructor **запрещено**.
 
@@ -95,6 +99,8 @@ class RecordConstructorDemo {
 
 **Последовательность:** вызывающий передаёт значение ссылки на строку и целое число; тело compact constructor проверяет и при необходимости заменяет значение *параметра* `name`, затем в финальные поля попадают нормализованные значения. Если проверка выбросила исключение, экземпляр не становится успешно сконструированным значением. Это не обещание, что произвольный конструктор с утечкой `this` безопасен для многопоточности.
 
+Параметр compact constructor затеняет поле: name — параметр, this.name — поле. До неявных присваиваний прямое чтение this.name запрещено definite assignment (DirectRead отклонён), но вызов instance-метода может наблюдать JVM default value. В фактическом `record Compact(String name){Compact {name=name.strip();System.out.println("compact="+name+","+name());}}` вход " x " дал compact=x,null, после создания c.name().equals("x") подтверждено. Не используйте accessor в теле compact как источник уже нормализованного значения и не выпускайте this для такой проверки. После нормального завершения тела поля получают значения параметров в порядке заголовка. См. [инициализация](initialization.md) и [конструкторы](classes.md).
+
 При **явном canonical constructor** список параметров пишется полностью, а присваивание полям выполняется в нём обычным образом:
 
 ~~~java
@@ -107,13 +113,15 @@ record Ratio(int numerator, int denominator) {
 }
 ~~~
 
-Уровень доступности canonical constructor должен соответствовать требованиям record; он не может быть *менее доступным*, чем сам record. Например, объявить `private` canonical constructor для доступного на уровне пакета record запрещено. У canonical constructor есть и другие ограничения JLS: нельзя просто добавить произвольный checked `throws`, несовпадающее имя параметра или явный `return` из compact constructor. **Дополнительный, не-canonical конструктор** обязан в качестве первого действия делегировать другому конструктору этого record через `this(...)`; напрямую заполнять component fields в таком конструкторе нельзя.
+Уровень доступности canonical constructor должен соответствовать требованиям record; он не может быть *менее доступным*, чем сам record. Например, объявить `private` canonical constructor для доступного на уровне пакета record запрещено. У canonical constructor есть и другие ограничения JLS: normal canonical должен иметь точно соответствующие компоненты (включая имена, объявленные типы, порядок и совпадающую variable arity), без собственных параметров типа, throws clause (даже unchecked) и явного вызова конструктора this(...) или super(). Отдельные BadArity, WrongName, CanonicalGeneric, CanonicalSuper, UncheckedThrows отклонены. Это не запрет выбрасывать unchecked exception в теле: Normal(int x) с проверкой x<0 фактически выбросил IllegalArgumentException без throws, положительный случай присвоил поле и завершился явным return;. Normal допускает return; после definite assignment, compact запрещает любой return (CompactReturn отклонён). Обычный неявный default constructor у record не объявляется; NoDefault(int x) с new NoDefault() отклонён, тогда как Empty() имеет нулевой canonical constructor. **Дополнительный, не-canonical конструктор** обязан в качестве первого действия делегировать другому конструктору этого record через `this(...)`; напрямую заполнять component fields в таком конструкторе нельзя.
 
 **Частая ошибка на интервью:** «compact constructor автоматически делает record immutable» — нет. Он позволяет в одном месте проверять и нормализовать параметры, но если параметр является изменяемым объектом, нужно отдельно продумать владение и копирование.
 
 ## 4. Generated equals, hashCode и toString (R-03, R-04, R-05, R-08, R-12)
 
 Генерируемый `equals` сравнивает **соответствующие значения компонентов**, а не только `this == other`. Два разных record-объекта с равными компонентами могут быть равны. Значение `hashCode` согласовано с этим равенством: у двух равных записей одинаковый hash; **точную числовую формулу и число не следует заучивать**. `toString` содержит имя record и представление компонентов; его подробный формат — **не протокол сериализации** и не основа для парсинга бизнес-сообщений.
+
+Именно неявные equals/hashCode/toString используют значения **полей** компонентов, не вызовы accessors. Неявный equals требует тот же runtime record class, сравнивает ссылочные компоненты по семантике Objects.equals (две null равны), примитивные — по семантике compare соответствующей обёртки. В Probe Mask(int x) переопределяет public int x(){return 0;}: при x=67 accessor даёт 0, но Mask(67) не равен Mask(0), равен Mask(67), а toString содержит x=67 на проверенном JDK. A(67) и B(67) разных классов не равны; `Box<String>(null)` и `Box<Integer>(null)` одного runtime класса равны, сравнение целого record с null — false. Два новых Empty() равны (нет различающихся компонентов), но различны по идентичности, не singleton. Эти правила не переносятся автоматически на явно написанные методы. См. [CORE-EQUALITY](equality.md) и [generics](generics.md).
 
 ~~~java
 record Coordinate(int x, String label) {}
@@ -132,6 +140,8 @@ class RecordEquality {
 ~~~
 
 **Граница:** используйте `equals` для содержательного сравнения записей, но не пытайтесь восстановить значения из произвольного вывода `toString`. Если ключом карты является record с изменяемыми компонентами, сначала проверьте стабильность равенства и хэша; сама запись не создаёт магической защиты от внешних мутаций.
+
+Record API дополнительно требует инварианта реконструкции (§5) и согласованности равенства, хэша и текста: равные записи должны давать равный текст, с оговоркой для соответствующих равных компонентных значений, у которых собственные строковые представления различаются. Если custom equals игнорирует компонент, следует продумать также hashCode и toString, а не считать любые пользовательские методы заведомо запрещёнными. Порядок сравнения компонентов, конкретный алгоритм hashCode и числовой хэш не специфицированы; хэш может изменяться между запусками даже при одинаковых хэшах компонентов. Текст для человека, не парсинг полей. [Record.equals/hashCode/toString](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html).
 
 ### 4.1 Массив как компонент: равное содержимое не означает равенство записей (R-08)
 
@@ -179,6 +189,8 @@ class RecordDoubles {
 
 **Что объяснить на собеседовании:** если кандидат выводит поведение record только из правил `==` над primitive double, он ошибётся именно на NaN и signed zero. Не переносите проверенную семантику `equals` на округление, математическое равенство вещественных измерений или предсказание точного `hashCode`.
 
+То же относится к float. В Probe FP(float f,double d) сравнение Float.NaN/Double.NaN с другими NaN payload (Float.intBitsToFloat(0x7fc00067), Double.longBitsToDouble(0x7ff8000000000067L)) дало равенство и одинаковый hashCode; отличие знака нуля каждого типа отдельно сделало записи неравными. Для всех восьми примитивных типов контракт равенства — результат compare соответствующей wrapper class равен нулю, а не обязательные реальные boxing и вызовы compare. Точный алгоритм хэширования не следует выводить из wrapper hashCode. См. [числовые типы](numbers.md) и [преобразования](conversions.md).
+
 ## 5. Record copy invariant и опасный accessor с clone (R-15)
 
 Это наиболее важная ловушка. [Контракт java.lang.Record](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html) формулирует ожидаемое свойство копирования: если получить компоненты через accessors и собрать новый экземпляр того же record, то результат должен сравниваться равным исходному. Схематически: `R copy = new R(original.c1(), ..., original.cn()); original.equals(copy)` должно быть `true`.
@@ -209,6 +221,27 @@ class BrokenRecordCopy {
 
 Это **нарушение record copy invariant**, а не доказательство, что `clone()` запрещён или что массивы нельзя копировать. **Не советуйте BadAccessor как правильный immutable record.** Для корректной модели с array-компонентом придётся одновременно согласовать защиту входов и выходов, семантику `equals/hashCode` и реконструкцию компонентов; часто проще использовать обычный [`final class` с private array и двумя копиями](immutability.md). Альтернатива — хранить в качестве компонента устойчивый value-type, например snapshot `List<String>`, осознавая, что это *не deep copy* mutable elements.
 
+**Copy-in без copy-out тоже недостаточен:** CopyIn(int[] values) с compact constructor `values=values.clone();` и стандартными accessor/equals при `bad.equals(new CopyIn(bad.values()))` даёт false, потому что новый конструктор снова копирует массив. Accessor к тому же раскрывает внутренний массив. Для ограниченного случая одного int[] можно согласовать контракт так (в Probe это member record Good, ниже тот же код как самостоятельный тип):
+
+~~~java
+import java.util.Arrays;
+import java.util.Objects;
+
+record Good(int[] values) {
+    Good { values = Objects.requireNonNull(values).clone(); }
+    public int[] values() { return values.clone(); }
+    public boolean equals(Object o) {
+        return o instanceof Good g && Arrays.equals(values, g.values);
+    }
+    public int hashCode() { return Arrays.hashCode(values); }
+    public String toString() {
+        return "Good[values=" + Arrays.toString(values) + "]";
+    }
+}
+~~~
+
+Политика: null запрещён, пустой массив разрешён, содержимое int[] — значение, входная и выходная копии независимы. В Probe на входе a={67} создан Good g; отдельно a[0]=1 и g.values()[0]=2 не изменили g.values()[0] (67 после каждой операции); `Good copy = new Good(g.values());` подтвердил равенство, одинаковые хэш и текст. new Good(null) явно отклонён NPE. Здесь equals/hashCode/toString работают с внутренними массивами, не с лишними копиями. Это не универсальная стратегия deep copy для массивов ссылок, графов, циклов или конкурентных изменений входа. Если прозрачное представление компонентов не подходит, final class или подходящий snapshot проще.
+
 ## 6. Generic records, методы, интерфейсы и вложенность (R-10, R-11, R-18)
 
 Record может иметь типовые параметры, реализовывать интерфейс, объявлять методы, `static` константы и методы, а также дополнительный конструктор с обязательной делегацией canonical.
@@ -237,11 +270,15 @@ class RecordsInContainer {
 
 Вложенный и локальный record не получают скрытую ссылку на экземпляр внешнего класса: они **неявно static по своей природе**. Запись `record Box<T>(T value)` корректна, а `Box<int>` — **compile-time error**: generic argument должен быть ссылочным типом (вместо primitive может понадобиться `Integer`). Подробно — в [generics и invariance](generics.md).
 
+Member record неявно static, явный static допустим; local record также неявно static, но явный static в локальной декларации запрещён (LocalStatic). Ни тот ни другой не захватывает экземпляр внешнего класса; local record не может захватить даже effectively final локальную переменную, а member record не может использовать type parameter внешнего класса. LocalCapture и OuterType отдельно отклонены non-static.cant.be.ref. Собственные параметры типа разрешены: в Probe `record Local<T>(T value)` дал 67. Интерфейс Default имеет default x()=-1 и twice()=2*x(); WithDefault(int x) implements Default получает сгенерированный accessor x(), переопределяющий совместимый default, а twice() у WithDefault(67) даёт 134. См. [вложенные классы](nested-classes.md), [интерфейсы](interfaces.md).
+
 **Методы не делают record автоматически mutable или immutable:** пользовательский метод может посчитать новое значение, вернуть новый record, обратиться к внешнему ресурсу или поменять достижимый через компонент объект. Оценивайте конкретное поведение, а не наличие ключевого слова `record`.
 
 ## 7. Аннотации компонентов и varargs (R-19, R-20 · P1)
 
 Аннотация на компоненте record может иметь разные допустимые точки применения: компонент/поле, параметр canonical constructor, accessor или type-use — **в зависимости от `@Target` самой аннотации**. Нельзя обещать, что любая аннотация копируется на все перечисленные места независимо от её целей.
+
+Декларационные цели независимы: RECORD_COMPONENT — сам компонент, FIELD — неявное поле, METHOD — неявный accessor, PARAMETER — производный параметр неявного или compact canonical constructor. Явно объявленный accessor и параметры normal canonical получают свои собственные аннотации, а не автоматически аннотации компонента. TYPE_USE относится к употреблениям типа, отдельный контекст. Для runtime reflection необходима соответствующая retention RUNTIME. В Probe Mark имеет RUNTIME и все четыре указанные декларационные цели; проверены getRecordComponents()[0], getDeclaredField("x"), getDeclaredMethod("x"), getDeclaredConstructor(int.class).getParameters()[0] в этом порядке. Implicit дал true,true,true,true; Explicit (normal constructor и явный accessor без Mark) — true,true,false,false; AnnotCompact — true,true,true,true. Это узкая проверка runtime declaration annotations, не проверка всех TYPE_USE, retention или class-file attributes.
 
 ~~~java
 import java.lang.annotation.ElementType;
@@ -255,6 +292,8 @@ record Packet(@Audited String payload) {}
 
 Record-компонент может использовать varargs как **последний компонент**, например `record Words(String... tokens) {}`. Такой компонент представлен массивом, поэтому вновь возникают правила array identity и mutable aliasing. С varargs не-reifiable обобщённых элементов возможны предупреждения о heap pollution; правила `@SafeVarargs` и безопасности доступа обсуждаются в [CORE-ARRAYS](arrays.md) и [CORE-ERASURE](erasure.md). Пометка `@SafeVarargs` **не** превращает небезопасный код в безопасный; нельзя автоматически считать всякую record-конструкцию с varargs свободной от проблем.
 
+Допустим не более одного variable arity компонента, только последнего (NotLast отклонён). В normal canonical объявление соответствующего параметра должно тоже быть varargs, не просто массивом (BadArity отклонён). В Probe Words(String... words) с matching explicit constructor сохраняет переданный String[]: w.words()==words, изменение words[0] видно через accessor, new Words() имеет длину 0. Не обещается автоматическая копия уже переданного массива. Для non-reifiable element type возникает unchecked warning, если не применены предусмотренные подавления; @SafeVarargs уместна на подходящем canonical constructor только при истинной гарантии безопасной работы с varargs. На самом компоненте её нельзя использовать для обхода: SafeComponent(@SafeVarargs String... x) отклонён, поскольку аннотация распространяется на фиксированной арности accessor x(). Не проверялись все возможные generic varargs предупреждения.
+
 ## 8. Ошибка компиляции, ошибка выполнения или ошибка проектирования? (R-09, R-14, R-16)
 
 | Случай | Тип результата | Почему |
@@ -266,7 +305,7 @@ Record-компонент может использовать varargs как **�
 | `record X(int n) { X() { System.out.println(67); } }` | **compile error** | Non-canonical constructor не делегирует другому constructor |
 | `new Person("X", -1)` из §3 | **runtime IllegalArgumentException** | Проверка собственного инварианта |
 | `new Scores(new int[]{67}).values()[0] = 1` | Компилируется и меняет массив | Нет автоматической deep immutability |
-| `new BadAccessor(a).equals(new BadAccessor(a.clone()))` | Компилируется, даёт `false` | Ошибка проектирования: нарушен copy invariant |
+| `original.equals(new BadAccessor(original.values()))` из §5 | Компилируется, даёт `false` | Ошибка проектирования: нарушен copy invariant |
 | `Box<int>` | **compile error** | Primitive как generic type argument |
 
 G1 §6 содержит **N01–N16 — шестнадцать изолированных compile-negative исходников**, проверенных исследователями по ожидаемым javac diagnostic keys. N01 намеренно проверяет запрещённую *грамматику* record `extends`; это не случайно недописанная скобка. Runtime-исключения нашего конструктора и изменяемость массива **не** считаются ошибками компиляции и не входят в этот счёт. Новые фрагменты из этой статьи не становятся автоматически проверенными в CI только потому, что G1 проверял другой код.
@@ -292,14 +331,14 @@ G1 §6 содержит **N01–N16 — шестнадцать изолиров�
 | R-09 | P0 | §2/8: посторонние instance fields/initializers запрещены |
 | R-10 | P0 | §6: generic record/implements, primitive type argument |
 | R-11 | P0 | §§3/6: методы, дополнительный constructor делегирует |
-| R-12 | P0 | §4.2: double NaN/±0.0 |
+| R-12 | P0 | §4.2: float/double NaN payload и ±0.0 |
 | R-13 | P0 | §1/3: null разрешён без собственной валидации |
 | R-14 | P0 | §§2/8: имена компонент, сигнатуры accessors |
-| R-15 | P1 | §5: BadAccessor clone accessor нарушает copy invariant |
+| R-15 | P1 | §5: BadAccessor и CopyIn нарушают copy invariant; Good согласует копирование/равенство |
 | R-16 | P1 | §3: explicit vs compact canonical, видимость/throws |
 | R-17 | P1 | §4/5: custom equals/hashCode/toString должны сохранять логический контракт |
 | R-18 | P1 | §2/6: static, nested/local records |
-| R-19 | P1 | §7: `@Target` и propagation аннотаций |
+| R-19 | P1 | §7: `@Target`, retention, implicit/explicit/compact propagation |
 | R-20 | P1 | §7: varargs/non-reifiable, `@SafeVarargs` boundaries |
 | R-21 | P2 | **Граница**: сериализация record и canonical deserialization требуют CORE-SERIAL |
 | R-22 | P2 | **Граница статьи о record:** [record patterns / Java21 switch](patterns.md) разбираются в отдельной CORE-PATTERNS, а не подменяются этим разделом |
@@ -309,8 +348,12 @@ G1 §6 содержит **N01–N16 — шестнадцать изолиров�
 
 **Первоисточники:** [JLS 21 §8.10](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10), [§8.10.1 (components)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10.1), [§8.10.2 (body)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10.2), [§8.10.3 (members)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10.3), [§8.10.4 (constructors)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10.4), [Record Java21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html), [Objects.equals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html#equals(java.lang.Object,java.lang.Object)). Интервью-вопросы из [SOURCE_REGISTRY](../../docs/SOURCE_REGISTRY.md) указывают, что стоит уметь объяснять, но **не заменяют Java SE контракт**.
 
-**Принятое G1** содержит полный позитивный `RecordsProbe.java` с 16 подписанными наблюдениями R01–R16 (в том числе намеренно плохое R13=false) и 16 отдельно проверенных negative N01–N16 в §6. Исходные результаты G1 получены исследователями на OpenJDK 21.0.12.1 с `--release 21 -Xlint:all`, но **не означают, что все Java-блоки выше прогнаны автоматически**. [Общий runnable с двумя G1-программами](../../examples/core/records-immutability/README.md) интегрирован из [технического PR #133](https://github.com/Melchiorius/backend-interview-labs/pull/133) в авторскую ветку; исходники и эталоны сверены с G1 §5, `verify.sh` выполняет компиляцию `javac --release 21 -Xlint:all` и два строгих `diff -u`. Роль 03 отдельно проверила опубликованные Git blobs и выполнила локальные запуски на Debian OpenJDK 21.0.12.1 без предупреждений. **CI общего итогового HEAD** и редакционные ворота фиксируются отдельно в [PR #132](https://github.com/Melchiorius/backend-interview-labs/pull/132); это не подтверждение автоматической компиляции всех блоков кода в статье.
+**Принятое G1** содержит полный позитивный `RecordsProbe.java` с 16 подписанными наблюдениями R01–R16 (в том числе намеренно плохое R13=false) и 16 отдельно проверенных negative N01–N16 в §6. Исходные результаты G1 получены исследователями на OpenJDK 21.0.12.1 с `--release 21 -Xlint:all`, но **не означают, что все Java-блоки выше прогнаны автоматически**. [Общий runnable с двумя G1-программами](../../examples/core/records-immutability/README.md) интегрирован из [технического PR #133](https://github.com/Melchiorius/backend-interview-labs/pull/133) в авторскую ветку; исходники и эталоны сверены с G1 §5, `verify.sh` выполняет компиляцию `javac --release 21 -Xlint:all` и два строгих `diff -u`. Роль 03 отдельно проверила опубликованные Git blobs и выполнила локальные запуски на Debian OpenJDK 21.0.12.1 без предупреждений. Историческая проверка общего HEAD и редакционные ворота зафиксированы в [PR #132](https://github.com/Melchiorius/backend-interview-labs/pull/132); это не подтверждение автоматической компиляции всех блоков кода в статье.
 
-**NOT RUN в рамках этой статьи без отдельного свидетельства:** автоматическая компиляция всех inline Java-фрагментов; N01–N16 в действующей CI; альтернативные JDK/OS; GUI Obsidian/IntelliJ; reflection/class-file inspection, record serialization/ORM, record patterns как отдельная тема, deep-copy циклических графов, JMM publication/concurrency stress, performance/JMH/GC/JIT. P2 **не** помечаются как реализованные темы.
+**NOT RUN в рамках этой статьи без отдельного свидетельства:** автоматическая компиляция всех inline Java-фрагментов; N01–N16 в действующей CI; альтернативные JDK/OS; GUI Obsidian/IntelliJ; исчерпывающая reflection/class-file inspection (узкая runtime-проверка аннотаций ниже выполнена), record serialization/ORM, record patterns как отдельная тема, deep-copy циклических графов, JMM publication/concurrency stress, performance/JMH/GC/JIT. P2 **не** помечаются как реализованные темы.
 
 **Особые правила восстановления record:** [CORE-SERIAL](serialization.md) объясняет, почему при десериализации `Serializable record` вызывается канонический конструктор, чем отличается обычный `Serializable`-класс и что означает специальное правило `serialVersionUID`.
+
+**Новые фактические проверки 02.** [Полные исходники, команды, фактические выводы и диагностические категории](https://github.com/Melchiorius/backend-interview-labs/issues/363#issuecomment-7227809467) на Debian OpenJDK/javac 21.0.12.1: Probe.java с --release 21 -encoding UTF-8 -XDrawDiagnostics -Xlint:all -Werror скомпилирован exit 0 без stderr; JVM exit 0, stderr пуст, stdout 20 строк/328 байт (метки проверок и непосредственные наблюдения compact/annotation). 29 отдельных отрицательных компиляций с --release 21 -encoding UTF-8 -XDrawDiagnostics, все exit 1/stdout пуст, включая восемь запрещённых имён; LocalStatic дал две синтаксические диагностики, Abstract — does.not.override.abstract. Это не повтор исторических 16 G1 или 24 ожидаемых отклонений всего CI. Новые фрагменты выше привязаны к Probe, не самостоятельный запуск каждого Markdown-блока.
+
+Полный общий runner выполнен дважды на пяти восстановленных входах с проверенными Git blob SHA/mode (не полный клон), default environment и LC_ALL=C.utf8, без инструментирования. Оба exit 0, внешний stderr и build/javac.stderr пусты, инвентарь входов до/после совпал, оба фактических stdout каждого запуска совпали с fixture (четыре cmp exit 0). Одна компиляция двух Java-исходников с --release 21 -Xlint:all, отказ при диагностике javac на stderr, два JVM и два diff -u; stdout обоих процессов сохраняются в build и печатаются скриптом, stderr JVM наследуется, отдельно не захвачен. Фактические R16 строк/144 байта, I10/94; внешний stdout 27 строк/314 байт, SHA-256 38e0ddf952503d6e8adecdf4844b53e70d99428207d0fc61fb63b27ba24bd6ea, после 26 строк маркер `CHECK PASSED: both stdout files match expected; javac emitted zero warnings`. 26 наблюдений, не 26 unit-тестов; R13=false намеренный антипример. SHA-256 обоих эталонов и вывод в приложении. Скрипт не использует Werror или явное encoding; OS locales C/C.utf8/POSIX, locale/charset JVM не измерялись. Никаких изменений общего примера, README, immutability.md или исследовательской базы.
