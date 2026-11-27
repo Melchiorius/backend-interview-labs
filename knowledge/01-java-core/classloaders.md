@@ -8,7 +8,9 @@
 
 ## 1. Class, ClassLoader и binary name (CL-01, CL-05, CL-06)
 
-`Class<?>` отражает конкретный runtime type. `ClassLoader` участвует в поиске и/или определении классов. У reference-класса есть binary name (например, `sample.Token`), но одинаковое имя не гарантирует один runtime type в разных namespaces. По [JVMS §5.3](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3) идентичность reference class/interface задаёт **пара binary name + defining loader**: `(sample.Token, loaderA)` не тот же тип, что `(sample.Token, loaderB)`, когда оба loader независимо определили один binary name.
+`Class<?>` отражает конкретный runtime type. `ClassLoader` участвует в поиске и/или определении классов. У обычного класса или интерфейса (не массива и не hidden class) есть binary name (например, `sample.Token`), но одинаковое имя не гарантирует один runtime type в разных namespaces. По [JVMS §5.3](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3) идентичность такого класса или интерфейса задаёт **пара binary name + defining loader**: `(sample.Token, loaderA)` не тот же тип, что `(sample.Token, loaderB)`, когда оба loader независимо определили один binary name.
+
+Примитивы и `void` также представлены объектами `Class`, но не определяются пользовательским загрузчиком. Классы массивов создаёт JVM (§11); hidden class, созданный через `Lookup.defineHiddenClass`, нельзя обнаружить обычным поиском по binary name. Runtime package определяется именем пакета и defining loader: одинаковый текст package в двух загрузчиках не даёт взаимного package-private доступа. У каждого загрузчика свой unnamed module. Общий интерфейс плагина обычно должен определяться общим родителем, иначе одинаковый текст интерфейса не гарантирует совместимости. Это нормативное объяснение, не эксперимент с package-private доступом. См. [JVMS §5.3](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3).
 
 ~~~java
 // sample/Token.java
@@ -23,6 +25,10 @@ public class Token {
 ## 2. Loading ≠ linking ≠ initialization (CL-02, CL-03, CL-04)
 
 **Loading** находит/создаёт runtime class; **linking** включает verification, preparation, resolution (допускаются разные стратегии времени разрешения символов); **initialization** исполняет static initialization согласно JLS §12.4. Простое получение объекта Class не всегда запускает static block.
+
+Verification проверяет структуру class-файла, байткод и типовую безопасность; preparation создаёт статические поля со значениями по умолчанию, не выполняя Java-инициализаторы. Значения constant variables из атрибута `ConstantValue` устанавливаются в ходе инициализации до `<clinit>` (JVMS §5.5); компилятор также может встроить константу в код клиента. Resolution связывает символические ссылки с конкретными сущностями; допустимо раннее или ленивое разрешение, не обязательно всё откладывается до первого использования.
+
+Loading constraints нужны при пересечении пространств имён: например, дескриптор метода общего API, принимающего `sample.Token`, должен обозначать согласованный runtime type в участвующих загрузчиках. Независимые одноимённые типы допустимы, но при наложении ограничения JVM требует их тождества. Нарушение — `LinkageError`, не обычный checked CNFE. [JVMS §5.3.4](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3.4), [§5.4](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.4), [§5.5](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.5), [инициализация](initialization.md). Эксперимент с нарушением constraint не выполнялся; JVM-LOADING — отдельная будущая тема.
 
 ~~~java
 package sample;
@@ -50,6 +56,8 @@ System.out.println("CL07=" + Class.forName("sample.Lazy", true, app).getSimpleNa
 Java21 публично предоставляет `ClassLoader.getSystemClassLoader()` и `ClassLoader.getPlatformClassLoader()`; реальный `ClassLoader.getParent()` показывает связь конкретного объекта-загрузчика. Bootstrap loader не обязательно представлен обычным Java объектом: для bootstrap-defined `String` в G1 `String.class.getClassLoader()==null` → **CL01=true**. Это не значит, что String «не загружен».
 
 В G1 также **CL02=true** для `LoaderProbe.class.getClassLoader()==getSystemClassLoader()` и **CL03=true** для `getPlatformClassLoader()!=null`. Это наблюдение конкретного OpenJDK21 процесса, а не универсальные class implementation names, заданные спецификацией. Java 8 extension loader, `rt.jar`, `lib/ext` и `java.ext.dirs` нельзя выдавать за действующую Java21 архитектуру; современный **platform class loader** — API, а не обещание старого extension mechanism. [ClassLoader API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html).
+
+Bootstrap загружает фундаментальные классы платформы, platform loader — классы платформы, в том числе не определённые bootstrap; system loader обычно загружает приложение, но может быть пользовательским (`java.system.class.loader`). Схема application → platform → bootstrap показывает типичный путь делегации, а не универсальное дерево JPMS: встроенные загрузчики могут обращаться к другим загрузчикам при поиске классов модулей. У стандартного ClassLoader с null parent поиск идёт через bootstrap, что не гарантирует видимости platform-defined классов. См. [JPMS](modules.md).
 
 ## 4. Два defining loader одного binary name и настоящий ClassCastException (CL-05–CL-07, CL-09, CL-20 P1)
 
@@ -99,7 +107,7 @@ try {
 
 ## 5. Parent delegation: initiating loader может не определять Class (CL-06, CL-08, CL-09, CL-20 P1)
 
-Стандартная реализация `ClassLoader.loadClass` обычно сначала делегирует родителю (parent-first), а затем обращается к `findClass`. **Но это не абсолютная обязанность любого custom subclass:** §4 умышленно делает child-first для одного имени. Родительский loader всё ещё является родителем объекта, просто политика в этом отдельном случае меняется.
+Стандартный `loadClass(name, resolve)` сначала вызывает `findLoadedClass(name)`, затем parent.loadClass (bootstrap при null parent), при отсутствии — `findClass`, при успехе и resolve=true — `resolveClass`. Одноаргументный loadClass передаёт false. findLoadedClass — не только кеш собственных определений. Обычно переопределяют findClass, чтобы сохранить делегацию. **Но это не абсолютная обязанность любого custom subclass:** §4 умышленно делает child-first для одного имени. Родительский loader всё ещё является родителем объекта, просто политика в этом отдельном случае меняется.
 
 ~~~java
 ClassLoader app = LoaderProbe.class.getClassLoader();
@@ -109,7 +117,37 @@ System.out.println(shared == sample.Token.class);   // true
 System.out.println(shared.getClassLoader() == app); // true
 ~~~
 
-**G1 CL19=true / CL20=true:** поиск инициирован через `delegating`, но возвращён родительский Class, определённый `app`. Это объясняет различие **initiating** и **defining** loader в JVMS; «вызывал метод на этом загрузчике» не значит «этот загрузчик определил тип». В child-first примере §4 наоборот этот объект сам вызвал `defineClass`. `CL17=true` подтвердил у него родителя app, что не помешало ему перехватить имя.
+**Исторические stdout CL19=true / CL20=true:** прямой вызов на delegating вернул тот же родительский Class, определённый app. Это доказывает делегированную идентичность, **не регистрацию initiating loader**. Исходное требование CL-08 не равно метке stdout CL08 или CL19/20.
+
+Различайте Java-объект, на котором вызван метод поиска, defining loader и initiating loader, зарегистрированный JVM для имени и класса. JVMS §5.3.2 описывает регистрацию при загрузке по запросу JVM; промежуточные делегирующие загрузчики не регистрируются автоматически. [findLoadedClass API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html#findLoadedClass(java.lang.String)) проверяет регистрацию.
+
+Новая проба: два свежих делегирующих загрузчика одного родителя. Token.java содержит `public class Token {}` в default package, компилируется рядом с Probe. Вложенный класс Probe и фрагмент main:
+
+~~~java
+static class Delegating extends ClassLoader {
+    Delegating(ClassLoader parent) { super(parent); }
+    Class<?> recorded(String name) { return findLoadedClass(name); }
+}
+~~~
+
+~~~java
+ClassLoader app = Probe.class.getClassLoader();
+String name = "Token";
+Class<?> parent = Class.forName(name, false, app);
+Delegating direct = new Delegating(app), vm = new Delegating(app);
+System.out.println(direct.recorded(name) == null); // true
+Class<?> d = direct.loadClass(name);
+System.out.println(d == parent && d.getClassLoader() == app); // true
+System.out.println(direct.recorded(name) == null); // true
+System.out.println(vm.recorded(name) == null); // true
+Class<?> v = Class.forName(name, false, vm);
+System.out.println(v == parent && v.getClassLoader() == app); // true
+System.out.println(vm.recorded(name) == parent); // true
+~~~
+
+Фактическая проба проверяла эти условия с метками и AssertionError при расхождении: direct.before.empty, direct.parent.identity, direct.after.empty, vm.before.empty, vm.parent.identity, vm.after.recorded, loaders.distinct — все true. В этом опыте прямой вызов вернул Class без регистрации direct; запрос через JVM зарегистрировал vm. Defining loader остался app. Это не значит, что любой прямой loadClass исключает регистрацию: при собственном defineClass загрузчик становится defining и initiating.
+
+Исторический CL17 подтвердил parent app у child-first. Новый Probe с отдельным Own loader, вызывающим defineClass для байтов Token, подтвердил vm.repeat=true, own.identity=true, own.repeat=true: повторный lookup возвращает прежний Class; повторный define тех же байтов в том же loader дал duplicate=LinkageError. Один общий API должен определяться общим загрузчиком; упрощённый пример не доказывает production security или concurrency.
 
 **NOT RUN** как отдельная дисциплина: параллельное выполнение loadClass несколькими потоками, loader deadlocks/locks, resource loading, package sealing/signatures, hot reload, unload и consistency в сложных графах. Строка `synchronized(getClassLoadingLock(name))` сама по себе не является доказательством полной production-безопасности.
 
@@ -130,7 +168,49 @@ try {
 }
 ~~~
 
-В G1 **CL15=true** для начального TCCL == app и **CL16=true** после setter == loaderA. Первое — **не инвариант всех потоков/контейнеров/launchers**, второе — фактическая смена TCCL **без изменения `a==b`**. Настоящий поиск provider через ServiceLoader и контекстный загрузчик **не запускался**. [Thread API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html).
+В G1 CL15=true для исходного TCCL == app и CL16=true после setter == loaderA. CL16 проверяет только setter, а не повторное a==b. Исторический runner восстанавливает app (наблюдавшееся начальное значение); переиспользуемый код восстанавливает сохранённый original в finally.
+
+По умолчанию контекст наследуется от создающего потока, но может быть переустановлен. TCCL используется только явно выбирающими его API; одноаргументный Class.forName использует defining loader вызывающего класса, app.loadClass — политику app. Null context трактуется конкретным API, например ServiceLoader при null loader использует system loader или bootstrap при его отсутствии. [Thread API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html). В новом Probe обе формы поиска Token до и после установки TCCL provider вернули parent (tccl.before.lookup=true, tccl.after.lookup=true); после установки TCCL на Own, определивший другой Token, Class.forName(name) и app.loadClass(name) всё ещё вернули parent, own.loadClass(name) — child (tccl.own.lookup=true). Исходный TCCL восстановлен.
+
+**ServiceLoader — реальный потребитель TCCL.** В classpath-пробе общий api.Svc в app, реализация impl.Provider и ресурс META-INF/services/api.Svc только в отдельном provider-каталоге дочернего URLClassLoader. В ресурсе одна строка impl.Provider. ServiceLoader.load(service) выбирает текущий TCCL в момент создания ServiceLoader, а discovery и инстанцирование происходят лениво при обходе/findFirst; явная перегрузка принимает loader. [ServiceLoader API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html#load(java.lang.Class)).
+
+~~~java
+// api/Svc.java
+package api;
+public interface Svc { int value(); }
+~~~
+~~~java
+// impl/Provider.java
+package impl;
+public class Provider implements api.Svc {
+    public int value() { return 67; }
+}
+~~~
+
+Фрагмент main (imports java.net.URL, java.net.URLClassLoader, java.nio.file.Path, java.util.ServiceLoader; provider не включён в app classpath):
+
+~~~java
+Thread thread = Thread.currentThread();
+ClassLoader original = thread.getContextClassLoader();
+ClassLoader app = Probe.class.getClassLoader();
+try (URLClassLoader provider = new URLClassLoader(
+        new URL[]{Path.of("provider").toUri().toURL()}, app)) {
+    try {
+        thread.setContextClassLoader(app);
+        ServiceLoader<api.Svc> before = ServiceLoader.load(api.Svc.class);
+        thread.setContextClassLoader(provider);
+        System.out.println(before.iterator().hasNext()); // false
+        System.out.println(ServiceLoader.load(api.Svc.class, app)
+                .iterator().hasNext()); // false
+        System.out.println(ServiceLoader.load(api.Svc.class)
+                .findFirst().orElseThrow().value()); // 67
+        System.out.println(ServiceLoader.load(api.Svc.class, provider)
+                .findFirst().orElseThrow().value()); // 67
+    } finally { thread.setContextClassLoader(original); }
+}
+~~~
+
+Фактический Probe подтвердил tccl.provider.absent.from.app, tccl.explicit.parent.empty, tccl.provider (значение 67 и defining loader provider), tccl.explicit.child, tccl.restored — все true. Не кешируйте один ServiceLoader глобально между приложениями: он сохраняет контекст поиска и кеш поставщиков. Это classpath SPI, отличный от named-module SPI из [CORE-MODULES](modules.md); не тест утечек или потокобезопасности.
 
 ## 7. ClassNotFoundException vs NoClassDefFoundError: два разных runtime механизма (CL-13, CL-14, CL-15)
 
@@ -168,7 +248,28 @@ package sample;
 public class Dependent extends Parent {}
 ~~~
 
-Затем после компиляции код копирует output в **отдельный временный каталог**, где удаляет `Parent.class`, не удаляя исходники/нормальную сборку. Запуск `MissingProbe` через `java -cp classloader/bad MissingProbe` печатает **CE01=ClassNotFoundException** для имени отсутствующего top-level класса и **CE02=NoClassDefFoundError** для найденного Dependent с отсутствующим superclass. Это **две успешные JVM-программы с обработанными исключениями**, не два compiler-negative. [CNFE API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassNotFoundException.html), [NCDFE API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/NoClassDefFoundError.html).
+Затем после компиляции код копирует output в **отдельный временный каталог**, где удаляет `Parent.class`, не удаляя исходники/нормальную сборку. Запуск `MissingProbe` через `java -cp classloader/bad MissingProbe` печатает **CE01=ClassNotFoundException** для имени отсутствующего top-level класса и **CE02=NoClassDefFoundError** для найденного Dependent с отсутствующим superclass. Это **один успешный JVM-процесс с двумя обработанными исключениями**, не два compiler-negative. [CNFE API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassNotFoundException.html), [NCDFE API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/NoClassDefFoundError.html).
+
+При определённых загрузочных запросах JVM преобразует CNFE отсутствующей зависимости в NCDFE с причиной CNFE (JVMS §5.3.2). Но NCDFE возможен и при существующем class-файле: после неудачной инициализации Class становится ошибочным. По [JLS §12.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2) первое исключение, не являющееся Error, обычно оборачивается в ExceptionInInitializerError; исходный Error может передаваться напрямую. Повторная попытка инициализации того же Class приводит к NCDFE.
+
+~~~java
+static class Broken {
+    static final int VALUE = fail();
+    static int fail() { throw new IllegalStateException("first failure"); }
+}
+~~~
+
+~~~java
+for (int i = 0; i < 2; i++) {
+    try { System.out.println(Broken.VALUE); throw new AssertionError("broken"); }
+    catch (LinkageError e) {
+        System.out.println("broken." + i + "=" + e.getClass().getSimpleName()
+                + ":" + (e.getCause() == null ? "null" : e.getCause().getClass().getSimpleName()));
+    }
+}
+~~~
+
+Фактически: broken.0=ExceptionInInitializerError:IllegalStateException, затем broken.1=NoClassDefFoundError:ExceptionInInitializerError. Вторая cause-цепочка — наблюдение данной JVM. В диагностике ищите первую ошибку и причину, а не только последний NCDFE. Перехват LinkageError ограничен демонстрацией, не совет продолжать после Error.
 
 **Контрпример compile-time:** записать `Class.forName("absent.DoesNotExist");` без `catch/throws` — static checked exception compiler-negative `CL_N01`; так же необработанный `loader.loadClass(name)` — `CL_N02`. Но обработанный G1 MissingProbe компилируется и завершается exit=0.
 
@@ -210,12 +311,12 @@ public class Dependent extends Parent {}
 | CL-14 | P0 | §7: missing superclass NCDFE |
 | CL-15 | P0 | §7/9: checked vs Error |
 | CL-16 | P0 | §8: module vs loader |
-| CL-17 | P1 | §11: array loader/component type NOT RUN |
+| CL-17 | P1 | §11: array loader/component type, фактическая проба |
 | CL-18 | P1 | §3: platform loader/TCCL environment-sensitive |
-| CL-19 | P1 | §2/11: verifier/linking constraints NOT RUN |
+| CL-19 | P1 | §2: linking constraints, отдельный эксперимент NOT RUN |
 | CL-20 | P1 | §4/5: limited child-first implementation |
-| CL-21 | P1 | §6: TCCL/SPI discovery NOT RUN |
-| CL-22 | P1 | §11: Class.forName(Module,String) NOT RUN |
+| CL-21 | P1 | §6: TCCL/SPI discovery, фактическая проба |
+| CL-22 | P1 | §11: Class.forName(Module,String), фактическая проба |
 | CL-23 | P2 | §5/11: locks/deadlock/parallel capable NOT RUN |
 | CL-24 | P2 | §5/11: hot reload/unloading/metaspace/JIT/JMH NOT RUN |
 | CL-25 | P2 | §11: instrumentation/agents/hidden classes NOT RUN |
@@ -223,12 +324,54 @@ public class Dependent extends Parent {}
 
 ## 11. Нормы A, интервью C и ограничения
 
+### Массивы (CL-17)
+
+Класс массива создаёт JVM; defining loader reference-массива совпадает с defining loader компонента, рекурсивно для многомерных массивов. У массивов примитивов bootstrap identity, getClassLoader()==null. Тип определяется элементом и размерностью, не длиной. [JVMS §5.3.3](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3.3). Фрагмент Probe с двумя независимо определёнными Token:
+
+~~~java
+Class<?> a = Array.newInstance(parent, 0).getClass();
+Class<?> b = Array.newInstance(child, 0).getClass();
+Class<?> bb = Array.newInstance(child, 0, 0).getClass();
+~~~
+
+Проверены a != b, loader a == app и b == own; bb != b, bb.getComponentType()==b и loader bb==own; у int[].class и int[][].class loader null и компонент второго int[].class. Фактические array.identity, array.dimensions, primitive.arrays — true. Это не полная матрица covariance.
+
+### Class.forName(Module,String) (CL-22)
+
+Модульная перегрузка ищет binary name в заданном модуле, возвращает null при отсутствии или принадлежности найденного класса другому модулю. Не связывает и не инициализирует этим вызовом, не проверяет доступность класса вызывающему коду, не поддерживает имена массивов. Это не обещание отсутствия любых исключений (например, LinkageError или NullPointerException). Перегрузка name/initialize/loader при отсутствии бросает CNFE. [Class API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html#forName(java.lang.Module,java.lang.String)).
+
+В Probe вложенный `static class Lazy { static { System.out.println("module:init"); } }`. Class.forName(Object.class.getModule(), "Probe$Lazy") и Class.forName(Probe.class.getModule(), "absent.Nope") вернули null; Class.forName(Probe.class.getModule(), "Probe$Lazy") вернул Class без initializer. Class.forName("absent.Nope", false, app) дал CNFE. Затем Class.forName("Probe$Lazy", true, app) запустил initializer:
+
+~~~text
+module.wrong=true
+module.absent=true
+module.found=true
+lookup=CNFE
+module:before-explicit-init
+module:init
+module:after-explicit-init
+~~~
+
+Проверены unnamed module приложения и отрицательный поиск в java.base; custom layer и случай двух named modules одного loader отдельно не проверялись.
+
 **Нормы Java21:** [JVMS §5.3](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3), [§5.3.2](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-5.html#jvms-5.3.2), [JLS §12.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.2), [§12.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.3), [§12.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4), [ClassLoader API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html), [Class API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html), [Thread API21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html), [NoClassDefFoundError](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/NoClassDefFoundError.html). Не подменять нормы поведением HotSpot одного процесса.
 
 **Реальные вопросы C:** [Q-HRUDAY Chapter12](https://github.com/Hruday-Boppa/Core-Java-Interview-Questions-List/blob/main/README.md) — parent delegation, custom loaders, phases loading; [Q-TEAMLEAD](https://github.com/teamlead/java-interview-questions/blob/main/README.md) — «What is classloader», dynamic loading; [Q-CHERNYSHOV-RU](https://github.com/Shell26/Java-Developer/blob/master/core.md) — вопрос о загрузчиках/динамической загрузке; [Q-IVAN JPMS](https://github.com/ivanjayasooriya/java-interview-prep/blob/main/docs/17-modules-jpms.md) — модульная тема. Это **широкие вопросы**, не частотная статистика и не норматив. Для initiating/defining, TCCL setter и Class.forName(Module,String) в этих C самостоятельных подтверждённых вопросов **нет (GAP)**. Устаревшие ответы про Java8 extension loader/`rt.jar` не применять к Java21.
 
 **G1/04 (исторически вне GitHub):** 18 уникальных Java21-исходников в четырёх компиляционных контекстах (7 base + 1 изменённый opened descriptor + 4 static + 6 classpath; два полных модульных варианта дают 24 физических файла), **4 чистых `javac`**, **6 JVM / 6 строгих stdout diff**, **49 строк** (11+11+2+2+21+2), не 49 JUnit-тестов. **17/17** compiler-negative с `-XDrawDiagnostics` — отдельное независимое G1/04 evidence, **не штатный positive CI**. После integration технического [PR #180](https://github.com/Melchiorius/backend-interview-labs/pull/180) уже существуют [шесть runnable-сценариев](../../examples/core/modules-classloader/README.md), [LoaderProbe.java](../../examples/core/modules-classloader/classloaders/src/LoaderProbe.java), [MissingProbe.java](../../examples/core/modules-classloader/classloaders/src/MissingProbe.java) и [verify.sh](../../examples/core/modules-classloader/verify.sh). [Технический CI #45029310487](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45029310487) — **completed/SUCCESS на technical SHA** `b7e7af3e8c44703cacf71e4f4e4343ecd60092e4`; **[итоговый интегрированный CI #45030280851](https://github.com/Melchiorius/backend-interview-labs/actions/runs/45030280851) — completed/SUCCESS на другом, author SHA** `6eb170d8660a1f28fbf323198451faa84e68b040`. В каждом отдельно успешны **Gradle/JUnit** и позитивный Java21 runnable: **4 компиляции `javac --release 21 -Xlint:all` без warnings/stderr, 6 JVM и 6 строгих `diff -u`**; **49 stdout строк шести JVM, не 49 JUnit-тестов**. Все **17/17** compiler-negative G1/04 с `-XDrawDiagnostics` остались **за пределами** обоих positive CI; runtime `ClassCastException`/CNFE/NCDFE не являются неудачными компиляциями. Каждый CI подтверждает **только свой SHA**; для последующих изменений нужен собственный CI ([PR #179](https://github.com/Melchiorius/backend-interview-labs/pull/179)).
 
-**P1 NOT RUN:** array loader по component type и primitive arrays (CL17); environment-dependent defaults (CL18); JVMS linking constraints (CL19); production custom child-first safety (CL20); ServiceLoader через TCCL (CL21); [Class.forName(Module,String)](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html#forName(java.lang.Module,java.lang.String)) (CL22). **P2 NOT RUN:** parallel-capable loader/locking/deadlocks, unloading/metaspace/hot reload, agents/hidden classes, JVM loading full course, JMH/JIT/GC/JMM. Не проверены все отдельные inline Java snippets, альтернативные JDK vendors/OS, IDE/Obsidian GUI и внешние HTTP/anchors. Не закрывайте CORE-SERIAL или JVM-LOADING этой статьёй.
+**Исторически P1 NOT RUN** включало массивы, SPI и модульную перегрузку; новые ограниченные пробы выше не подменяют историческое evidence. По-прежнему не проверены отдельное нарушение loading constraint, все environment-dependent defaults, production custom loader safety. **P2 NOT RUN:** parallel-capable loader/locking/deadlocks, unloading/metaspace/hot reload, agents/hidden classes, JVM loading full course, JMH/JIT/GC/JMM. Не проверены все inline snippets, альтернативные JDK/OS, IDE/Obsidian GUI и внешние HTTP/anchors.
+
+### Диагностическое упражнение
+
+Два плагина определили одноимённый Token; после смены TCCL приведение объекта к Token приложения не прошло. Второй класс присутствует в JAR, но сначала дал ExceptionInInitializerError, затем NCDFE. Третий найденный класс не загружается из-за отсутствующего superclass. Что проверять?
+
+**Разбор:** сравнить реальные Class, getClassLoader и getModule, не только имя. TCCL не меняет defining loader уже созданного объекта; общий API должен быть определён общим родителем. CNFE при явном поиске отсутствующего имени отличать от NCDFE при загрузке зависимости и NCDFE при повторной ошибочной инициализации. Искать первый throwable и cause; наличие class-файла не гарантирует наличие зависимостей и успешную инициализацию. При отсутствии SPI provider проверить TCCL в момент создания ServiceLoader, явно выбранный loader, ресурс и общий тип сервиса.
+
+### Воспроизводимость новых проб
+
+Полные временные исходники и команды в адресном отчёте [#348](https://github.com/Melchiorius/backend-interview-labs/issues/348). OpenJDK 21.0.12.1 Debian 13: две компиляции javac --release 21 -encoding UTF-8 -Xlint:all -Werror, обе exit 0, stdout/stderr пусты. Provider компилируется с -cp app -d provider, но его каталог отсутствует в app classpath. Java -cp app Probe app/Token.class provider запущена шесть раз: исходная среда (stdout US-ASCII, default en/US и явные en/US, tr/TR), затем LC_ALL=C.utf8 (stdout UTF-8, default en/empty, явные -Duser.language=en -Duser.country=US и tr/TR). Все exit 0, stderr пуст. 32 строки наблюдений за запуск, 777 байт в исходной среде, UTF-8 772/774/774 байта соответственно. Последняя строка сообщает реально наблюдаемые locale и charset; JVM-флаги не означают установленные системные локали.
+
+Отдельно реконструирован неизменённый shared runner (31 вход: 24 Java-файла, 6 fixtures, verify.sh; Git blob SHA совпали), не полный клон. Два запуска LC_ALL=C.utf8 bash verify.sh exit 0, stdout одна строка marker (104 байта), stderr пуст: четыре компиляции, шесть JVM и шесть diff сверяют 49 внутренних stdout наблюдений, не печатают их; не JUnit tests. SHA-256 обоих stdout 2f40eb643683b422fe9e7efe1392aa7424ea44f948d828189cbcbc4f00b1dfb8. OS locales en_US/tr_TR отсутствуют; runner строг к stderr, JAVA_TOOL_OPTIONS не использовалась. Новые временные пробы не входят в CI runner; исторические G1/CI выше относятся к своим SHA. Полный clone, GUI, package access, concurrency и другие JDK/OS не проверены.
 
 [CORE-MODULES](modules.md) объясняет readability/exports/opens, а эта статья — defining loader и runtime identity. Статусы [COVERAGE](../../docs/COVERAGE.md) и [CURRICULUM](../../docs/CURRICULUM.md) меняются только отдельным G6 после G5; 14 malformed link labels G1 и N2 по link count — отдельный erratum, **принятый G1-план не изменяется**.
