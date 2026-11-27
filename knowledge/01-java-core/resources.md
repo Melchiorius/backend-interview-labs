@@ -2,6 +2,8 @@
 
 **Версия:** Java SE 21. **Исследовательский контракт:** [принятый план CORE-EXCEPTIONS/RESOURCES](../../docs/plans/CORE-EXCEPTIONS-RESOURCES.md) (ER-01–ER-30, Issue [#100](https://github.com/Melchiorius/backend-interview-labs/issues/100)); авторское [Issue #103](https://github.com/Melchiorius/backend-interview-labs/issues/103). Эта статья продолжает [CORE-EXCEPTIONS](exceptions.md): прежде чем разбираться, почему закрытие может создать ещё одно исключение, важно различать `throw`, `throws`, propagation, `getCause()` и `finally`.
 
+**Как читать примеры.** Объявления классов и интерфейсов помещайте в отдельные исходники с импортами перед объявлениями; методы вызывайте из main в том же пакете, а отдельные операторы — внутри метода. В примерах с Traced, LogResource и Count используйте соответствующий вспомогательный класс, определённый в статье. Повторяющиеся имена из независимых примеров не склеивайте. Для checked-вызовов объявите указанный throws или обработайте исключение; намеренно неиспользуемые ресурсные переменные могут вызвать предупреждение javac, поэтому учебные примеры с такими предупреждениями компилируются без -Werror. Отрицательные варианты — отдельные компиляции.
+
 ## Проблема: работу и очистку нужно диагностировать одновременно
 
 Представим обработчик заказа: он открывает два ресурса, пытается записать данные, затем закрывает оба. Если запись завершилась неудачно и закрытие второго ресурса тоже бросило исключение, **какую ошибку должен увидеть вызывающий**? Если наружу выйдет только «не удалось закрыть соединение», мы потеряем причину, из-за которой сама операция не была выполнена.
@@ -21,7 +23,7 @@ interface Closeable extends AutoCloseable {
 }
 ~~~
 
-Эта схема **иллюстрирует сигнатуры**, а не предлагает копировать объявления стандартных библиотечных интерфейсов в проект. Действительные API: [AutoCloseable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html) и [java.io.Closeable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Closeable.html).
+Эта схема **иллюстрирует объявления методов с их throws-контрактами**, а не предлагает копировать объявления стандартных библиотечных интерфейсов в проект. Действительные API: [AutoCloseable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html) и [java.io.Closeable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Closeable.html).
 
 `AutoCloseable` допускает общий `Exception` в контракте `close()`. `Closeable` — более специальный интерфейс с `IOException`. **Но конкретный ресурс может сужать throws вплоть до пустого списка**. Компилятор анализирует выбранное объявление метода по статическому типу ресурса, а не «всегда заставляет ловить Exception, раз тип реализует AutoCloseable».
 
@@ -38,9 +40,11 @@ class CloseExamples {
 }
 ~~~
 
-Здесь `PlainResource.close()` не объявляет checked, и сам по себе TWR не требует `throws Exception`. А если написать `AutoCloseable resource = new PlainResource(); try (resource) { ... }`, статический тип ссылки — `AutoCloseable`, и checked-обязательство из его `close()` может понадобиться обработать, несмотря на фактический объект `PlainResource`. Не путайте виртуальный dispatch конкретной реализации и compile-time checking *объявленной* сигнатуры. См. [CORE-INTERFACES](interfaces.md), [CORE-INHERITANCE](inheritance.md), [JLS §11.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2).
+Здесь `PlainResource.close()` не объявляет checked, и сам по себе TWR не требует `throws Exception`. А если написать `AutoCloseable resource = new PlainResource(); try (resource) { ... }`, статический тип ссылки — `AutoCloseable`, поэтому в показанном простом TWR нужно обработать checked-исключение из `close()` (например, `catch (Exception e)`) или объявить `throws Exception` у окружающего метода, несмотря на фактический объект `PlainResource`. Компилятор проверяет объявленный throws-контракт по статическому типу, а при выполнении вызывается реализация `close()` фактического объекта. Throws clause не входит в сигнатуру метода в смысле JLS §8.4.2. См. [CORE-INTERFACES](interfaces.md), [CORE-INHERITANCE](inheritance.md), [JLS §11.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2).
 
 **Идемпотентность:** `AutoCloseable` сам по себе **не обещает** безопасного многократного `close()` и не запрещает runtime-ошибки; контракт `Closeable` требует, чтобы закрытие уже закрытого объекта не имело эффекта. Прикладная реализация может иметь дополнительные условия. Не следует бездумно закрывать один и тот же объект вручную и в TWR, не прочитав API конкретного ресурса.
+
+**Рекомендации API, не гарантии вызова close.** Документация [AutoCloseable.close()](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html#close()) советует реализации выбирать более узкий checked-контракт либо не бросать исключений, по возможности освобождать ресурс и отмечать его закрытым до бросания ошибки, избегать InterruptedException и исключений, подавление которых нарушает корректную работу программы. InterruptedException связан с политикой прерывания: см. [CORE-EXCEPTIONS](exceptions.md), раздел о флаге прерывания. Это рекомендации реализации, а не обещание успешного освобождения или обязательной идемпотентности AutoCloseable. В конечной пробе собственный Closeable с проверкой closed изменил состояние один раз при двух вызовах, а другой AutoCloseable сначала установил closed=true и затем бросил IOException. Эти наблюдения иллюстрируют выбранные реализации, не доказывают свойства всех ресурсов.
 
 **Видимость:** реализация публичного метода интерфейса требует совместимого доступа, поэтому `class R implements AutoCloseable { void close() {} }` (package-private) **не компилируется**. [JLS §9.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4).
 
@@ -86,6 +90,24 @@ close A
 Для одного ресурса `try (R r = ...) { body; }` по завершении защищённого блока вызывает `r.close()`, если результат ресурса не `null`, включая стандартные случаи исключения из тела. Если у API недопустимо повторное закрытие, TWR не делает его автоматически безопасным: **владение ресурсом** — отдельный вопрос проекта.
 
 [Норма JLS §14.20.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3). Реальный вывод показанного кода — **объяснённое ожидаемое наблюдение**, а не заявление, что этот Markdown-фрагмент уже прогнан на CI.
+
+### Один объект в двух записях заголовка
+
+~~~java
+class Count implements AutoCloseable {
+    int closes;
+    public void close() { closes++; }
+}
+// Внутри метода:
+Count a = new Count();
+Count b = a;
+try (a; b) {
+    System.out.println(a == b); // true
+}
+System.out.println(a.closes); // 2
+~~~
+
+TWR регистрирует записи заголовка, а не множество уникальных объектов: две ненулевые ссылки на один экземпляр означают две попытки close в обратном порядке при обычном выходе. Дедупликации по identity нет. Обёртка также может закрывать вложенный ресурс в своём close; если оба зарегистрированы, возможны повторные вызовы. Определите владельца и контракт повторного закрытия заранее; не добавляйте второй close ради формальной страховки.
 
 ## Ошибка работы плюс две ошибки close: primary и suppressed (ER-13, ER-19, ER-25)
 
@@ -149,6 +171,62 @@ close-A
 
 **Важная граница:** suppressed — не другое название `getCause()`. Поле cause обычно описывает *почему была создана новая ошибка* (например, исключение базы, обёрнутое сервисом), а suppressed — **дополнительные ошибки cleanup** при распространении уже существующей primary. Обе связи могут сосуществовать. Вывод и правила: [JLS §14.20.3.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3.1), [Throwable.getSuppressed API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html#getSuppressed()).
 
+### Что именно делает трансляция TWR
+
+Для одной объявленной ресурсной переменной JLS §14.20.3.1 задаёт следующую схему (имена служебных переменных условны, R и acquire/body — заполнители, не самостоятельный Java-файл):
+
+~~~java
+final R r = acquire();
+Throwable primary = null;
+try {
+    body();
+} catch (Throwable t) {
+    primary = t;
+    throw t;
+} finally {
+    if (r != null) {
+        if (primary != null) {
+            try {
+                r.close();
+            } catch (Throwable closeFailure) {
+                primary.addSuppressed(closeFailure);
+            }
+        } else {
+            r.close();
+        }
+    }
+}
+~~~
+
+Инициализатор находится до внутреннего try. Несколько записей переводятся во вложенные TWR: первый ресурс — внешний, последующие — внутренние. Поэтому ошибки при создании внутреннего ресурса и при его закрытии могут стать первичными для внешнего. Важен catch(Throwable), не catch(Exception): даже AssertionError из close при наличии отличного от него primary может быть подавлен. Однако сам addSuppressed тоже может завершиться исключением.
+
+~~~java
+import java.io.IOException;
+class SameFailure {
+    static class R implements AutoCloseable {
+        final IOException failure;
+        R(IOException failure) { this.failure = failure; }
+        public void close() throws IOException { throw failure; }
+    }
+    static void run() {
+        IOException same = new IOException("same");
+        IOException outer = new IOException("outer");
+        try (R a = new R(outer); R b = new R(same)) {
+            throw same;
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getCause() == same);
+            System.out.println(e.getSuppressed()[0] == outer);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+}
+~~~
+
+Здесь тело и внутренний close бросают **один и тот же объект**. API Throwable запрещает self-suppression: addSuppressed(same) на same бросает IllegalArgumentException. Она заменяет прежнюю причину при выходе из внутреннего TWR; внешний close затем добавляет свою отдельную ошибку к новой primary. На OpenJDK 21.0.12.1 фактически наблюдались causeSame=true и outer=true. Тип IAE — норма API; наличие именно same в cause этой IAE — наблюдение данной реализации, не обещание контракта. Если тело успешно, но оба close бросают один общий IOException, возникает аналогичная self-suppression при внешнем закрытии; в пробе снова IAE, causeSame=true.
+
+Если primary создан с отключённой suppression, допустимое отличное исключение из close игнорируется, primary продолжает распространяться, список остаётся пустым. Отключение не отменяет проверку self/null; см. [CORE-EXCEPTIONS](exceptions.md) и [Throwable.addSuppressed](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html#addSuppressed(java.lang.Throwable)). Отдельная проба с primary-подклассом Exception, вызвавшим super("disabled", null, false, true), подтвердила сохранение его identity и длину 0. Проба с AssertionError из close подтвердила сохранение этого объекта в suppressed обычного IOException. Таким образом, сохранение primary и полнота списка не безусловны: правила обычных примеров предполагают различные исключения, нормальное завершение регистрации и включённую suppression.
+
 ## Тело завершилось успешно, но оба вызова `close()` завершились ошибкой (ER-14, ER-25)
 
 В следующем коде **нет ошибки тела**, но есть два падающих закрытия:
@@ -169,9 +247,22 @@ class TwoCloseFailures {
 }
 ~~~
 
-Закрытие идёт B → A, значит **первая ошибка закрытия** `close-B` становится primary, а более поздняя `close-A` добавляется к ней как suppressed. Если падает только один `close()`, его ошибка будет primary, а suppressed-список обычно пуст — **не нужно выдумывать отсутствующую ошибку работы**.
+Закрытие идёт B → A, значит **первая ошибка закрытия** `close-B` становится primary, а более поздняя `close-A` добавляется к ней как suppressed. Если падает только один `close()` при нормальном теле, его ошибка будет primary; если у неё уже есть suppressed, они сохраняются. Не нужно выдумывать отсутствующую ошибку работы или считать список обязательно пустым.
 
 Это не гарантирует, что любой `close()` всегда кидает `IOException`: в демонстрационном классе так запрограммировано флагом `failOnClose`. Сама спецификация TWR задаёт **приоритет уже возникших ошибок**, не обещает, что ресурсы способны всегда закрыться безошибочно.
+
+### Вложенные suppressed и уже существующие связи
+В схеме root — первичная ошибка, prior — ранее добавленная подавленная ошибка, child — новая ошибка закрытия, deep — подавленная ошибка самого child. Стрелки показывают связи между объектами исключений по ссылкам, а не порядок выполнения.
+
+~~~text
+root
+  cause -> cause
+  suppressed[0] -> prior
+  suppressed[1] -> child
+      suppressed[0] -> deep
+~~~
+
+Такое дерево получилось в конечной пробе: root уже имел cause и prior до входа в TWR, тело бросало root, close бросал child с уже добавленным deep. После закрытия root.getSuppressed() содержит [prior, child], child.getSuppressed() — [deep]. Существующие элементы не очищаются, новые допустимые добавляются в конец по порядку регистрации, вложенные списки не распрямляются в общий массив. Cause остаётся независимой связью. При единственной ошибке close (тот же child и успешное тело) наружу вышел child со своим прежним deep. Это дерево конкретного примера, не требование ацикличности произвольных связей Throwable или полного стека.
 
 ## Ошибка инициализации второго ресурса (ER-15)
 
@@ -204,6 +295,34 @@ class InitFailure {
 
 Иными словами, **порядок частичной инициализации — слева направо, cleanup успешных предыдущих ресурсов — обратно**. Если бы B успешно создался, а C не создался, после ошибки C закрывались бы B, затем A. Новому ресурсу, инициализация которого так и не вернула объект, вызывать `close()` не на чем. Норма: [JLS §14.20.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3).
 
+### Неудачная обёртка и граница регистрации
+
+~~~java
+import java.io.IOException;
+class Wrapper implements AutoCloseable {
+    Wrapper(Count inner) throws IOException {
+        throw new IOException("wrapper");
+    }
+    public void close() { throw new AssertionError(); }
+}
+// Внутри метода, используя Count из примера выше:
+Count first = new Count();
+try (var w = new Wrapper(first)) {
+    throw new AssertionError("body");
+} catch (IOException e) {
+    System.out.println(first.closes); // 0
+}
+Count second = new Count();
+try (second; var w = new Wrapper(second)) {
+    throw new AssertionError("body");
+} catch (IOException e) {
+    System.out.println(second.closes); // 1
+}
+first.close(); // очистка тестового объекта владельцем
+~~~
+
+В первой форме инициализатор обёртки не вернул ресурс, а first не был зарегистрирован. TWR не умеет обнаруживать внутренние объекты, приобретённые как аргументы конструктора (например, new Wrapper(openInner())), или заранее открытые вне заголовка. Во второй форме second зарегистрирован отдельно и его close вызывается даже при ошибке следующей записи. В реальной реализации, которая берёт владение, неудачная инициализация должна быть failure-atomic: освобождать уже приобретённое при ошибке либо сохранять ответственность у вызывающего по явному контракту. При успешной обёртке, которая каскадно закрывает underlying, две записи могут вызвать повторное закрытие (см. пример alias). Не регистрируйте обе ссылки без проверки контракта владения и повторного close.
+
 ## null, внешняя ссылка и effectively final (ER-16)
 
 Ресурсное выражение может вычислиться в `null`, если это допустимо по типам; TWR **не вызывает** на нём `close()` и не бросает NPE просто из-за попытки закрыть null.
@@ -227,7 +346,7 @@ class ExistingResourceCases {
 }
 ~~~
 
-Начиная с Java 9 (включая Java 21) в заголовке TWR допустима уже объявленная локальная переменная или параметр, если он **final** или **effectively final**, точно определён при входе и имеет тип, совместимый с `AutoCloseable`. Необязательно заново объявлять `R r = ...` *внутри* скобок.
+В Java 21 разрешены два вида записи ресурса: объявление локальной переменной с инициализатором (ровно один declarator, разделение ресурсов через ;), доступное с Java 7, либо VariableAccess — ExpressionName или FieldAccess, добавленный в Java 9 для уже существующих переменных. Внешняя переменная (включая параметр) должна быть final или effectively final и definitely assigned до использования; поле должно быть final и definitely assigned. Тип ресурса должен быть подтипом AutoCloseable. Объявленная в заголовке переменная неявно final, её область видимости включает последующие записи и тело try, но не внешний catch/finally. См. [JLS §14.20.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3), [CORE-FUNCTIONS](functions.md) (захват ссылок и effectively final).
 
 ~~~java
 class Reassignment {
@@ -241,9 +360,31 @@ class Reassignment {
 
 Переопределённая ссылка перестаёт быть effectively final, даже если ресурсы по отдельности реализуют AutoCloseable. Это не означает, что внутреннее состояние **самого объекта** должно быть неизменяемым. `final` ограничивает переназначение **переменной**, а не делает объект «immutable». О различиях типов/ссылок: [CORE-TYPES](types.md) и [CORE-PARAMS](parameters.md).
 
+~~~java
+class Holder {
+    final Count field = new Count();
+}
+class FieldCase {
+    static int evaluations;
+    static Holder receiver(Holder h) {
+        evaluations++;
+        return h;
+    }
+    static void run() {
+        Holder h = new Holder();
+        try (receiver(h).field) {
+            System.out.println(evaluations); // 1
+        }
+        System.out.println(h.field.closes); // 1
+    }
+}
+~~~
+
+Для внешнего VariableAccess трансляция сначала сохраняет вычисленную ссылку в новой final-переменной. Receiver выражения receiver(h).field вычисляется один раз при регистрации, не ещё раз при close. Простой h.field также допустим. Произвольное выражение try(get()) не является VariableAccess, но try(var r = get()) допустимо при совместимом типе и обработке checked. Реальные отдельные отказы javac: non-final field и переназначенный parameter (expr.effectively.final.var), неинициализированная переменная (var.might.not.have.been.initialized), присваивание объявленной в заголовке (try.resource.may.not.be.assigned), ссылка на неё в finally (cant.resolve.location), голый вызов (expr.needs.var), объявление без = и два declarator через запятую (синтаксическая диагностика). Вывод `1` для счётчика в `FieldCase.run()` предполагает один вызов при начальном `evaluations == 0`; повторные вызовы без сброса накапливают значение. В фактической временной пробе счётчик `eval` явно сброшен в 0: поле и receiver дали по одному close, receiver вычислен один раз. Внешняя переменная сохраняет свою обычную область видимости; close не обнуляет её автоматически.
+
 **Практическая ловушка:** внешний объект уже существовал до TWR, но TWR его **закроет**; другие ссылки на этот же объект после блока могут указывать на закрытое состояние. Это вопрос *владения временем жизни*, не «временной копии» и не передачи объекта по значению.
 
-## Расширенная форма TWR: `catch` и `finally` выполняются после закрытия (ER-17)
+## Расширенная форма TWR: `catch` и `finally` выполняются после попыток закрытия (ER-17)
 
 Форма `try (resource) { body } catch (...) { ... } finally { ... }` сочетает автоматическое закрытие с обычными обработчиками. Важно правильно назвать последовательность:
 
@@ -263,9 +404,9 @@ class Extended {
 }
 ~~~
 
-Сначала отрабатывают ресурсные инициализаторы, затем тело, затем закрытие, **и только после этого** внешний `catch` (если есть подходящее исключение) и `finally`. Если B не создался, ошибка инициализации может попасть во внешний catch **после** закрытия A. Если тело успешно, но `close()` упал, catch может получить именно ошибку закрытия. «Catch обрабатывает только ошибки body» — неверно. [JLS §14.20.3.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3.2).
+Сначала выполняются ресурсные инициализаторы, затем (при их успехе) тело, затем предусмотренные трансляцией попытки закрытия уже зарегистрированных ненулевых ресурсов. После завершения внутреннего TWR внешний catch (при подходящем исключении) и finally работают по правилам обычного try. Если B не создался, ошибка инициализации может попасть во внешний catch после попытки закрытия A. Если тело успешно, но close упал, catch может получить именно ошибку закрытия. В конечной пробе close выставил флаг попытки/закрытия своей реализации и бросил IOException; catch и finally наблюдали этот флаг. Это факт вызова и завершения попытки, не гарантия освобождения реального ресурса. Если close не завершится, последующий управляющий поток может не наступить. «Catch обрабатывает только ошибки body» неверно. [JLS §14.20.3.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3.2).
 
-**Граница у примера:** `Traced.close()` статически объявляет `IOException`, поэтому даже если данный экземпляр создан с `false` и фактически не бросает, catch IOException остаётся допустимым — компилятор учитывает **сигнатуру**, не исследует флаг экземпляра.
+**Граница у примера:** `Traced.close()` статически объявляет `IOException`, поэтому даже если данный экземпляр создан с `false` и фактически не бросает, catch IOException остаётся допустимым — компилятор учитывает **объявленный throws-контракт**, не исследует флаг экземпляра.
 
 ## Почему TWR не равно finally { close(); } (ER-10, ER-13)
 
@@ -290,7 +431,27 @@ class Manual {
 
 Аналогично: если в теле TWR вычисляется `return 67;`, затем close бросает исключение, то нормального возврата **не будет**, потому что очистка не завершилась нормально. Если close прошёл успешно, ранее вычисленный результат возвращается. [JLS §14.20.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.2), [§14.20.3.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3.1).
 
-## Проверяемое исключение из `close()`: какую сигнатуру учитывает компилятор (ER-18, ER-23)
+### Return, break и continue
+
+~~~java
+static int value(Count r) {
+    try (r) { return 67; }
+}
+// Внутри метода:
+Count a = new Count();
+for (int i = 0; i < 1; i++) {
+    try (a) { break; }
+}
+Count b = new Count();
+for (int i = 0; i < 1; i++) {
+    try (b) { continue; }
+}
+System.out.println(a.closes + "," + b.closes); // 1,1
+~~~
+
+При нормальном close сохраняется уже подготовленная причина abrupt completion (return, break, continue). Если причина не throw, служебная primary остаётся null; при исключении close его ошибка заменяет прежнюю причину. В отдельных конечных пробах return дал 67 и счётчик1; при падающем close вместо return распространился тот же IOException("close"). Для break и continue получены счётчики1,1; при падающем close каждый переход заменён IOException. Не существует объекта Throwable для подавления самого return/break/continue; никакого автоматического suppressed для этих причин. Если была причина throw, действует другая ветвь трансляции выше. См. [CORE-EXCEPTIONS](exceptions.md) о причинах R/S и checked-анализе finally.
+
+## Проверяемое исключение из `close()`: какое объявление close учитывает компилятор (ER-18, ER-23)
 
 При использовании TWR компилятор проверяет возможные checked исключения **как из инициализации, так и из тела и закрытия**. Типовая ошибка: «в теле нет throw, значит ничего не нужно ловить».
 
@@ -314,15 +475,52 @@ class CheckedClose {
 
 Если реализатор `AutoCloseable.close()` пытается сузить видимость, код не компилируется; если переопределяющий метод пытается **расширить** checked `throws` относительно контракта интерфейса, компилятор тоже отвергнет его. В данном случае `AutoCloseable.close() throws Exception` достаточно широк, однако потомки конкретных классов могут иметь **более узкий** родительский контракт. См. [CORE-EXCEPTIONS](exceptions.md) и [CORE-INHERITANCE](inheritance.md).
 
+### Статическая обязанность даже при null и составном типе
+
+~~~java
+static void allowed() throws Exception {
+    AutoCloseable r = null;
+    try (r) {
+        System.out.println("body");
+    }
+}
+~~~
+
+Удаление throws Exception здесь отвергается: javac учитывает объявление close статического типа AutoCloseable, даже если во время выполнения ссылка заведомо null и close не будет вызван. Проверяется не конкретное значение, а тип ресурса и возможные checked-исключения из close согласно JLS §11.2.2.
+
+~~~java
+import java.io.IOException;
+import java.sql.SQLException;
+interface A extends AutoCloseable {
+    void close() throws IOException;
+}
+interface B extends AutoCloseable {
+    void close() throws SQLException;
+}
+class Both implements A, B {
+    int closes;
+    public void close() { closes++; }
+}
+class Intersection {
+    static <T extends A & B> void use(T r) {
+        try (r) { System.out.println(r != null); }
+    }
+}
+~~~
+
+У T учитываются совместимые унаследованные методы: checked-исключение должно быть разрешено обоими контрактами close. Для несвязанных IOException и SQLException общего разрешённого checked-типа нет, поэтому use не требует checked throws из close. В пробе вызов с Both дал один close. Это конкретный совместимый набор абстрактных методов, не правило объединять throws всех bounds в один широкий список, не гарантия отсутствия unchecked и не вывод о поведении любого объекта. См. [CORE-INTERFACES](interfaces.md), [JLS §15.12.2.5](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.2.5), [JLS §11.2.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-11.html#jls-11.2.2). Отдельные отрицательные компиляции подтвердили недопустимость package-private close и расширение throws Exception при реализации Closeable.close.
+
 ## Стек вызовов, cause, suppressed: три разных диагностических вопроса (ER-19, ER-25)
 
 | Диагностика | На какой вопрос отвечает | Пример |
 |---|---|---|
-| Stack trace | В какой точке было создано/брошено исключение и через какие вызовы оно прошло | Стек `IOException("work")` |
+| Stack trace | Снимок стека, обычно при создании Throwable, а не история всех последующих throw | Стек `IOException("work")`; повторный throw сам не обновляет его |
 | `getCause()` | Какая **предыдущая ошибка была обёрнута** в новую | `IllegalStateException("service", io)` |
 | `getSuppressed()` | Какие **дополнительные ошибки** были зарегистрированы при сохранении основной причины | `work` + `close-B`/`close-A` |
 
 Один Throwable может иметь и cause, и suppressed. `getSuppressed()` возвращает массив; сами Throwable-объекты сохраняют собственные stack trace/cause. Но suppressed не обязаны быть исключительно «файловыми ошибками закрытия»: API предоставляет публичный `addSuppressed()` и позволяет добавлять их вручную. При отключённой suppression на уровне `Throwable` добавление не будет наблюдаться в обычном списке, поэтому нельзя обещать универсальную полноту diagnostics при любом subclass/конструкторе. [Throwable API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html).
+
+Как показано в [CORE-EXCEPTIONS](exceptions.md), повторный throw того же объекта не обновляет trace автоматически; fillInStackTrace/setStackTrace могут менять записываемый стек, а writableStackTrace=false даёт пустой массив и отключает запись. Не обещайте точное место throw, полную цепочку кадров или все вторичные ошибки в любом Throwable.
 
 **Почему не нужно подавлять все исключения cleanup?** Даже если primary более важен, подавленные сведения позволяют увидеть вторичные сбои, которые объясняют утечки/невозможность корректно завершить операцию. Передача только `primary.getMessage()` в мониторинг теряет диагностический контекст. Это инженерный аргумент за вывод полной цепочки с suppressed, не языковое требование конкретного логгера.
 
@@ -346,7 +544,7 @@ class CheckedClose {
 | ER-14 · P0 | Только close failures: первый при обратном закрытии primary |
 | ER-15 · P0 | Ошибка инициализации B закрывает уже созданный A |
 | ER-16 · P0 | null, effectively final, внешняя ссылка |
-| ER-17 · P0 | Extended TWR: catch/finally после закрытия |
+| ER-17 · P0 | Extended TWR: catch/finally после попыток закрытия |
 | ER-18 · P0 | Close-throws checked и override; [CORE-EXCEPTIONS](exceptions.md) |
 | ER-19 · P1 | Cause vs suppressed; ручное добавление и отключение suppression (ссылка на API) |
 | ER-20–ER-22 · P1 | [CORE-EXCEPTIONS](exceptions.md): override, throw null, Error/interruption |
@@ -365,7 +563,29 @@ class CheckedClose {
 
 Короткие самостоятельные фрагменты (включая `Traced`, от которого зависят последующие демонстрации) читаются **совместно**, но их нельзя без подготовки скопировать в один файл с несколькими публичными объявлениями и импортами. **Отдельные N01–N20** из [G1 §6](../../docs/plans/CORE-EXCEPTIONS-RESOURCES.md) — двадцать самостоятельных ожидаемых ошибок компиляции, а не часть позитивного сценария. **Проверяемая общая трасса:** [CORE-EXCEPTIONS + CORE-RESOURCES — README, Java source, P01–P20 stdout и verify.sh](../../examples/core/exceptions-resources/README.md). На конкретных `R implements AutoCloseable` и общем журнале P09–P13 показывают порядок open A→B / close B→A, body primary `work` с suppressed `[close-B, close-A]`, close-only primary `close-B` и ошибку `init-B`, после которой уже созданный A закрывается. P14–P16 показывают null, effectively-final и extended `finally`. **20 наблюдений — одна программа, не 20 независимых тестов.** Негативные N01–N20 из G1 остаются отдельными. Согласование и фактические команды автора runnable: [Issue #104](https://github.com/Melchiorius/backend-interview-labs/issues/104).
 
-**Авторские проверки роли 02 (OpenJDK/javac 21.0.12.1, Linux):** 20/20 отдельных N01–N20 из G1 §6 заново проверены на ожидаемые **категории** ошибок компиляции командой `javac --release 21`; это временные исходники, не CI. Дополнительно локально собран отдельный компактный smoke с `Traced implements AutoCloseable` и общим `StringBuilder`, выполнены `javac --release 21` и `java`: **10 строк одного запуска**, включая порядок `open-A;open-B;body;close-B;close-A;`, primary `work` плюс suppressed `[close-B, close-A]`, primary `close-B` плюс suppressed `[close-A]`, `init-B` плюс suppressed `[close-A]`, `null`, existing resource и extended `finally`. Это **авторская независимая компоновка**, не автоматическое извлечение всех блоков этой статьи и не обещание P01–P20 §5. Пробная компиляция того же smoke с `-Xlint:all -Werror` **не прошла** из-за предупреждений `[try]` о намеренно неиспользуемых в теле ресурсных ссылках и `[finally]` о замещающем abrupt completion; под обычным `--release 21` компиляция и запуск прошли. Такие warnings полезны для обучения и не являются ложной «ошибкой TWR». **NOT RUN:** автоматическая компиляция всех Markdown snippets, GUI Obsidian/IntelliJ, другие JDK/JVM, живой JDBC, bytecode/JIT/perf и реальная файловая система. Проверка общего `ExceptionResourceProbes.java` ролью 03: Debian OpenJDK/javac 21.0.12.1, `bash examples/core/exceptions-resources/verify.sh`, успешные `javac --release 21`/`java`/`diff -u` и **20/20 строк P01–P20**. Это фактическая проверка исходных code/stdout/script blobs роли 03, а не автоматический прогон Markdown snippets. CI на окончательном интегрированном HEAD фиксируется в PR #105 отдельно.
+**Исторические авторские проверки роли 02 при первоначальной публикации (OpenJDK/javac 21.0.12.1, Linux):** 20/20 отдельных N01–N20 из G1 §6 заново проверены на ожидаемые **категории** ошибок компиляции командой `javac --release 21`; это временные исходники, не CI.
+
+Дополнительно локально собран отдельный компактный smoke с `Traced implements AutoCloseable` и общим `StringBuilder`, выполнены `javac --release 21` и `java`: **10 строк одного запуска**, включая порядок `open-A;open-B;body;close-B;close-A;`, primary `work` плюс suppressed `[close-B, close-A]`, primary `close-B` плюс suppressed `[close-A]`, `init-B` плюс suppressed `[close-A]`, `null`, existing resource и extended `finally`. Это **авторская независимая компоновка**, не автоматическое извлечение всех блоков этой статьи и не обещание P01–P20 §5.
+
+Пробная компиляция того же smoke с `-Xlint:all -Werror` **не прошла** из-за предупреждений `[try]` о намеренно неиспользуемых в теле ресурсных ссылках и `[finally]` о замещающем abrupt completion; под обычным `--release 21` компиляция и запуск прошли. Такие warnings полезны для обучения и не являются ложной «ошибкой TWR».
+
+**NOT RUN при первоначальной авторской проверке:** автоматическая компиляция всех Markdown snippets, GUI Obsidian/IntelliJ, другие JDK/JVM, живой JDBC, bytecode/JIT/perf и реальная файловая система.
+
+**Историческая проверка роли 03 при первоначальной публикации.** Общий `ExceptionResourceProbes.java`: Debian OpenJDK/javac 21.0.12.1, `bash examples/core/exceptions-resources/verify.sh`, успешные `javac --release 21`/`java`/`diff -u` и **20/20 строк P01–P20**. Это фактическая проверка исходных code/stdout/script blobs роли 03, а не автоматический прогон Markdown snippets. Первоначальная публикация прошла через [PR #105](https://github.com/Melchiorius/backend-interview-labs/pull/105); история его CI относится к тому HEAD, а не к новым проверкам ниже.
+
+**Дополнительные проверки D-A12b (первоначальная доработка статьи, роль 02).** В [задаче #339](https://github.com/Melchiorius/backend-interview-labs/issues/339) и [фактическом отчёте 02 #7212873432](https://github.com/Melchiorius/backend-interview-labs/issues/339#issuecomment-7212873432) приведены полные исходники, команды и результаты на Debian OpenJDK/javac 21.0.12.1.
+
+- `Probe.java`: `javac --release 21 -encoding UTF-8 -XDrawDiagnostics -Xlint:all -Werror`, затем JVM с явными UTF-8 параметрами. Оба кода завершения 0; stdout компилятора и stderr обоих процессов пусты, stdout JVM — 20 строк.
+- `Warning.java`: те же параметры без -Werror, компиляция и JVM завершились с кодом 0. Одно предупреждение try.resource.not.referenced, stdout JVM — body.
+- 11 изолированных отрицательных исходников: те же параметры без -Werror, каждый завершился с кодом 1, stdout пуст. Broad дополнительно предупреждает о потенциальном InterruptedException, Two — синтаксические ошибки; JVM не запускалась.
+
+Это отдельные конечные проверки N14–22, не исторические 20 негативов G1, не пробы A12a (15 авторских/17 независимых) и не 24 ожидаемых отклонения других проверок CI. Все Markdown-блоки автоматически не исполнялись.
+
+**Регрессия общего runner при первоначальной доработке D-A12b (роль 02).** На трёх точных восстановленных входах (исходник, скрипт, эталон; не полный клон) с LC_ALL=C.UTF-8, после сверки Git SHA и mode, выполнены bash verify.sh и два cmp (actual.stdout против эталона, печатный вывод против эталона с маркером), exits0/0/0, внешний stderr пуст. 20 строк/539 байт actual и fixture совпадают, SHA-256 c52f0f1b8a79641887f362ae7abc311e41925cea1de404664fd0673bb1a8b9f8; stdout21 строка/584 байта, SHA-256 ffd02db971b4ad8d35a37a24ea466ae31cd14f74d7ff25b61b258621d2651a78, последняя строка CHECK PASSED: stdout matches expected.stdout. Скрипт сам выполняет javac --release 21, одну JVM, diff -u и печать; не проверяет отдельно strict lint, stderr или hash. Это одна программа/20 наблюдений. Это результаты первоначального локального прогона 02, а не повторный запуск при редактуре G3. Новые временные пробы не включены в runner и CI.
+
+**Отдельная интеграционная проверка N23 (роль 03).** В [отчёте 03 #7216580176](https://github.com/Melchiorius/backend-interview-labs/pull/340#issuecomment-7216580176) и README приведены отдельные уточнения измеряемых свойств исходной трассы. На OpenJDK/javac 21.0.12.1 Negative.java с checked-вызовом без обработки отвергнут компилятором (один отрицательный исходник, без -Werror, код 1); Positive.java с обработкой и проверками идентичности и отсутствия cause до и после addSuppressed строго скомпилирован с -Werror и выполнен (один положительный исходник, коды 0/0, три строки stdout, 93 байта). Роль 03 также отдельно выполнила неизменённый runner на трёх точных восстановленных входах: исходные 20 строк и маркер совпали. Это самостоятельные временные проверки, не новые строки P01–P20, не исполнение этих проб в CI и не окончательная приёмка пакета.
+
+Не проверены все inline-блоки, GUI/внешние ссылки, другие JVM/ОС, живой IO/JDBC, стресс, принудительное завершение процесса.
 
 **Где тот же принцип нужен Stream API:** [CORE-STREAM-ADV: `BaseStream.close()`, `onClose()` и suppressed-ошибки обработчиков](stream-advanced.md). Терминальная операция Stream сама по себе не обязана закрывать поток; если источник удерживает внешний ресурс, ответственность за его закрытие остаётся у вызывающего кода. Сравните этот контракт с try-with-resources выше; это не обещание автоматического `commit`/`rollback` или завершения внешнего IO.
 
