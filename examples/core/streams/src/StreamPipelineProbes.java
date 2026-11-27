@@ -35,7 +35,7 @@ public class StreamPipelineProbes {
         show("P17", failure(() -> Stream.of("a").collect(Collectors.toMap(x -> x, x -> null))));
         Map<String, List<Integer>> groups = Stream.of(1, 2, 3, 4).collect(Collectors.groupingBy(x -> x % 2 == 0 ? "even" : "odd"));
         show("P18", new TreeMap<>(groups));
-        show("P19", Stream.of(1, 2, 3, 4).collect(Collectors.partitioningBy(x -> x % 2 == 0)));
+        show("P19", new TreeMap<>(Stream.of(1, 2, 3, 4).collect(Collectors.partitioningBy(x -> x % 2 == 0))));
         show("P20", IntStream.of(2, 3, 5).sum());
         show("P21", IntStream.rangeClosed(1, 3).boxed().toList());
         Stream<Integer> consumed = Stream.of(1, 2);
