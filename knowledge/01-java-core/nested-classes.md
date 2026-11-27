@@ -13,7 +13,7 @@
 | Форма | Где объявляется | Есть имя типа в исходном коде | Требуется охватывающий экземпляр | Характерная особенность |
 |---|---|---|---|---|
 | **Static nested member** | В теле класса с `static` | Да | Нет | Упоминается как `Outer.Nested` |
-| **Non-static inner member** | В теле класса, если тип не явный и не неявный static | Да | Да, при обычном создании | `outer.new Inner()`, `Outer.this` |
+| **Non-static inner member** | В теле класса, если класс ни явно, ни неявно static | Да | Да, при обычном создании | `outer.new Inner()`, `Outer.this` |
 | **Local class** | В блоке, например внутри метода | Да, но область видимости локальная | Зависит от контекста объявления | Может захватывать effectively-final локальные переменные |
 | **Anonymous class** | В выражении `new Parent(...) { ... }` | Нет собственного имени в исходном коде | Собственный — от контекста; отдельно возможен охватывающий экземпляр для суперкласса | Одновременно определяет класс и создаёт объект |
 
@@ -147,7 +147,7 @@ class Bad {
 
 Разделяйте две независимые вещи: статический **член внутри типа** и объявление **самого локального типа**. См. [JLS §8.1.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.3), [§14.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.3) и [инициализацию классов](initialization.md).
 
-Допустимость объявления static-члена не разрешает его телу автоматически читать instance-поле внешнего класса, захваченную local variable или type parameter внешнего generic class. В отдельном static-методе Inner обращение `return x;` к внешнему instance-полю без receiver запрещено; явный подходящий объект позволяет обратиться к доступному полю. В static-методе local class нельзя обращаться к captured local, а `static T f()` внутри inner класса generic Outer<T> не может использовать параметр T внешнего класса (нужен собственный параметр метода или другой допустимый тип). В отдельных пробах OuterStatic, CaptureStatic, TypeStatic javac отклонил эти обращения с non-static.cant.be.ref; LocalStatic с модификатором static у local class дал две синтаксические диагностики. Это не запрет static-членов в Java 21.
+Допустимость объявления static-члена не разрешает его телу автоматически читать instance-поле внешнего класса, захваченную local variable или type parameter внешнего generic class. В отдельном static-методе Inner обращение `return x;` к внешнему instance-полю без receiver запрещено; явный подходящий объект позволяет обратиться к доступному полю. В static-методе local class нельзя обращаться к captured local, а `static T f()` внутри inner класса generic `Outer<T>` не может использовать параметр T внешнего класса (нужен собственный параметр метода или другой допустимый тип). В отдельных пробах OuterStatic, CaptureStatic, TypeStatic javac отклонил эти обращения с non-static.cant.be.ref; LocalStatic с модификатором static у local class дал две синтаксические диагностики. Это не запрет static-членов в Java 21.
 
 ## 4. Local class: имя действительно только в локальной области
 
@@ -183,7 +183,7 @@ Effectively final — не проверка фактически одинако�
 
 Отдельное условие — **определённость присваивания** (*definite assignment*): `int x; Supplier<Integer> s = () -> x; x = 67;` не компилируется, даже если вызвать `s.get()` позднее. Компилятор проверяет определённость присваивания в контексте лямбды, а не угадывает будущий порядок вызовов. См. [JLS §16](https://docs.oracle.com/javase/specs/jls/se21/html/jls-16.html) и [разбор lambda capture](functions.md).
 
-Локальное имя класса доступно в оставшейся части непосредственно охватывающего блока, начиная с собственного объявления и включая его тело: в Probe local class L объявляет `L self(){return this;}`. За закрывающей скобкой блока имя недоступно: отрицательный LocalScope дал cant.resolve.location. Это вопрос lexical scope, а не модификаторов доступа. В Inner метода `int shadow(int id){return id+this.id+Probe.this.id;}` параметр 69, поле Inner 68 и поле Probe 67 различаются; результат 204 проверен. См. [доступ](access.md) и [JLS §6.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.3).
+Локальное имя класса доступно в оставшейся части непосредственно охватывающего блока, начиная с собственного объявления и включая его тело: в Probe local class L объявляет `L self(){return this;}`. За закрывающей скобкой блока имя недоступно: отрицательный LocalScope дал cant.resolve.location. Это вопрос lexical scope, а не модификаторов доступа. В методе Inner `int shadow(int id){return id+this.id+Probe.this.id;}` параметр 69, поле Inner 68 и поле Probe 67 различаются; результат 204 проверен. См. [доступ](access.md) и [JLS §6.3](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.3).
 
 ### Захват ссылки не замораживает объект
 
