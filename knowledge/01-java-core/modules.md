@@ -4,11 +4,13 @@
 
 **Версия:** Java SE 21, нормативные [JLS §7.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.7), [JLS §6.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-6.html#jls-6.6), [Module API 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Module.html), [javac 21](https://docs.oracle.com/en/java/javase/21/docs/specs/man/javac.html), [java launcher 21](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html). Принятый [план G1](../../docs/plans/CORE-MODULES-CLASSLOADER.md) содержит исходники, локальный transcript и изолированные negative; история проверок и дополнительные эксперименты разобраны в §9.
 
+**Как воспроизводить примеры.** Каждый `module-info.java` и каждый Java-файл с указанным путём размещайте отдельно, в каталоге соответствующего модуля под `--module-source-path`. Не вставляйте многофайловый листинг целиком в один файл. Для исходной лаборатории используйте полные деревья G1 и общий runner; дополнительные графы, альтернативные дескрипторы и фрагменты Main/Query относятся к отдельным временным вариантам. Полные исходники, пути, замены и команды этих проб приведены в [приложении A/B к отчёту 02](https://github.com/Melchiorius/backend-interview-labs/issues/342#issuecomment-7217861072).
+
 **Адресное покрытие:** **JM-01–JM-17 = 17 P0**, **JM-18–JM-23 = 6 P1**, **JM-24–JM-27 = 4 P2**: **27/27 ID**. Вместе с [CORE-CLASSLOADER](classloaders.md) — **53/53 (33 P0, 12 P1, 8 P2)**. P1/P2 помечены границами, P2 не объявлены experimentally verified. Связанные существующие материалы: [правила доступа](access.md), [инспекция Reflection](reflection.md), [аннотации](annotations.md), [инициализация](initialization.md), [определяющий загрузчик](classloaders.md).
 
 ## 1. Что такое модуль: от исходников к графу (JM-01, JM-02, JM-11, JM-17)
 
-*Пакет* группирует типы в пространстве имён. **Модуль JPMS** объединяет пакеты и задаёт границы зависимостей и доступа. Именованный (named) модуль бывает явным или автоматическим. У явного модуля есть декларация `module-info.java`, которую javac переводит в `module-info.class`; автоматический получает дескриптор при обнаружении подходящего JAR без явной декларации. В обоих случаях `ModuleDescriptor` описывает конфигурацию, а `java.lang.Module` представляет уже созданный runtime-модуль. Неназванный (unnamed) модуль не имеет имени и дескриптора, подробнее §5. Имя пакета само по себе не является глобальной идентичностью типа или указанием на модуль. См. [ModuleDescriptor API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/module/ModuleDescriptor.html), [CORE-CLASSLOADER](classloaders.md).
+*Пакет* группирует типы в пространстве имён. **Модуль JPMS** объединяет пакеты и задаёт границы зависимостей и доступа. Именованный (named) модуль бывает явным или автоматическим. У явного модуля есть явно заданный дескриптор, обычно полученный компиляцией `module-info.java` в `module-info.class`. Для запуска уже скомпилированного именованного модуля исходный файл не нужен; автоматический получает дескриптор при обнаружении подходящего JAR без явной декларации. В обоих случаях `ModuleDescriptor` описывает конфигурацию, а `java.lang.Module` представляет уже созданный runtime-модуль. Неназванный (unnamed) модуль не имеет имени и дескриптора, подробнее §5. Имя пакета само по себе не является глобальной идентичностью типа или указанием на модуль. См. [ModuleDescriptor API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/module/ModuleDescriptor.html), [CORE-CLASSLOADER](classloaders.md).
 
 Не смешивайте четыре понятия:
 - **Наблюдаемые (observable) модули:** кандидаты, доступные системе для поиска дескрипторов, с учётом режима и путей. Файл в произвольном каталоге не автоматически кандидат.
@@ -31,7 +33,7 @@ readability: m.client -> m.mid
 
 В этой конкретной конфигурации ребро transitive добавляет читаемость клиенту, не превращая все его зависимости в экспортируемые пакеты. Полные правила включают дополнительные условия; см. [java.lang.module — resolution](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/module/package-summary.html). 
 
-В компиляции нескольких модулей каждая единица имеет собственный дескриптор. Возьмём три настоящих модуля: `m.lib` с библиотекой; `m.mid` — промежуточный API; `m.client` — клиент. Это не три Gradle-подпроекта: здесь обсуждается **JPMS**, а инструменты сборки могут лишь подготовить нужные каталоги.
+В компиляции нескольких модулей каждая единица имеет собственный дескриптор. Возьмём три настоящих модуля: `m.lib` с библиотекой; `m.mid` — промежуточный API; `m.client` — клиент. Это не три Gradle-подпроекта: здесь обсуждается **JPMS**, а инструменты сборки могут лишь подготовить нужные каталоги. В следующем листинге показаны три отдельных файла-дескриптора, по одному на модуль.
 
 ~~~java
 // m.lib/module-info.java
@@ -80,7 +82,7 @@ java --module-path mods -m m.client/client.Main
 
 ### Когда transitive нужен самому API
 
-В историческом примере Bridge возвращает String: он не демонстрирует иностранный тип в возвращаемом значении. Рассмотрим отдельный граф lab.client → lab.bridge → lab.model. Модуль lab.model экспортирует model.api, lab.bridge экспортирует bridge.api. Клиент использует публичный метод Bridge.greeter(), тип результата объявлен в другом модуле.
+В историческом примере Bridge возвращает String: он не демонстрирует тип из другого модуля в объявлении возвращаемого типа. Рассмотрим отдельный граф lab.client → lab.bridge → lab.model. Модуль lab.model экспортирует model.api, lab.bridge экспортирует bridge.api. Клиент использует публичный метод Bridge.greeter(), тип результата объявлен в другом модуле.
 
 ~~~java
 // lab.model/model/api/Greeter.java
@@ -114,7 +116,7 @@ module lab.bridge { requires transitive lab.model; exports bridge.api; }
 module lab.client { requires lab.bridge; }
 ~~~
 
-В Java21 отдельная строгая компиляция трёх модулей и запуск клиента дали api=67. С обычным requires lab.model в bridge импорт Greeter клиентом отвергнут (does.not.read); javac также предупредил о публичной сигнатуре, выставляющей тип непрочитанной транзитивно зависимости (leaks.not.accessible.not.required.transitive). Два решения: transitive у bridge, если чужой тип — сознательная часть публичного API; либо явный requires lab.model у client, если клиент сам принимает прямую зависимость. Второй вариант в пробе компилировался без -Werror с предупреждением о прежнем API bridge, затем также напечатал api=67. Когда же Greeter используется только внутри bridge, метод возвращает int, а клиент не импортирует Greeter, обычный requires достаточен: строгая компиляция и вывод internal=67. Нет основания делать транзитивной каждую внутреннюю зависимость: это расширяет контракт и связывает клиентов с её типами. См. [CORE-INTERFACES](interfaces.md).
+В Java21 отдельная строгая компиляция трёх модулей и запуск клиента дали api=67. С обычным requires lab.model в bridge импорт Greeter клиентом отвергнут (does.not.read); отдельно javac предупредил, что публичный API экспортируемого пакета использует возвращаемый тип из модуля, зависимость от которого не объявлена через requires transitive (leaks.not.accessible.not.required.transitive). Это предупреждение о контракте API bridge, а не ошибка отсутствия readability именно у client. Возвращаемый тип не входит в сигнатуру метода в смысле [JLS §8.4.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.2). Два решения: transitive у bridge, если чужой тип — сознательная часть публичного API; либо явный requires lab.model у client, если клиент сам принимает прямую зависимость. Второй вариант в пробе компилировался без -Werror с предупреждением о прежнем API bridge, затем также напечатал api=67. Когда же Greeter используется только внутри bridge, метод возвращает int, а клиент не импортирует Greeter, обычный requires достаточен: строгая компиляция и вывод internal=67. Нет основания делать транзитивной каждую внутреннюю зависимость: это расширяет контракт и связывает клиентов с её типами. См. [CORE-INTERFACES](interfaces.md).
 
 **Другой отрицательный контроль `JM_N02`:** оставить модуль читаемым, но убрать `exports lib.api` (оставив лишь `opens lib.internal to m.client`). Диагностика верхнего уровня также `package.not.visible`, однако причина уже **not.exported**, то есть клиент читает модуль, но не получает пакет для компиляции. Это принципиально иное ограничение, требующее другого исправления.
 
@@ -172,7 +174,7 @@ java --module-path static/mods --add-modules m.opt -m m.consumer/consumer.Static
 
 ### Три состояния optional-модуля и два этапа отказа
 
-Уточним старую лабораторию новой временной парой lab.app (requires static lab.opt) и lab.opt (exports opt.api). Main сравнивает обнаружение дескриптора в переданном каталоге и наличие runtime-модуля в boot layer. В классе OptionalApi есть public static int value(), возвращающий 67. Ключевые строки Main:
+Уточним старую лабораторию новой временной парой lab.app (requires static lab.opt) и lab.opt (exports opt.api). Main сравнивает обнаружение дескриптора в переданном каталоге и наличие runtime-модуля в boot layer. В классе OptionalApi есть public static int value(), возвращающий 67. Ниже фрагмент внутри метода main класса Main, а не самостоятельный исходный файл:
 
 ~~~java
 var self = Main.class.getModule();
@@ -198,7 +200,7 @@ if (args.length > 1) {
 
 Без use все три JVM завершились с кодом 0. Само поле observable измеряет поиск именно по переданному каталогу, не все системные модули. Отдельно javac с отсутствующим lab.opt отказал module.not.found даже при requires static. При обычном requires lab.opt, скомпилированном при наличии зависимости, запуск без неё остановился до main: Error occurred during initialization of boot layer / FindException. В отличие от этого optional-вариант дошёл до конкретного обращения к классу и получил NoClassDefFoundError. Это наблюдение конечного графа, не универсальное обещание порядка загрузки/связывания классов; см. [CORE-CLASSLOADER](classloaders.md) и [CORE-EXCEPTIONS](exceptions.md).
 
-Директива `requires static transitive lab.opt;` тоже допустима по грамматике Java 21: compile-time зависимость обязательна, transitive readability вычисляется для разрешённого target; runtime static само по себе не добавляет его к корням. Совместную форму здесь не компилировали отдельно. Наличие optional API в публичной сигнатуре не делает безопасным его вызов при отсутствии модуля.
+Директива `requires static transitive lab.opt;` тоже допустима по грамматике Java 21: compile-time зависимость обязательна, transitive readability вычисляется для разрешённого target; runtime static само по себе не добавляет его к корням. Совместную форму здесь не компилировали отдельно. Наличие типа из optional-модуля в публичном контракте API не делает безопасным его вызов при отсутствии модуля.
 
 ## 4. exports, qualified exports, opens — три разных вопроса (JM-05–JM-11, JM-13; JM-19 P1)
 
@@ -307,7 +309,7 @@ jar --describe-module --file auto/demo-lib-1.0.jar
 jar --describe-module --file auto/renamed-2.0.jar
 ~~~
 
-Обе команды describe-module дали exit 0; точный stdout (по очереди):
+Обе команды describe-module в авторской пробе 02 завершились с кодом 0. Ниже показаны содержательные строки stdout по очереди; завершающая пустая строка каждого вывода опущена. Точные выводы содержат соответственно 125 и 131 байт, с двумя LF в конце каждого. SHA-256: для имени из файла — `5abebda05e43322480783e2e769e6c1525e6bf94695819c275ac5ee4af8e19fa`, для имени из manifest — `69905c2c1fac8974011355fcb00851aa4ac6de0658e4d5bd7d6628a6cdf41ca3`. Полные байтовые представления и контрольные суммы приведены в [приложении C к отчёту 02](https://github.com/Melchiorius/backend-interview-labs/issues/342#issuecomment-7217883834).
 
 ~~~text
 No module descriptor found. Derived automatic module.
@@ -366,7 +368,7 @@ ordinary classpath=false,true
 
 Это реальный контрпример универсальному требованию явного module-info.java, --module-path и -m для любого опыта с JPMS. Оба JAR обнаружены по отдельности, их automatic descriptors найдены, но named runtime-модули не созданы в boot layer и Lib на classpath относится к unnamed module. Не делайте из этого вывод, что запуск named consumer с этими JAR проверен, что любой JAR годится для automatic module или что слои создаются автоматически при одном поиске. Имя из manifest стабильно относительно переименования файла при неизменном manifest, но не гарантирует неизменность API. Без него имя и версия выводятся из имени JAR; возможны некорректные имена, class-файлы в неназванном пакете, проблемы с service declarations и конфликтами. Нормативное правило ModuleFinder и его FindException, не универсальный эксперимент над всеми JAR.
 
-**Типовая ошибка на интервью:** «У нас два модуля, значит JVM создала два classloader»; ответ — нет, JPMS регулирует граф модулей, а **defining loader + binary name** задают идентичность класса. Это две оси, не одно отношение.
+**Учебная ловушка:** «У нас два модуля, значит JVM создала два classloader»; ответ — нет, JPMS регулирует граф модулей, а **defining loader + binary name** задают идентичность класса. Это две оси, не одно отношение.
 
 ## 6. uses/provides: descriptor проверяет контракты, но не запускает SPI (JM-16; JM-20 P1)
 
@@ -476,16 +478,16 @@ missing-uses=ServiceConfigurationError
 
 ### Самопроверка: предскажите ошибку и исправьте её
 
-Пусть модуль app требует только bridge, bridge обычным requires зависит от model и экспортирует свой API, который возвращает model.api.Greeter. model экспортирует model.api и открывает model.hidden только bridge. В Main клиент импортирует Greeter и хочет прочитать приватное поле Hidden через reflection. Есть ещё requires static addon у app, а addon лежит на module path, но не добавлен к корням и ниоткуда иначе не разрешается.
+Пусть из обязательных зависимостей приложения модуль app объявляет только requires bridge, bridge обычным requires зависит от model и экспортирует свой API, который возвращает model.api.Greeter. model экспортирует model.api и открывает model.hidden только bridge. В Main клиент импортирует Greeter и хочет прочитать приватное поле Hidden через reflection. У app есть также requires static addon; addon наблюдаем при компиляции, поэтому эта зависимость может быть проверена компилятором. При запуске addon лежит на module path, но не входит в корни, а кроме static-ребра нет никакой причины для его разрешения.
 
 1. Компилируется ли импорт Greeter? Если нет, какой минимальный ремонт? Какие два способа отличаются контрактом API?
 2. После исправления читаемости разрешено ли из app deep reflection в model.hidden? Достаточно ли простого exports?
 3. Будет ли addon разрешён только из-за присутствия JAR? Что если Main вызывает его API?
 
 > [!note]- Разбор
-> 1. Нет: при обычном requires bridge→model отсутствует readability app→model. Явный requires model у app или requires transitive model у bridge добавляет нужную читаемость. Если foreign type — часть публичной сигнатуры bridge, transitive выражает этот контракт, а не скрытую реализацию; model.api уже экспортирован.
+> 1. Нет: при обычном requires bridge→model отсутствует readability app→model. Явный requires model у app или requires transitive model у bridge добавляет нужную читаемость. Если тип из другого модуля — часть публичного контракта API bridge, transitive выражает этот контракт, а не скрытую реализацию; model.api уже экспортирован.
 > 2. Нет: qualified opens адресован bridge, не app. Нужен соответствующий opens для app при соблюдении остальных условий reflection; exports сам по себе не открывает приватные члены. При обычном Java import одного opens недостаточно.
-> 3. Нет при описанных корнях и отсутствии иной причины resolution. Для конкретного вызова нужно обеспечить доступность и разрешение addon, например явно включить его в roots, либо предусмотреть корректное поведение без него. Отсутствие runtime-модуля может привести к ошибке связывания при обращении; static не гарантирует успешного вызова.
+> 3. Нет: при запуске при описанных корнях и отсутствии иной причины resolution static-ребра недостаточно. Для конкретного вызова нужно обеспечить доступность и разрешение addon, например явно включить его в roots, либо предусмотреть корректное поведение без него. Отсутствие runtime-модуля может привести к ошибке связывания при обращении; static не гарантирует успешного вызова.
 
 Это самостоятельная учебная задача с разбором, не приписываемый внешнему интервью-источнику вопрос и не ещё один фактически запущенный тест.
 
@@ -545,12 +547,24 @@ ALL-UNNAMED в позиции получателя относится ко вс�
 
 **NOT RUN в опубликованном позитивном G2 runner:** работающий `ServiceLoader` discovery; positive `open module`; инструменты `--add-exports`, `--add-opens`, `--add-reads`; автоматические модули, migration JAR, dynamic `ModuleLayer`, alternate module graphs/JDK/OS/JMOD/jlink, code generated/agents/OSGi/Spring Boot, classloader concurrency/security, все inline code fences как самостоятельные компиляции, GUI/HTTP/anchors, JIT/JMH/GC, P2. Этот список относится к исходному позитивному runner, а не к новым временным опытам. За G1 N1 (14 malformed JLS link labels) и N2 (18/19 links) отвечает отдельный erratum; исходный план сохранён. [COVERAGE](../../docs/COVERAGE.md) фиксирует принятые статусы, [CURRICULUM](../../docs/CURRICULUM.md) — состав курса.
 
-**Новые ограниченные проверки D-A21a.** В [задаче #342](https://github.com/Melchiorius/backend-interview-labs/issues/342) авторский отчёт содержит полные источники и команды временных проб. Debian OpenJDK 21.0.12.1+1-1-deb13u1-Debian, javac 21.0.12.1, LC_ALL=C.UTF-8; отключены переменные инъекции Java-опций и CLASSPATH. 52 команды: 26 javac, 21 java, 5 jar; 37 exit 0, 15 exit 1 (10 compiler-negative и 5 runtime-отказов). Строгая компиляция положительных вариантов `--release 21 -encoding UTF-8 -XDrawDiagnostics -Xlint:all -Werror`; отрицательные и предупреждающие варианты отдельно без -Werror. В частности, explicit client requires при plain bridge сохранил одно предупреждение, отсутствующий friend — два, отсутствующий opens package — одно; это успешные компиляции без -Werror. Точные наблюдения приведены в §1–6 и §9. Новые временные исходники не входят в репозиторий и не исполняются исходным CI.
+**Новые ограниченные проверки D-A21a (роль 02, первоначальная доработка статьи).** В [задаче #342](https://github.com/Melchiorius/backend-interview-labs/issues/342) опубликованы [основной авторский отчёт](https://github.com/Melchiorius/backend-interview-labs/issues/342#issuecomment-7217830566), [приложение A/B с полными исходниками, вариантами, командами и кодами завершения](https://github.com/Melchiorius/backend-interview-labs/issues/342#issuecomment-7217861072) и [приложение C с фактическими stdout/stderr и SHA-256](https://github.com/Melchiorius/backend-interview-labs/issues/342#issuecomment-7217883834). Debian OpenJDK 21.0.12.1+1-1-deb13u1-Debian, javac 21.0.12.1, LC_ALL=C.UTF-8; отключены переменные инъекции Java-опций (JAVA_TOOL_OPTIONS, JDK_JAVA_OPTIONS, _JAVA_OPTIONS, JDK_JAVAC_OPTIONS) и CLASSPATH.
 
-**Повторный запуск неизменённого общего runner.** Восстановлены 31 точный входной файл (24 Java,6 fixtures,verify.sh), не полный клон; сверены Git SHA и mode до и после. В стандартном окружении с POSIX locale и в LC_ALL=C.UTF-8, без JAVA_TOOL_OPTIONS, JDK_JAVA_OPTIONS, _JAVA_OPTIONS, JDK_JAVAC_OPTIONS и CLASSPATH, `bash verify.sh` завершился 0 в обоих случаях, внешний stderr пуст. Скрипт выполняет четыре javac с --release 21 -Xlint:all, шесть JVM, проверяет отсутствие stderr компилятора/JVM и шесть полных diff -u. В отличие от строгих временных компиляций, скрипт не использует -Werror и не проверяет SHA внутри; 49 наблюдений из 6 JVM не означают 49 независимых тестов. Он печатает одну строку (104 байта с LF), а не все эталоны:
+- 26 вызовов javac: 13 строгих положительных компиляций с параметрами `--release 21 -encoding UTF-8 -XDrawDiagnostics -Xlint:all -Werror`, все exit 0, stdout/stderr пусты; 3 успешные компиляции с намеренными предупреждениями и 10 изолированных отрицательных компиляций (exit 1), те же параметры без -Werror. При explicit client requires и plain bridge осталось одно предупреждение, при отсутствующем friend — два, при отсутствующем opens package — одно; это успешные компиляции без -Werror.
+- 21 вызов java: 16 exit 0, включая обработанный ServiceConfigurationError, и 5 ожидаемых runtime-отказов с exit 1.
+- 5 вызовов jar: все exit 0. Всего 52 команды, 37 exit 0 и 15 exit 1; точные наблюдения приведены в §1–6 и §9.
+
+Совместная форма requires static transitive рассмотрена только по грамматике и правилам resolution; ALL-UNNAMED и ограничение javac --release на изменение экспорта пакетов JDK — только по документации. Запуск named consumer с automatic JAR и программное создание слоя не проверялись. Новые временные исходники не входят в репозиторий и не исполняются общим runner или CI.
+
+**Повторный запуск неизменённого общего runner (роль 02, первоначальная доработка D-A21a).** Восстановлены 31 точный входной файл (24 Java,6 fixtures,verify.sh), не полный клон; сверены Git SHA и mode до и после. В стандартном окружении с POSIX locale и в LC_ALL=C.UTF-8, без JAVA_TOOL_OPTIONS, JDK_JAVA_OPTIONS, _JAVA_OPTIONS, JDK_JAVAC_OPTIONS и CLASSPATH, `bash verify.sh` завершился 0 в обоих случаях, внешний stderr пуст, сравнение двух выводов cmp завершилось с кодом 0. Скрипт выполняет четыре javac с --release 21 -Xlint:all, шесть JVM, проверяет отсутствие stderr компилятора/JVM и шесть полных diff -u. В отличие от строгих временных компиляций, скрипт не использует -Werror и не проверяет SHA внутри; 49 наблюдений из 6 JVM не означают 49 независимых тестов. Он печатает одну строку (104 байта с LF), а не все эталоны:
 
 ~~~text
 CHECK PASSED: Java 21 JPMS/ClassLoader; 4 compilations, 6 JVM processes, 11+11+2+2+21+2=49 stdout lines
 ~~~
 
-SHA-256 обеих строковых трасс 2f40eb643683b422fe9e7efe1392aa7424ea44f948d828189cbcbc4f00b1dfb8; все шесть fixture SHA-256 совпали с историческим G1 L505–510. en_US.UTF-8/tr_TR.UTF-8 в локальной системе отсутствовали, NOT RUN. Не проверены другие ОС/JDK, полная миграция с automatic modules, динамическое создание слоёв, широкие вопросы security/agents/unloading/concurrency, JMOD/jlink, все inline code fences как самостоятельные компиляции, GUI/HTTP/anchors и P2. Эти ограничения не отменяют конкретных новых наблюдений и не означают полное покрытие CORE-CLASSLOADER.
+SHA-256 обеих строковых трасс 2f40eb643683b422fe9e7efe1392aa7424ea44f948d828189cbcbc4f00b1dfb8; все шесть fixture SHA-256 совпали с историческим G1 L505–510. Это предыдущие фактические запуски 02, а не новые локальные проверки при редактуре.
+
+**Независимая практическая проверка JM17 (роль 03).** В [отдельном отчёте 03 #7217992291](https://github.com/Melchiorius/backend-interview-labs/pull/343#issuecomment-7217992291) приведены другие временные исходники, команды и точные потоки. На OpenJDK/javac/jar 21.0.12.1 из двух обычных JAR без module-info обнаружены автоматические дескрипторы number.box (версия 2.1 из имени файла) и lab.fixed (имя из manifest). Для обоих automatic=true, boot=false; Discovery и NumberBox принадлежат одному unnamed module, value=67, Object относится к именованному java.base. Семь первоначальных команд (две строгие компиляции, четыре вызова jar и одна JVM) завершились с кодом 0 и пустым stderr; ещё два вызова jar --list успешно подтвердили содержимое архивов. Вывод JVM — 5 строк, 193 байта с LF; два вывода describe-module — 130 и 125 байт с двумя LF в конце, соответственно. Полные потоки и их SHA-256 — в отчёте 03. Отрицательная компиляция для этого ограниченного положительного контрпримера не требовалась. Это не повтор всех 52 команд 02 и не запуск named consumer с automatic JAR или динамическим слоем.
+
+Роль 03 независимо восстановила те же 31 защищённый входной файл (не полный клон), проверила их Git SHA и режимы до и после и запустила исходный runner в default POSIX и LC_ALL=C.UTF-8. Оба запуска exit 0, внешний stderr пуст, cmp exit 0. Тот же маркер из 104 байт и тот же SHA-256; все шесть fixture hashes совпали с G1 L505–510, шесть полных diff в каждом запуске прошли. Это отдельная проверка исходного runner, а не дополнительные JM/CL-строки или повтор новых проб в CI. CI исходного runner печатает только маркер, не все 49 строк.
+
+**Границы новых проверок 02/03.** en_US.UTF-8/tr_TR.UTF-8 в локальных системах отсутствовали, NOT RUN. Не проверены другие ОС/JDK, полная миграция с automatic modules, динамическое создание слоёв, широкие вопросы security/agents/unloading/concurrency, JMOD/jlink, все inline code fences как самостоятельные компиляции, GUI/HTTP/anchors и P2. Эти ограничения не отменяют конкретных новых наблюдений и не означают полное покрытие CORE-CLASSLOADER.
