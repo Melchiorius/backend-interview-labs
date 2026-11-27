@@ -239,7 +239,7 @@ class ConcatDemo {
 
 ## 10. `==`, `equals`, NaN и знаковый ноль (OP-14, OP-15; OP-27 P2)
 
-Для числового equality, когда оба операнда числовые или один примитивный числовой, а другой допускает преобразование к числовому, применяется binary numeric promotion (с необходимым unboxing); для boolean/Boolean, если хотя бы один boolean, применяется boolean equality с unboxing. Две ссылки сравниваются по reference equality, если допускается casting conversion хотя бы в одном направлении (включая null); true, если обе null или обозначают один объект/массив. Два разных boxed-типа Integer и Long нельзя сравнить напрямую через == (IncompatibleWrappers). Probe проверил Integer wrap=67; wrap==67, Boolean yes=true; yes==true, две null Object ссылки, а Integer missing=null; missing==67 бросило NPE. Это не сравнение адресов памяти; `equals` — вызов метода, поведение которого определяет класс. Контрпример `"x" == 67` отвергается по несовместимым типам (OP-N12); это не ложный `false` при выполнении.
+Для числового equality, когда оба операнда имеют примитивные числовые типы или один имеет такой тип, а другой допускает unboxing в числовой тип, применяется binary numeric promotion (с необходимым unboxing); для boolean/Boolean, если хотя бы один boolean, применяется boolean equality с unboxing. Две ссылки сравниваются по reference equality, если допускается casting conversion хотя бы в одном направлении (включая null); true, если обе null или обозначают один объект/массив. Два разных boxed-типа Integer и Long нельзя сравнить напрямую через == (IncompatibleWrappers). Probe проверил Integer wrap=67; wrap==67, Boolean yes=true; yes==true, две null Object ссылки, а Integer missing=null; missing==67 бросило NPE. Это не сравнение адресов памяти; `equals` — вызов метода, поведение которого определяет класс. Контрпример `"x" == 67` отвергается по несовместимым типам (OP-N12); это не ложный `false` при выполнении.
 
 Плавающая точка имеет особые значения, поэтому простая аналогия «`==` означает одинаковые биты» неверна:
 
@@ -336,7 +336,7 @@ Constant expression по JLS §15.29 — выражение примитивно
 | OP-07 | P0 | §4, §8: numeric promotion, OP18/19, OP-N01/02 |
 | OP-08 | P0 | §6: `int` 5/`long` 6 mask bits, OP09–11 |
 | OP-09 | P0 | §7: `&&` skip rhs, OP12 |
-| OP-10 | P0 | §7: boolean eager &/|/^ после нормального LHS/unboxing, OP13/15 |
+| OP-10 | P0 | §7: булевы eager-операторы после нормального вычисления и распаковки слева, OP13/15 |
 | OP-11 | P0 | §7: `||` skip rhs, OP14 |
 | OP-12 | P0 | §8: selected branch only, typing both branches, OP18/19/24 |
 | OP-13 | P0 | §9: String `+` grouping, OP16/17 |
